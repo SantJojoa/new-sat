@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model areas {
+  id              String         @id
+  name            String         @unique
+  subdireccion_id String
+  created_at      DateTime       @default(now())
+  updated_at      DateTime
+  subdirecciones  subdirecciones @relation(fields: [subdireccion_id], references: [id])
+  users           users[]
+}
+
+model subdirecciones {
+  id          String   @id
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  areas       areas[]
+}
+
+model user_types {
+  id          String   @id
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  users       users[]
+}
+
+model users {
+  id           String     @id
+  username     String     @unique
+  password     String
+  user_type_id String
+  names        String
+  last_name    String
+  num_id       String     @unique
+  area_id      String?
+  charge       String?
+  email        String     @unique
+  is_active    Boolean    @default(true)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime
+  areas        areas?     @relation(fields: [area_id], references: [id])
+  user_types   user_types @relation(fields: [user_type_id], references: [id])
+}
