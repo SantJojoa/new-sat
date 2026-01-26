@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,35 +7,35 @@ datasource db {
 }
 
 model areas {
-  id              String         @id
+  id              String         @id @default(cuid())
   name            String         @unique
   subdireccion_id String
   created_at      DateTime       @default(now())
-  updated_at      DateTime
+  updated_at      DateTime       @updatedAt
   subdirecciones  subdirecciones @relation(fields: [subdireccion_id], references: [id])
   users           users[]
 }
 
 model subdirecciones {
-  id          String   @id
+  id          String   @id @default(cuid())
   name        String   @unique
   description String?
   created_at  DateTime @default(now())
-  updated_at  DateTime
+  updated_at  DateTime @updatedAt
   areas       areas[]
 }
 
 model user_types {
-  id          String   @id
+  id          String   @id @default(cuid())
   name        String   @unique
   description String?
   created_at  DateTime @default(now())
-  updated_at  DateTime
+  updated_at  DateTime @updatedAt
   users       users[]
 }
 
 model users {
-  id           String     @id
+  id           String     @id @default(cuid())
   username     String     @unique
   password     String
   user_type_id String
@@ -48,7 +47,7 @@ model users {
   email        String     @unique
   is_active    Boolean    @default(true)
   created_at   DateTime   @default(now())
-  updated_at   DateTime
+  updated_at   DateTime   @updatedAt
   areas        areas?     @relation(fields: [area_id], references: [id])
   user_types   user_types @relation(fields: [user_type_id], references: [id])
 }
