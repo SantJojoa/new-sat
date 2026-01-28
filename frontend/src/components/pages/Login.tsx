@@ -1,27 +1,153 @@
-import React, { useState } from 'react';
-import { HouseWifi, UserRound, Lock, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { HouseWifi, UserRound, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+
+import { useAuth } from '../../hooks/useAuth';
+
+interface LoginFormData {
+    username: string;
+    password: string;
+    remember: boolean;
+}
+
+interface ApiError {
+    message: string;
+    status?: number;
+}
 
 
 export default function Login() {
+
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
     const [formData, setFormData] = useState({
         username: '',
         password: '',
         remember: false
-    })
+    });
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            const form = (location.state as any)?.from?.pathname || '/dashboard';
+            navigate(form, { replace: true });
+        }
+    }, [isAuthenticated, navigate, location])
+
+
+    useEffect(() => {
+        const savedUserName = localStorage.getItem('rememberedUsername');
+        if (savedUserName) {
+            setFormData(prev => ({ ...prev, username: savedUserName, remember: true }));
+        }
+    }, [])
+
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+
+        if (error) setError(null);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        console.log('Form submitted:', formData);
+
+    const validateForm = (): boolean => {
+
+        if (!formData.username.trim()) {
+            setError('El nombre de usuario es requerido');
+            return false;
+        }
+
+        if (!formData.password) {
+            setError('La contraseña es requerida');
+            return false;
+        }
+
+        if (formData.password.length < 4) {
+            setError('La contraseña debe tener al menos 4 caracteres');
+            return false;
+        }
+
+        return true;
     }
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!validateForm()) return;
+
+
+        setIsSubmitting(true);
+        setError(null)
+        setSuccess(null)
+
+
+        try {
+            if (formData.remember) {
+                localStorage.setItem('rememberedUsername', formData.username);
+            } else {
+                localStorage.removeItem('rememberedUsername');
+            }
+
+            await login(formData.username, formData.password)
+
+            setSuccess('Inicio de sesión exitoso');
+            console.log('Form submitted:', formData);
+
+            setTimeout(() => {
+                navigate('/dashboard', { replace: true });
+            }, 1000);
+
+        } catch (err: any) {
+            console.error('Login error:', err);
+
+            if (err.response?.status === 401) {
+                setError('Credenciales incorrectas. Verifica tu usuario y contraseña.');
+            } else if (err.response?.status === 404) {
+                setError('Servicio no disponible. Por favor, intenta más tarde.');
+            } else if (err.message?.includes('Network Error')) {
+                setError('Error de conexión. Verifica tu internet.');
+            } else {
+                setError(err.message || 'Error al iniciar sesión. Intenta nuevamente.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+
+    }
+
+
+    const handleForgotPassword = (e: React.MouseEvent) => {
+        e.preventDefault();
+        // Aquí puedes implementar la lógica para recuperar contraseña
+        navigate('/forgot-password');
+    };
+
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background-light">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-text-secondary">Verificando autenticación...</p>
+                </div>
+            </div>
+        );
+    }
+
+
+
 
     return (
         <div className='bg-background-light min-h-screen flex flex-col font-display'>
@@ -36,7 +162,7 @@ export default function Login() {
                             aria-label='IDSN Logo'
                         >
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/40 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/40 to-transparent" />
                         <div className='absolute bottom-10 left-10 right-10 text-white'>
                             <h1 className='text-3xl font-bold mb-2'>
                                 Sistema SAT
