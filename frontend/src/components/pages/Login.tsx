@@ -165,10 +165,11 @@ export default function Login() {
                         <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/40 to-transparent" />
                         <div className='absolute bottom-10 left-10 right-10 text-white'>
                             <h1 className='text-3xl font-bold mb-2'>
-                                Sistema SAT
+                                SIVAC -
+                                <span className='text-white/95 font-light'> Sistema de Inspección, Vigilancia, Asistencia y Capacitación</span>
                             </h1>
                             <p className="text-white/90 font-light leading-relaxed">
-                                No se que poner aqui              Inge tqm Lorem ipsum dolor sit, amet consectetur adipisicing elit. Et unde numquam sequi ab quasi ipsam illo optio tempora quia voluptatibus. Est similique, ipsam placeat eligendi iste dolores provident esse iure.
+                                Sistema que integra inspección, vigilancia, capacitación y acompañamiento para fortalecer la gestion y el trabajo intersectorial del Instituto Departamental de Salud de Narño.
                             </p>
                         </div>
                     </div>
@@ -182,7 +183,7 @@ export default function Login() {
                                 </span>
                                 <h3 className='text-2xl font-bold text-text-primary'> Iniciar Sesión</h3>
                             </div>
-                            <p className='text-text-secondary text-sm'>Ingrese sus credenciales para acceder a la plataforma SAT
+                            <p className='text-text-secondary text-sm'>Ingrese sus credenciales para acceder a la plataforma SIVAC
                             </p>
                         </div>
 

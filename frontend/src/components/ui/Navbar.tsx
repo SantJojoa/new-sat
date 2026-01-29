@@ -5,9 +5,9 @@ import { Info } from 'lucide-react';
 export default function Navbar() {
     return (
         <header className='bg-white flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light 
-       px-6 py-3 backdrop-blur-md sticky top-0 z-50'>
-            <div className='flex items-center gap-4 text-primary'>
-                <div className='size-8'>
+       px-4 py-2 backdrop-blur-md sticky top-0 z-50 h-14'>
+            <div className='flex items-center gap-3 text-primary'>
+                <div className='size-6'>
                     <svg xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
@@ -16,16 +16,16 @@ export default function Navbar() {
                         <path d="M9 3a1 1 0 0 1 .608 .206l.1 .087l2.706 2.707h6.586a3 3 0 0 1 2.995 2.824l.005 .176v8a3 3 0 0 1 -2.824 2.995l-.176 .005h-14a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-11a3 3 0 0 1 2.824 -2.995l.176 -.005h4z" />
                     </svg>
                 </div>
-                <h2 className='text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]'>
+                <h2 className='text-text-primary text-base font-bold leading-tight tracking-[-0.015em]'>
                     SAT-IDSN
                 </h2>
             </div>
 
             <button
-                className="flex items-center justify-center rounded-lg h-10 bg-primary/10 text-primary px-3 transition-colors cursor-pointer hover:text-green-800 hover:bg-green-800/10"
+                className="flex items-center justify-center rounded-lg h-8 w-8 bg-primary/10 text-primary transition-colors cursor-pointer hover:text-green-800 hover:bg-green-800/10"
                 aria-label="Ayuda"
             >
-                <Info />
+                <Info size={18} />
             </button>
         </header>
     )
