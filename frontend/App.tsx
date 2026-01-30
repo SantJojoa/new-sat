@@ -1,4 +1,3 @@
-import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './src/hooks/useAuth'
 import Layout from './src/components/layout/Layout'
@@ -12,12 +11,13 @@ function App() {
             <Router>
                 <Routes>
                     {/* Ruta de login sin layout */}
+                    <Route path="/login" element={<Login />} />
 
 
                     {/* Rutas principales con layout (navbar + footer) */}
                     <Route path="/" element={<Layout />}>
                         {/* Ruta de login */}
-                        <Route path="login" element={<Login />} />
+
                         {/* Ruta por defecto redirige al dashboard */}
                         <Route index element={<Navigate to="/dashboard" replace />} />
 

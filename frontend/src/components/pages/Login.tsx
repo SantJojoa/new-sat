@@ -129,11 +129,11 @@ export default function Login() {
     }
 
 
-    const handleForgotPassword = (e: React.MouseEvent) => {
-        e.preventDefault();
-        // Aquí puedes implementar la lógica para recuperar contraseña
-        navigate('/forgot-password');
-    };
+    // const handleForgotPassword = (e: React.MouseEvent) => {
+    //     e.preventDefault();
+    //     // Aquí puedes implementar la lógica para recuperar contraseña
+    //     navigate('/forgot-password');
+    // };
 
     if (authLoading) {
         return (
@@ -152,8 +152,8 @@ export default function Login() {
     return (
         <div className='bg-background-light min-h-screen flex flex-col font-display'>
             <main className='flex grow items-center justify-center p-4 md:p-8'>
-                <div className='bg-white max-w-[1000px] w-full flex flex-col md:flex-row rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden border border-border-light'>
-                    <div className='hidden md:flex md:w-1/2 relative min-h-[500px] bg-primary overflow-hidden'>
+                <div className='bg-white max-w-[1000px] w-full flex flex-col md:flex-row rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden border border-border-light md:h-[650px]'>
+                    <div className='hidden md:flex md:w-1/2 relative min-h-[500px] bg-primary overflow-hidden h-full'>
                         <div className='absolute inset-0 bg-cover bg-center'
                             style={{
                                 backgroundImage: "url('https://www.idsn.gov.co/info/idsn_se/media/galeria12605.jpg')"
@@ -175,7 +175,7 @@ export default function Login() {
                     </div>
 
 
-                    <div className='w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center'>
+                    <div className='w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center overflow-y-auto h-full'>
                         <div className='mb-8'>
                             <div className='flex items-center gap-2 mb-2'>
                                 <span className='text-primary text-3xl'>
@@ -188,6 +188,19 @@ export default function Login() {
                         </div>
 
                         <form onSubmit={handleSubmit} className='space-y-6'>
+                            {error && (
+                                <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-3 text-sm border border-red-100 animate-in fade-in slide-in-from-top-2">
+                                    <AlertCircle size={18} className="shrink-0" />
+                                    <p>{error}</p>
+                                </div>
+                            )}
+                            {success && (
+                                <div className="bg-green-50 text-green-600 p-3 rounded-lg flex items-center gap-3 text-sm border border-green-100 animate-in fade-in slide-in-from-top-2">
+                                    <div className='size-2 rounded-full bg-green-500 animate-pulse' />
+                                    <p>{success}</p>
+                                </div>
+                            )}
+
                             <div className="flex flex-col gap-1.5">
                                 <label
                                     htmlFor="username"
@@ -232,12 +245,21 @@ export default function Login() {
                                     <input
                                         id='password'
                                         name='password'
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         value={formData.password}
                                         onChange={handleInputChange}
                                         className='form-input flex w-full rounded-lg text-text-primary focus:outline-0 focus:ring-1 focus:ring-primary border border-border-light bg-white focus:border-primary h-12 placeholder:text-text-secondary/50 pl-11 pr-4 text-base font-normal transition-all'
                                         placeholder=' ••••••••'
+                                        autoComplete='current-password'
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+                                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
 
