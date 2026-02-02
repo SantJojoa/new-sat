@@ -1,39 +1,61 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsNotEmpty, Min, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString } from 'class-validator';
 
 export class CreateSalidaDto {
     @IsString()
     @IsNotEmpty()
-    @MaxLength(50)
     codigo: string;
 
     @IsString()
     @IsNotEmpty()
-    @MaxLength(500)
-    descripcion: string;
-
-    @IsString()
-    @IsNotEmpty()
-    tipo_salida: string; // 'equipo', 'material', 'documento', 'insumo', 'otro'
-
-    @IsNumber()
-    @Min(1)
-    cantidad: number;
-
-    @IsString()
-    @IsNotEmpty()
-    unidad_medida: string; // 'unidad', 'metro', 'litro', 'kilogramo', 'caja'
-
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(200)
-    destinatario: string;
+    tipo_salida: string; // 'Capacitacion Presencial', 'Capacitacion Virtual', etc.
 
     @IsString()
     @IsOptional()
-    @MaxLength(1000)
-    observaciones?: string;
+    subtipo_salida?: string; // 'Inspeccion', 'Vigilancia', 'Acompañamiento'
 
-    // Estos campos se asignan automáticamente del usuario autenticado
-    // solicitante_id: string;  // Se obtiene del usuario autenticado
-    // area_id: string;         // Se obtiene del área del usuario autenticado
+    @IsString()
+    @IsNotEmpty()
+    tema: string;
+
+    @IsString()
+    @IsOptional()
+    descripcion?: string;
+
+    @IsDateString()
+    @IsNotEmpty()
+    fecha_inicio: string;
+
+    @IsDateString()
+    @IsNotEmpty()
+    fecha_final: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsEnum(['Manana', 'Tarde', 'Completa'])
+    jornada: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    municipios_ids?: string[];
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    ips_ids?: string[];
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    entidades_ids?: string[];
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    eapb_ids?: string[];
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    organizaciones_ids?: string[];
 }

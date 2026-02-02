@@ -92,22 +92,89 @@ model permissions {
   @@unique([user_type_id, module_id])
 }
 
+// Catálogos
+model municipios {
+  id         String   @id @default(cuid())
+  name       String
+  code       String?  @unique // Código DANE
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  ips     ips[]
+  salidas salidas[] @relation("SalidasMunicipios")
+}
+
+model ips {
+  id           String   @id @default(cuid())
+  name         String
+  nit          String?
+  municipio_id String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  municipio municipios? @relation(fields: [municipio_id], references: [id])
+  salidas   salidas[]   @relation("SalidasIps")
+}
+
+model entidades {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasEntidades")
+}
+
+model eapb {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasEapb")
+}
+
+model organizaciones {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasOrganizaciones")
+}
+
 model salidas {
-  id               String    @id @default(cuid())
-  codigo           String    @unique
-  descripcion      String
-  tipo_salida      String
-  cantidad         Int
-  unidad_medida    String
-  destinatario     String
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  // Datos de la comisión
+  tipo_salida    String // 'Capacitacion Presencial', 'Capacitacion Virtual', etc.
+  subtipo_salida String? // 'Inspeccion', 'Vigilancia', 'Acompañamiento'
+  tema           String // Descripción corta o título del tema
+  descripcion    String? // Descripción detallada (opcional)
+
+  // Agenda
+  fecha_inicio DateTime
+  fecha_final  DateTime
+  jornada      String // 'Manana', 'Tarde', 'Completa'
+
+  // Estado
   fecha_solicitud  DateTime  @default(now())
   fecha_aprobacion DateTime?
   estado           String    @default("pendiente")
   observaciones    String?
 
+  // Relaciones de Usuario/Área
   solicitante_id String
   aprobador_id   String?
   area_id        String
+
+  // Relaciones con Catálogos (Muchos a Muchos implícitos)
+  municipios     municipios[]     @relation("SalidasMunicipios")
+  ips            ips[]            @relation("SalidasIps")
+  entidades      entidades[]      @relation("SalidasEntidades")
+  eapb           eapb[]           @relation("SalidasEapb")
+  organizaciones organizaciones[] @relation("SalidasOrganizaciones")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

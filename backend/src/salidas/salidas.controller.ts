@@ -44,6 +44,13 @@ export class SalidasController {
         return this.salidasService.getEstadisticas(req.user);
     }
 
+    @Get('catalogos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('salidas', 'view')
+    getCatalogos() {
+        return this.salidasService.getCatalogos();
+    }
+
     @Get(':id')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('salidas', 'view')
