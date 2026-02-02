@@ -1,7 +1,0 @@
-Datasource "db": PostgreSQL database "new_sat_bd", schema "public" at "localhost:5432"
-
-- Introspecting based on datasource defined in prisma\schema.prisma
-✔ Introspected 4 models and wrote them into prisma\schema.prisma in 156ms
-      
-Run prisma generate to generate Prisma Client.
-
