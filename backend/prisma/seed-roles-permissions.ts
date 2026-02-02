@@ -6,9 +6,8 @@ import * as bcrypt from 'bcrypt';
 const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1080691332sJ*@localhost:5432/new_sat_bd?schema=public' });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-
-async function main() {
-    console.log('🌱 Starting seed...');
+async function seedRolesAndPermissions() {
+    console.log('🌱 Seeding roles and permissions...');
 
     // 1. Crear tipos de usuario con niveles jerárquicos
     const userTypes = await Promise.all([
@@ -324,90 +323,28 @@ async function main() {
         });
     }
 
-    console.log('✅ Usuarios de ejemplo creados');
+    console.log('\n🎉 Seed completado exitosamente!');
+    console.log('\n📋 Credenciales de prueba:');
+    console.log('┌──────────────────────┬─────────────┬─────────────────────────────┐');
+    console.log('│ Usuario              │ Contraseña  │ Rol                         │');
+    console.log('├──────────────────────┼─────────────┼─────────────────────────────┤');
+    console.log('│ superadmin           │ super123    │ Super Administrador         │');
+    console.log('│ adminsub             │ admin123    │ Admin Subdirección          │');
+    console.log('│ liderpro             │ lider123    │ Líder                       │');
+    console.log('│ usuario1             │ user123     │ Usuario Normal              │');
+    console.log('└──────────────────────┴─────────────┴─────────────────────────────┘');
 
-    // 6. Seed Catálogos (Solo si están vacíos)
-    console.log('🌱 Seeding catalogs...');
-
-    // Municipios
-    const municipiosCount = await prisma.municipios.count();
-    if (municipiosCount === 0) {
-        await prisma.municipios.createMany({
-            data: [
-                { name: 'Pasto', code: '52001' },
-                { name: 'Tumaco', code: '52835' },
-                { name: 'Ipiales', code: '52356' },
-                { name: 'Túquerres', code: '52838' },
-                { name: 'La Unión', code: '52399' }
-            ]
-        });
-        console.log('Created Municipios');
-    }
-
-    // Entidades
-    const entidadesCount = await prisma.entidades.count();
-    if (entidadesCount === 0) {
-        await prisma.entidades.createMany({
-            data: [
-                { name: 'Alcaldía Municipal' },
-                { name: 'Secretaría de Salud Departamental' },
-                { name: 'Instituto Departamental de Salud' },
-                { name: 'Gobernación de Nariño' }
-            ]
-        });
-        console.log('Created Entidades');
-    }
-
-    // IPS
-    const ipsCount = await prisma.ips.count();
-    if (ipsCount === 0) {
-        await prisma.ips.createMany({
-            data: [
-                { name: 'Hospital Universitario Departamental de Nariño', nit: '800000000' },
-                { name: 'Clínica Hispanoamérica', nit: '900000000' },
-                { name: 'Hospital Civil de Ipiales', nit: '891200000' },
-                { name: 'Hospital San Andrés de Tumaco', nit: '892000000' }
-            ]
-        });
-        console.log('Created IPS');
-    }
-
-    // EAPB
-    const eapbCount = await prisma.eapb.count();
-    if (eapbCount === 0) {
-        await prisma.eapb.createMany({
-            data: [
-                { name: 'Emssanar' },
-                { name: 'Asmet Salud' },
-                { name: 'Sanitas' },
-                { name: 'Nueva EPS' }
-            ]
-        });
-        console.log('Created EAPB');
-    }
-
-    // Organizaciones
-    const orgCount = await prisma.organizaciones.count();
-    if (orgCount === 0) {
-        await prisma.organizaciones.createMany({
-            data: [
-                { name: 'Organización Panamericana de la Salud' },
-                { name: 'UNICEF' },
-                { name: 'Cruz Roja' }
-            ]
-        });
-        console.log('Created Organizaciones');
-    }
-
-    console.log('🎉 Seed completed successfully!');
+    console.log('\n🔐 Resumen de permisos por rol:');
+    console.log('┌──────────────────────┬─────────────────────────────────────────────────────────────┐');
+    console.log('│ Rol                  │ Permisos                                                    │');
+    console.log('├──────────────────────┼─────────────────────────────────────────────────────────────┤');
+    console.log('│ Super Administrador  │ ✅ Todo + Crear/Gestionar usuarios                          │');
+    console.log('│ Admin Subdirección   │ ✅ Todo (menos usuarios) + Aprobar salidas                  │');
+    console.log('│ Líder                │ ✅ Todo (menos usuarios) + Crear/Modificar salidas         │');
+    console.log('│ Usuario Normal       │ 👁️ Vista: Dashboard, Salidas, Reportes                     │');
+    console.log('└──────────────────────┴─────────────────────────────────────────────────────────────┘');
 }
 
-main()
-    .catch((e) => {
-        console.error('❌ Error during seeding:', e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-        await pool.end(); // También cierra el pool
-    });
+seedRolesAndPermissions()
+    .catch(console.error)
+    .finally(() => prisma.$disconnect());

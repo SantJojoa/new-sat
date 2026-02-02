@@ -14,6 +14,7 @@ model areas {
   updated_at      DateTime       @updatedAt
   subdirecciones  subdirecciones @relation(fields: [subdireccion_id], references: [id])
   users           users[]
+  salidas         salidas[]
 }
 
 model subdirecciones {
@@ -26,12 +27,14 @@ model subdirecciones {
 }
 
 model user_types {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String        @id @default(cuid())
+  name        String        @unique
   description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  level       Int           @default(0)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
   users       users[]
+  permissions permissions[]
 }
 
 model users {
@@ -50,4 +53,133 @@ model users {
   updated_at   DateTime   @updatedAt
   areas        areas?     @relation(fields: [area_id], references: [id])
   user_types   user_types @relation(fields: [user_type_id], references: [id])
+
+  salidas_solicitadas salidas[] @relation("SolicitanteSalidas")
+  salidas_aprobadas   salidas[] @relation("AprobadorSalidas")
+}
+
+model modules {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  icon        String?
+  path        String?
+  order       Int           @default(0)
+  is_active   Boolean       @default(true)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  permissions permissions[]
+  parent_id   String?
+  parent      modules?      @relation("ModuleParent", fields: [parent_id], references: [id])
+  children    modules[]     @relation("ModuleParent")
+}
+
+model permissions {
+  id           String   @id @default(cuid())
+  user_type_id String
+  module_id    String
+  can_view     Boolean  @default(false)
+  can_create   Boolean  @default(false)
+  can_edit     Boolean  @default(false)
+  can_delete   Boolean  @default(false)
+  can_approve  Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  user_types user_types @relation(fields: [user_type_id], references: [id])
+  modules    modules    @relation(fields: [module_id], references: [id])
+
+  @@unique([user_type_id, module_id])
+}
+
+// Catálogos
+model municipios {
+  id         String   @id @default(cuid())
+  name       String
+  code       String?  @unique // Código DANE
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  ips     ips[]
+  salidas salidas[] @relation("SalidasMunicipios")
+}
+
+model ips {
+  id           String   @id @default(cuid())
+  name         String
+  nit          String?
+  municipio_id String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  municipio municipios? @relation(fields: [municipio_id], references: [id])
+  salidas   salidas[]   @relation("SalidasIps")
+}
+
+model entidades {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasEntidades")
+}
+
+model eapb {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasEapb")
+}
+
+model organizaciones {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasOrganizaciones")
+}
+
+model salidas {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  // Datos de la comisión
+  tipo_salida    String // 'Capacitacion Presencial', 'Capacitacion Virtual', etc.
+  subtipo_salida String? // 'Inspeccion', 'Vigilancia', 'Acompañamiento'
+  tema           String // Descripción corta o título del tema
+  descripcion    String? // Descripción detallada (opcional)
+
+  // Agenda
+  fecha_inicio DateTime
+  fecha_final  DateTime
+  jornada      String // 'Manana', 'Tarde', 'Completa'
+
+  // Estado
+  fecha_solicitud  DateTime  @default(now())
+  fecha_aprobacion DateTime?
+  estado           String    @default("pendiente")
+  observaciones    String?
+
+  // Relaciones de Usuario/Área
+  solicitante_id String
+  aprobador_id   String?
+  area_id        String
+
+  // Relaciones con Catálogos (Muchos a Muchos implícitos)
+  municipios     municipios[]     @relation("SalidasMunicipios")
+  ips            ips[]            @relation("SalidasIps")
+  entidades      entidades[]      @relation("SalidasEntidades")
+  eapb           eapb[]           @relation("SalidasEapb")
+  organizaciones organizaciones[] @relation("SalidasOrganizaciones")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  solicitante users  @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
+  aprobador   users? @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
+  areas       areas  @relation(fields: [area_id], references: [id])
 }
