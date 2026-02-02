@@ -14,6 +14,7 @@ model areas {
   updated_at      DateTime       @updatedAt
   subdirecciones  subdirecciones @relation(fields: [subdireccion_id], references: [id])
   users           users[]
+  salidas         salidas[]
 }
 
 model subdirecciones {
@@ -26,12 +27,14 @@ model subdirecciones {
 }
 
 model user_types {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String        @id @default(cuid())
+  name        String        @unique
   description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  level       Int           @default(0)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
   users       users[]
+  permissions permissions[]
 }
 
 model users {
@@ -50,4 +53,66 @@ model users {
   updated_at   DateTime   @updatedAt
   areas        areas?     @relation(fields: [area_id], references: [id])
   user_types   user_types @relation(fields: [user_type_id], references: [id])
+
+  salidas_solicitadas salidas[] @relation("SolicitanteSalidas")
+  salidas_aprobadas   salidas[] @relation("AprobadorSalidas")
+}
+
+model modules {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  icon        String?
+  path        String?
+  order       Int           @default(0)
+  is_active   Boolean       @default(true)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  permissions permissions[]
+  parent_id   String?
+  parent      modules?      @relation("ModuleParent", fields: [parent_id], references: [id])
+  children    modules[]     @relation("ModuleParent")
+}
+
+model permissions {
+  id           String   @id @default(cuid())
+  user_type_id String
+  module_id    String
+  can_view     Boolean  @default(false)
+  can_create   Boolean  @default(false)
+  can_edit     Boolean  @default(false)
+  can_delete   Boolean  @default(false)
+  can_approve  Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  user_types user_types @relation(fields: [user_type_id], references: [id])
+  modules    modules    @relation(fields: [module_id], references: [id])
+
+  @@unique([user_type_id, module_id])
+}
+
+model salidas {
+  id               String    @id @default(cuid())
+  codigo           String    @unique
+  descripcion      String
+  tipo_salida      String
+  cantidad         Int
+  unidad_medida    String
+  destinatario     String
+  fecha_solicitud  DateTime  @default(now())
+  fecha_aprobacion DateTime?
+  estado           String    @default("pendiente")
+  observaciones    String?
+
+  solicitante_id String
+  aprobador_id   String?
+  area_id        String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  solicitante users  @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
+  aprobador   users? @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
+  areas       areas  @relation(fields: [area_id], references: [id])
 }
