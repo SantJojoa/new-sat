@@ -4,7 +4,7 @@ import Layout from './src/components/layout/Layout'
 import Login from './src/components/pages/Login'
 import Dashboard from './src/components/pages/Dashboard'
 import ProtectedRoute from './src/components/common/ProtectedRoute'
-
+import SlideBar from './src/components/ui/SlideBar'
 function App() {
     return (
         <AuthProvider>
@@ -24,7 +24,7 @@ function App() {
                         {/* Dashboard - protegido */}
                         <Route path="dashboard" element={
                             <ProtectedRoute>
-                                <Dashboard />
+                                <SlideBar />
                             </ProtectedRoute>
                         } />
 
