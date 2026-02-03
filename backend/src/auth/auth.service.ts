@@ -50,10 +50,12 @@ export class AuthService {
                 id: user.id,
                 username: user.username,
                 names: user.names,
-                last_names: user.last_names,
+                last_name: user.last_name,
                 email: user.email,
                 user_type_id: user.user_type_id,
                 area_id: user.area_id,
+                user_type: user.user_types,
+                area: user.areas,
             }
         }
     }
