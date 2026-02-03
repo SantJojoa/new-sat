@@ -9,6 +9,7 @@ interface MultiSelectModalProps {
     onSave: (selected: { id: string; name: string }[]) => void;
     searchPlaceholder?: string;
     icon?: string;
+    singleSelect?: boolean;
 }
 
 const MultiSelectModal = ({
@@ -19,7 +20,8 @@ const MultiSelectModal = ({
     selectedItems,
     onSave,
     searchPlaceholder = "Buscar...",
-    icon = "search"
+    icon = "search",
+    singleSelect = false
 }: MultiSelectModalProps) => {
     const [search, setSearch] = useState('');
     const [tempSelected, setTempSelected] = useState<{ id: string; name: string }[]>([]);
@@ -41,7 +43,8 @@ const MultiSelectModal = ({
             if (exists) {
                 return prev.filter(i => i.id !== item.id);
             } else {
-                return [...prev, item];
+                // Si es selección única, reemplazar; si no, añadir
+                return singleSelect ? [item] : [...prev, item];
             }
         });
     };
@@ -103,15 +106,19 @@ const MultiSelectModal = ({
                         />
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Quick Actions - ocultar "Seleccionar todos" en modo single select */}
                     <div className="flex gap-2 mt-3">
-                        <button
-                            onClick={handleSelectAll}
-                            className="text-xs font-semibold text-primary hover:underline"
-                        >
-                            Seleccionar todos ({filteredItems.length})
-                        </button>
-                        <span className="text-zinc-300">|</span>
+                        {!singleSelect && (
+                            <>
+                                <button
+                                    onClick={handleSelectAll}
+                                    className="text-xs font-semibold text-primary hover:underline"
+                                >
+                                    Seleccionar todos ({filteredItems.length})
+                                </button>
+                                <span className="text-zinc-300">|</span>
+                            </>
+                        )}
                         <button
                             onClick={handleClearAll}
                             className="text-xs font-semibold text-zinc-500 hover:underline"
@@ -145,9 +152,10 @@ const MultiSelectModal = ({
                                             }`}
                                     >
                                         <input
-                                            type="checkbox"
+                                            type={singleSelect ? "radio" : "checkbox"}
                                             checked={isSelected}
                                             onChange={() => toggleItem(item)}
+                                            name={singleSelect ? "singleSelectGroup" : undefined}
                                             className="rounded border-zinc-300 text-primary focus:ring-primary"
                                         />
                                         <span className={`text-sm ${isSelected

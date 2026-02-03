@@ -37,6 +37,20 @@ interface User {
         id: string;
         name: string;
         description: string;
+        permissions?: {
+            id: string;
+            module_id: string;
+            can_view: boolean;
+            modules: {
+                id: string;
+                name: string;
+                path: string;
+                icon: string;
+                description: string;
+                order?: number;
+                is_active?: boolean;
+            }
+        }[];
     };
     area?: {
         id: string;

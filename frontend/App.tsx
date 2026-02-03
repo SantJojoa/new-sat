@@ -4,6 +4,7 @@ import Layout from './src/components/layout/Layout'
 import Login from './src/components/pages/Login'
 import ProtectedRoute from './src/components/common/ProtectedRoute'
 import SolicitarSalida from './src/components/pages/SolicitarSalida'
+import Dashboard from './src/components/pages/Dashboard'
 function App() {
     return (
         <AuthProvider>
@@ -23,9 +24,23 @@ function App() {
                         {/* Dashboard - protegido */}
                         <Route path="dashboard" element={
                             <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="solicitar-salida" element={
+                            <ProtectedRoute>
                                 <SolicitarSalida />
                             </ProtectedRoute>
                         } />
+
+                        {/* Rutas para nuevos módulos */}
+                        <Route path="modificar-salida" element={
+                            <ProtectedRoute>
+                                <SolicitarSalida />
+                            </ProtectedRoute>
+                        } />
+
 
                         {/* Perfil - protegido */}
 

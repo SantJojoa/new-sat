@@ -100,8 +100,9 @@ model municipios {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  ips     ips[]
-  salidas salidas[] @relation("SalidasMunicipios")
+  ips            ips[]
+  salidas        salidas[] @relation("SalidasMunicipios")
+  salidas_evento salidas[] @relation("SalidaLugarEvento")
 }
 
 model ips {
@@ -163,6 +164,13 @@ model salidas {
   fecha_aprobacion DateTime?
   estado           String    @default("pendiente")
   observaciones    String?
+
+  // Datos Transporte
+  transporte_medio         String? // 'Pasajero', 'Permanente', 'Institucional', 'No Aplica'
+  transporte_responsables  String? // Nombres de responsables
+  instituciones_convocadas Int?        @default(0)
+  lugar_evento_id          String? // ID del municipio del evento
+  lugar_evento             municipios? @relation("SalidaLugarEvento", fields: [lugar_evento_id], references: [id])
 
   // Relaciones de Usuario/Área
   solicitante_id String

@@ -125,6 +125,12 @@ export class SalidasService {
                 solicitante_id: user.id,
                 area_id: user.area_id,
 
+                // Transport Fields
+                transporte_medio: createSalidaDto.transporte_medio,
+                transporte_responsables: createSalidaDto.transporte_responsables,
+                instituciones_convocadas: createSalidaDto.instituciones_convocadas,
+                lugar_evento_id: createSalidaDto.lugar_evento_id,
+
                 // Connect Relations
                 municipios: {
                     connect: createSalidaDto.municipios_ids?.map(id => ({ id })) || []
@@ -271,6 +277,13 @@ export class SalidasService {
                 fecha_inicio: updateSalidaDto.fecha_inicio ? new Date(updateSalidaDto.fecha_inicio) : undefined,
                 fecha_final: updateSalidaDto.fecha_final ? new Date(updateSalidaDto.fecha_final) : undefined,
                 jornada: updateSalidaDto.jornada,
+
+                // Transport Fields
+                transporte_medio: updateSalidaDto.transporte_medio,
+                transporte_responsables: updateSalidaDto.transporte_responsables,
+                instituciones_convocadas: updateSalidaDto.instituciones_convocadas,
+                lugar_evento_id: updateSalidaDto.lugar_evento_id,
+
                 estado: updateSalidaDto.estado,
                 observaciones: updateSalidaDto.observaciones_aprobacion
                     ? `${salida.observaciones || ''}\n${updateSalidaDto.observaciones_aprobacion}`

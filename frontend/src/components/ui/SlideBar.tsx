@@ -1,15 +1,22 @@
 import { useAuth } from "../../hooks/useAuth"
+import { useLocation, Link } from "react-router-dom"
 
-export default function SlideBar({ activeItem = 'solicitar-salida' }) {
+export default function SlideBar() {
     const { user, logout } = useAuth();
 
-    const navItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
-        { id: 'solicitar-salida', label: 'Solicitar Salida', icon: 'add_box', href: '/solicitar-salida' },
-        { id: 'mis-salidas', label: 'Mis Salidas', icon: 'history', href: '/mis-salidas' },
-        { id: 'reportes', label: 'Reportes', icon: 'analytics', href: '/reportes' },
-        { id: 'configuracion', label: 'Configuración', icon: 'settings', href: '/configuracion' },
-    ]
+    const location = useLocation();
+
+    // Generate nav items from permissions
+    const navItems = user?.user_type?.permissions
+        ?.filter(p => p.can_view && p.modules.is_active)
+        ?.sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0))
+        ?.map(p => ({
+            id: p.modules.id,
+            label: p.modules.description || p.modules.name,
+            icon: p.modules.icon,
+            href: p.modules.path
+        })) || [];
+
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0">
             <div className="p-6 flex-col gap-8 h-full">
@@ -26,19 +33,22 @@ export default function SlideBar({ activeItem = 'solicitar-salida' }) {
                 </div>
 
                 <nav className="flex flex-col gap-1 flex-1 mt-4">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.id}
-                            href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${activeItem === item.id ? 'bg-primary/10 text-primary border border-primary/20' : 'text-zinc-600 hover:bg-zinc-100'}`}>
-                            <span className="material-symbols-outlined text-[22px]">
-                                {item.icon}
-                            </span>
-                            <span className={`text-sm ${activeItem === item.id ? 'font-bold' : 'font-medium'}`}>
-                                {item.label}
-                            </span>
-                        </a>
-                    ))}
+                    {navItems.map((item) => {
+                        const isActive = location.pathname.startsWith(item.href);
+                        return (
+                            <Link
+                                key={item.id}
+                                to={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-zinc-600 hover:bg-zinc-100'}`}>
+                                <span className="material-symbols-outlined text-[22px]">
+                                    {item.icon}
+                                </span>
+                                <span className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
 
                     <div className="mt-auto pt-4 border-t border-zinc-100 flex flex-col gap-4">
                         <div className="flex flex-col gap-1 px-3">

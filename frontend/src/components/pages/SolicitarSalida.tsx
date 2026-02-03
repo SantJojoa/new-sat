@@ -14,7 +14,10 @@ export default function SolicitarSalida() {
         fechaInicio: '',
         fechaFinal: '',
         jornada: 'Día Completo',
-        descripcion: ''
+        descripcion: '',
+        // Transport fields
+        transporteMedio: '',
+        institucionesConvocadas: ''
     });
 
     const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -26,6 +29,11 @@ export default function SolicitarSalida() {
     const [selectedEntidades, setSelectedEntidades] = useState<CatalogoItem[]>([]);
     const [selectedEAPB, setSelectedEAPB] = useState<CatalogoItem[]>([]);
     const [selectedOrganizaciones, setSelectedOrganizaciones] = useState<CatalogoItem[]>([]);
+
+    // Transport section state
+    const [transporteResponsables, setTransporteResponsables] = useState<string[]>([]);
+    const [nuevoResponsable, setNuevoResponsable] = useState('');
+    const [selectedLugarEvento, setSelectedLugarEvento] = useState<CatalogoItem | null>(null);
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
@@ -89,6 +97,11 @@ export default function SolicitarSalida() {
                 entidades_ids: selectedEntidades.map(i => i.id),
                 eapb_ids: selectedEAPB.map(i => i.id),
                 organizaciones_ids: selectedOrganizaciones.map(i => i.id),
+                // Transport fields
+                transporte_medio: formData.transporteMedio || undefined,
+                transporte_responsables: transporteResponsables.length > 0 ? transporteResponsables.join(', ') : undefined,
+                instituciones_convocadas: formData.institucionesConvocadas ? parseInt(formData.institucionesConvocadas) : undefined,
+                lugar_evento_id: selectedLugarEvento?.id || undefined,
             };
 
             await salidasService.createSalida(payload);
@@ -102,7 +115,9 @@ export default function SolicitarSalida() {
                 fechaInicio: '',
                 fechaFinal: '',
                 jornada: 'Día Completo',
-                descripcion: ''
+                descripcion: '',
+                transporteMedio: '',
+                institucionesConvocadas: ''
             });
             setSelectedMunicipios([]);
             setSelectedIPS([]);
@@ -110,6 +125,10 @@ export default function SolicitarSalida() {
             setSelectedEAPB([]);
             setSelectedOrganizaciones([]);
             setSelectedSubtipos([]);
+            // Reset transport fields
+            setTransporteResponsables([]);
+            setNuevoResponsable('');
+            setSelectedLugarEvento(null);
         } catch (error: any) {
             console.error("Error creating salida:", error);
             const msg = error.response?.data?.message || "Error al crear la solicitud";
@@ -156,7 +175,7 @@ export default function SolicitarSalida() {
     return (
         <div className="bg-bg-light font-display min-h-screen">
             <div className="flex h-screen overflow-hidden">
-                <SlideBar activeItem="solicitar-salida" />
+                <SlideBar />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
                     <header className="bg-white border-b border-zinc-200 px-8 py-4 sticky top-0 z-10">
@@ -351,7 +370,7 @@ export default function SolicitarSalida() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveModal('municipios')}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                                     Seleccionar Municipios
@@ -374,7 +393,7 @@ export default function SolicitarSalida() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveModal('ips')}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                                     Seleccionar IPS
@@ -396,7 +415,7 @@ export default function SolicitarSalida() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveModal('entidades')}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                                     Seleccionar Entidades
@@ -419,7 +438,7 @@ export default function SolicitarSalida() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveModal('eapb')}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                                     Seleccionar EAPB
@@ -441,7 +460,7 @@ export default function SolicitarSalida() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveModal('organizaciones')}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                                     Seleccionar Organizaciones
@@ -456,17 +475,167 @@ export default function SolicitarSalida() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Sección de Transporte */}
+                                    <div className="pt-6 border-t border-zinc-100 mt-8 mb-6">
+                                        <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-primary">directions_bus</span>
+                                            Transporte
+                                        </h3>
+                                        <p className="text-sm text-zinc-500 mt-1">
+                                            Información sobre el transporte para la salida
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Medio de Transporte */}
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-sm font-semibold text-zinc-700">
+                                                Medio de Transporte
+                                            </label>
+                                            <select
+                                                name="transporteMedio"
+                                                value={formData.transporteMedio}
+                                                onChange={handleInputChange}
+                                                className="w-full h-12 rounded-lg border border-zinc-200
+                                             focus:ring-primary focus:border-primary transition-all"
+                                            >
+                                                <option value="">Seleccione medio</option>
+                                                <option value="Pasajero">Pasajero</option>
+                                                <option value="Permanente">Permanente</option>
+                                                <option value="Institucional">Institucional</option>
+                                                <option value="No Aplica">No Aplica</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Instituciones Convocadas */}
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-sm font-semibold text-zinc-700">
+                                                Número de Instituciones Convocadas
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="institucionesConvocadas"
+                                                value={formData.institucionesConvocadas}
+                                                onChange={handleInputChange}
+                                                min="0"
+                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200
+                                             focus:ring-primary focus:border-primary transition-all"
+                                                placeholder="Ej: 5"
+                                            />
+                                        </div>
+
+                                        {/* Responsable(s) */}
+                                        <div className="flex flex-col gap-2 md:col-span-2">
+                                            <label className="text-sm font-semibold text-zinc-700">
+                                                Responsable(s)
+                                            </label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={nuevoResponsable}
+                                                    onChange={(e) => setNuevoResponsable(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            if (nuevoResponsable.trim()) {
+                                                                setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
+                                                                setNuevoResponsable('');
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="flex-1 h-12 px-4 rounded-lg border border-zinc-200
+                                             focus:ring-primary focus:border-primary transition-all"
+                                                    placeholder="Escriba el nombre del responsable y presione Enter o Añadir"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (nuevoResponsable.trim()) {
+                                                            setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
+                                                            setNuevoResponsable('');
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">add</span>
+                                                    Añadir
+                                                </button>
+                                            </div>
+                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
+                                                {transporteResponsables.length === 0 ? (
+                                                    <p className="text-sm text-zinc-400 italic">
+                                                        No hay responsables añadidos
+                                                    </p>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {transporteResponsables.map((responsable, index) => (
+                                                            <span
+                                                                key={index}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
+                                                            >
+                                                                {responsable}
+                                                                <button
+                                                                    onClick={() => setTransporteResponsables(transporteResponsables.filter((_, i) => i !== index))}
+                                                                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                                                    type="button"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Lugar de Evento */}
+                                        <div className="flex flex-col gap-3 md:col-span-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-semibold text-zinc-700">
+                                                    Lugar del Evento (Municipio)
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveModal('lugarEvento')}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">place</span>
+                                                    Seleccionar Municipio
+                                                </button>
+                                            </div>
+                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
+                                                {selectedLugarEvento ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                                                        {selectedLugarEvento.name}
+                                                        <button
+                                                            onClick={() => setSelectedLugarEvento(null)}
+                                                            className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                                            type="button"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">close</span>
+                                                        </button>
+                                                    </span>
+                                                ) : (
+                                                    <p className="text-sm text-zinc-400 italic">
+                                                        No hay municipio seleccionado
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="flex justify-end gap-4 pt-8 mt-8 border-t border-zinc-100">
                                         <button
                                             type="button"
-                                            className="px-6 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 transition-colors"
+                                            className="px-6 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 transition-colors cursor-pointer"
                                         >
                                             Cancelar
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="px-8 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-8 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">send</span>
                                             {isLoading ? 'Enviando...' : 'Solicitar Salida'}
@@ -542,6 +711,19 @@ export default function SolicitarSalida() {
                 onSave={setSelectedSubtipos}
                 searchPlaceholder="Buscar subtipo..."
                 icon="fact_check"
+            />
+
+            {/* Modal para lugar de evento - single select usando array wrapper */}
+            <MultiSelectModal
+                isOpen={activeModal === 'lugarEvento'}
+                onClose={() => setActiveModal(null)}
+                title="Seleccionar Lugar del Evento"
+                items={municipiosData}
+                selectedItems={selectedLugarEvento ? [selectedLugarEvento] : []}
+                onSave={(selected) => setSelectedLugarEvento(selected.length > 0 ? selected[selected.length - 1] : null)}
+                searchPlaceholder="Buscar municipio..."
+                icon="place"
+                singleSelect={true}
             />
         </div>
     )

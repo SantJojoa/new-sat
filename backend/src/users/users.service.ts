@@ -61,7 +61,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
 
@@ -81,7 +89,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
     }
@@ -93,7 +109,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
     }

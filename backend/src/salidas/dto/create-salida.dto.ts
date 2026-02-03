@@ -58,4 +58,20 @@ export class CreateSalidaDto {
     @IsString({ each: true })
     @IsOptional()
     organizaciones_ids?: string[];
+
+    // Transport Fields
+    @IsString()
+    @IsOptional()
+    transporte_medio?: string;
+
+    @IsString()
+    @IsOptional()
+    transporte_responsables?: string;
+
+    @IsOptional()
+    instituciones_convocadas?: number;
+
+    @IsString()
+    @IsOptional()
+    lugar_evento_id?: string;
 }
