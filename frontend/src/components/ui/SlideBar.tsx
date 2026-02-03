@@ -1,13 +1,14 @@
-import { href } from "react-router-dom"
+import { useAuth } from "../../hooks/useAuth"
 
 export default function SlideBar({ activeItem = 'solicitar-salida' }) {
+    const { user, logout } = useAuth();
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
-        { id: 'solicitar-salida', label: 'Solicitar Salida', icon: 'outbox', href: '/solicitar-salida' },
-        { id: 'mis-salidas', label: 'Mis Salidas', icon: 'outbox', href: '/mis-salidas' },
-        { id: 'reportes', label: 'Reportes', icon: 'outbox', href: '/reportes' },
-        { id: 'configuracion', label: 'Configuración', icon: 'outbox', href: '/configuracion' },
+        { id: 'solicitar-salida', label: 'Solicitar Salida', icon: 'add_box', href: '/solicitar-salida' },
+        { id: 'mis-salidas', label: 'Mis Salidas', icon: 'history', href: '/mis-salidas' },
+        { id: 'reportes', label: 'Reportes', icon: 'analytics', href: '/reportes' },
+        { id: 'configuracion', label: 'Configuración', icon: 'settings', href: '/configuracion' },
     ]
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0">
@@ -39,14 +40,33 @@ export default function SlideBar({ activeItem = 'solicitar-salida' }) {
                         </a>
                     ))}
 
-                    <div className="mt-auto pt-4 border-t border-zinc-100">
-                        <a
-                            href="/configuracion"
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-zinc-600 hover:bg-zinc-100 transition-colors"
+                    <div className="mt-auto pt-4 border-t border-zinc-100 flex flex-col gap-4">
+                        <div className="flex flex-col gap-1 px-3">
+                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                    {user?.names?.[0]}{user?.last_name?.[0]}
+                                </div>
+                                <div className="flex flex-col overflow-hidden">
+                                    <span className="text-sm font-bold text-zinc-900 truncate">
+                                        {user?.names} {user?.last_name}
+                                    </span>
+                                    <span className="text-xs text-zinc-500 truncate">
+                                        {user?.user_type?.name.toUpperCase() || 'Rol desconocido'} • {user?.area?.name.toUpperCase() || 'Sin Área'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={logout}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left"
                         >
-                            <span className="material-symbols-outlined text-[22px]">settings</span>
-                            <span className="text-sm font-medium">Configuración</span>
-                        </a>
+                            <span className="material-symbols-outlined text-[22px]">logout</span>
+                            <span className="text-sm font-medium">Cerrar Sesión</span>
+                        </button>
                     </div>
 
                 </nav>

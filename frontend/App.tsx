@@ -2,9 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './src/hooks/useAuth'
 import Layout from './src/components/layout/Layout'
 import Login from './src/components/pages/Login'
-import Dashboard from './src/components/pages/Dashboard'
 import ProtectedRoute from './src/components/common/ProtectedRoute'
-import SlideBar from './src/components/ui/SlideBar'
+import SolicitarSalida from './src/components/pages/SolicitarSalida'
 function App() {
     return (
         <AuthProvider>
@@ -24,7 +23,7 @@ function App() {
                         {/* Dashboard - protegido */}
                         <Route path="dashboard" element={
                             <ProtectedRoute>
-                                <SlideBar />
+                                <SolicitarSalida />
                             </ProtectedRoute>
                         } />
 
