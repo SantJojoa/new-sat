@@ -5,6 +5,10 @@ import Login from './src/components/pages/Login'
 import ProtectedRoute from './src/components/common/ProtectedRoute'
 import SolicitarSalida from './src/components/pages/SolicitarSalida'
 import Dashboard from './src/components/pages/Dashboard'
+import Subdirecciones from './src/components/pages/admin/Subdirecciones'
+import Areas from './src/components/pages/admin/Areas'
+import Users from './src/components/pages/admin/Users'
+import ModificarSalida from './src/components/pages/ModificarSalida'
 function App() {
     return (
         <AuthProvider>
@@ -37,7 +41,25 @@ function App() {
                         {/* Rutas para nuevos módulos */}
                         <Route path="modificar-salida" element={
                             <ProtectedRoute>
-                                <SolicitarSalida />
+                                <ModificarSalida />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="subdirecciones" element={
+                            <ProtectedRoute>
+                                <Subdirecciones />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="areas" element={
+                            <ProtectedRoute>
+                                <Areas />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="users" element={
+                            <ProtectedRoute>
+                                <Users />
                             </ProtectedRoute>
                         } />
 

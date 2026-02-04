@@ -73,37 +73,71 @@ async function main() {
         }),
         prisma.modules.upsert({
             where: { name: 'usuarios' },
-            update: {},
+            update: {
+                icon: 'person_add',
+                order: 6,
+            },
             create: {
                 name: 'usuarios',
                 description: 'Gestión de Usuarios',
-                icon: 'Users',
+                icon: 'person_add',
                 path: '/users',
-                order: 2,
+                order: 6,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'subdirecciones' },
+            update: {
+                icon: 'domain',
+                order: 4,
+            },
+            create: {
+                name: 'subdirecciones',
+                description: 'Gestión de Subdirecciones',
+                icon: 'domain',
+                path: '/subdirecciones',
+                order: 4,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'areas' },
+            update: {
+                icon: 'layers',
+                order: 5,
+            },
+            create: {
+                name: 'areas',
+                description: 'Gestión de Áreas',
+                icon: 'layers',
+                path: '/areas',
+                order: 5,
             },
         }),
         prisma.modules.upsert({
             where: { name: 'solicitar_salida' },
             update: {
                 icon: 'add_box',
+                order: 2,
             },
             create: {
                 name: 'solicitar_salida',
                 description: 'Solicitar Salida',
                 icon: 'add_box',
                 path: '/solicitar-salida',
-                order: 3,
+                order: 2,
             },
         }),
         prisma.modules.upsert({
             where: { name: 'modificar_salida' },
-            update: {},
+            update: {
+                order: 3,
+            },
             create: {
                 name: 'modificar_salida',
                 description: 'Modificar Salida',
-                icon: 'Edit',
+                icon: 'edit',
                 path: '/modificar-salida',
-                order: 4,
+                order: 3,
             },
         }),
     ]);
@@ -151,7 +185,7 @@ async function main() {
     // Asumiremos que admin subdireccion no crea salidas solicitadas, solo aprueba (pero aprobación va en otra tabla probablemente, aquí es acceso al modulo)
     // Por ahora le damos vista a todo menos usuarios (solo vista) y sin crear en solicitar salida
     for (const module of modules) {
-        if (module.name === 'usuarios') {
+        if (module.name === 'usuarios' || module.name === 'subdirecciones' || module.name === 'areas') {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {
@@ -215,7 +249,7 @@ async function main() {
 
     // Permisos para LÍDER (usuarios vista, solicitar y modificar ACTIVOS)
     for (const module of modules) {
-        if (module.name === 'usuarios') {
+        if (module.name === 'usuarios' || module.name === 'subdirecciones' || module.name === 'areas') {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {

@@ -40,6 +40,10 @@ export class UsersService {
         return result;
     }
 
+    async findUserTypes() {
+        return await this.prisma.user_types.findMany();
+    }
+
     async findAll() {
         const users = await this.prisma.users.findMany({
             include: {

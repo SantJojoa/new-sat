@@ -1,7 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap');
 @import "tailwindcss";
 
 /* Material Symbols - ANTES del @theme */
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap');
 
 @theme {
     --color-primary: #00995e;

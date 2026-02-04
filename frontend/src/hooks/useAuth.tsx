@@ -41,6 +41,10 @@ interface User {
             id: string;
             module_id: string;
             can_view: boolean;
+            can_create: boolean;
+            can_edit: boolean;
+            can_delete: boolean;
+            can_approve: boolean;
             modules: {
                 id: string;
                 name: string;

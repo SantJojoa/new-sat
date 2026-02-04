@@ -42,5 +42,20 @@ export const salidasService = {
     createSalida: async (data: CreateSalidaPayload) => {
         const response = await api.post('/salidas', data);
         return response.data;
+    },
+
+    getSalidas: async () => {
+        const response = await api.get('/salidas');
+        return response.data;
+    },
+
+    approveSalida: async (id: string, observaciones: string) => {
+        const response = await api.post(`/salidas/${id}/approve`, { observaciones });
+        return response.data;
+    },
+
+    rejectSalida: async (id: string, motivo: string) => {
+        const response = await api.post(`/salidas/${id}/reject`, { motivo });
+        return response.data;
     }
 };
