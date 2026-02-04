@@ -128,27 +128,32 @@ async function main() {
             },
         }),
         prisma.modules.upsert({
-            where: { name: 'modificar_salida' },
+            where: { name: 'gestionar_salida' },
             update: {
                 order: 3,
+                icon: 'data_table',
+                description: 'Gestionar Salida',
             },
             create: {
-                name: 'modificar_salida',
-                description: 'Modificar Salida',
-                icon: 'edit',
-                path: '/modificar-salida',
+                name: 'gestionar_salida',
+                description: 'Gestionar Salida',
+                icon: 'data_table',
+                path: '/gestionar-salida',
                 order: 3,
             },
         }),
     ]);
 
-    // Eliminar el modulo 'salidas' antiguo si existe
+    // Eliminar el modulo 'salidas' antiguo si existe y 'modificar_salida'
     try {
-        const oldSalidas = await prisma.modules.findUnique({ where: { name: 'salidas' } });
-        if (oldSalidas) {
-            await prisma.permissions.deleteMany({ where: { module_id: oldSalidas.id } });
-            await prisma.modules.delete({ where: { id: oldSalidas.id } });
-            console.log('🗑️ Módulo antiguo "salidas" eliminado');
+        const modulesToDelete = ['salidas', 'modificar_salida'];
+        for (const modName of modulesToDelete) {
+            const mod = await prisma.modules.findUnique({ where: { name: modName } });
+            if (mod) {
+                await prisma.permissions.deleteMany({ where: { module_id: mod.id } });
+                await prisma.modules.delete({ where: { id: mod.id } });
+                console.log(`🗑️ Módulo antiguo "${modName}" eliminado`);
+            }
         }
     } catch (e) {
         console.log('Nom se pudo eliminar el módulo antiguo o no existía:', e);
@@ -204,7 +209,7 @@ async function main() {
                     can_approve: false,
                 },
             });
-        } else if (module.name === 'solicitar_salida' || module.name === 'modificar_salida') {
+        } else if (module.name === 'solicitar_salida' || module.name === 'gestionar_salida') {
             // Admin subdireccion no solicita ni modifica salidas de otros por esta vía estándar (quizas aprobar)
             await prisma.permissions.upsert({
                 where: {
@@ -270,7 +275,7 @@ async function main() {
                     can_approve: false,
                 },
             });
-        } else if (module.name === 'solicitar_salida' || module.name === 'modificar_salida') {
+        } else if (module.name === 'solicitar_salida' || module.name === 'gestionar_salida') {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {

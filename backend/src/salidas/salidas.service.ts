@@ -170,7 +170,8 @@ export class SalidasService {
             organizaciones: true,
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
-            areas: { select: { id: true, name: true, subdireccion_id: true } }
+            areas: { select: { id: true, name: true, subdireccion_id: true } },
+            lugar_evento: true
         };
 
         const userType = await this.prisma.user_types.findUnique({
@@ -308,7 +309,7 @@ export class SalidasService {
     async remove(id: string, user: users) {
         // Same permission logic...
         const salida = await this.findOne(id, user);
-        if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendientes se pueden eliminar');
+        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendientes se pueden eliminar');
         return this.prisma.salidas.delete({ where: { id } });
     }
 
@@ -316,7 +317,7 @@ export class SalidasService {
         // ... (Similar structure, fetch, validate permission, update state)
         // Re-using simplified content for brevity in tool call, but ensuring logic is present
         const salida = await this.findOne(id, user);
-        if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
+        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
 
         // Permission check (admin_sub or superadmin)
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -335,7 +336,7 @@ export class SalidasService {
 
     async reject(id: string, user: users, rejectDto: RejectSalidaDto) {
         const salida = await this.findOne(id, user);
-        if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
+        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');

@@ -8,7 +8,7 @@ import Dashboard from './src/components/pages/Dashboard'
 import Subdirecciones from './src/components/pages/admin/Subdirecciones'
 import Areas from './src/components/pages/admin/Areas'
 import Users from './src/components/pages/admin/Users'
-import ModificarSalida from './src/components/pages/ModificarSalida'
+import GestionarSalida from './src/components/pages/GestionarSalida'
 function App() {
     return (
         <AuthProvider>
@@ -39,9 +39,14 @@ function App() {
                         } />
 
                         {/* Rutas para nuevos módulos */}
-                        <Route path="modificar-salida" element={
+                        <Route path="gestionar-salida" element={
                             <ProtectedRoute>
-                                <ModificarSalida />
+                                <GestionarSalida />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="gestionar-salida/editar/:id" element={
+                            <ProtectedRoute>
+                                <SolicitarSalida />
                             </ProtectedRoute>
                         } />
 
