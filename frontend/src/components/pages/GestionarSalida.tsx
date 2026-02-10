@@ -91,9 +91,23 @@ export default function GestionarSalida() {
     const [bulkComment, setBulkComment] = useState('');
     const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
 
+    // Feedback modal state (replaces alerts)
+    const [feedbackModal, setFeedbackModal] = useState<{
+        type: 'success' | 'error' | null;
+        title: string;
+        message: string;
+    }>({ type: null, title: '', message: '' });
+
     const hasApprovePermission = user?.user_type?.permissions?.some(
         p => p.modules.name === 'gestionar_salida' && p.can_approve
     ) || ['superadmin', 'admin_subdireccion'].includes(user?.user_type?.name || '');
+
+    const canBulkSelect = (salida: Salida) => {
+        // Cannot select already approved or rejected salidas
+        if (salida.estado === 'aprobada' || salida.estado === 'rechazada') return false;
+        // Must belong to user's area/subdirección (reuse checkOwnership)
+        return checkOwnership(salida);
+    };
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => {
@@ -105,10 +119,12 @@ export default function GestionarSalida() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.size === filteredSalidas.length) {
+        const selectableIds = filteredSalidas.filter(canBulkSelect).map(s => s.id);
+        const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
+        if (allSelected) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredSalidas.map(s => s.id)));
+            setSelectedIds(new Set(selectableIds));
         }
     };
 
@@ -133,7 +149,7 @@ export default function GestionarSalida() {
             if (errorCount > 0) {
                 msg += `\n${errorCount} no se pudieron procesar.`;
             }
-            alert(msg);
+            setFeedbackModal({ type: 'success', title: 'Acción Masiva Completada', message: msg });
 
             setBulkModal({ type: null });
             setBulkComment('');
@@ -141,7 +157,7 @@ export default function GestionarSalida() {
             fetchSalidas();
         } catch (error: any) {
             console.error('Error bulk action:', error);
-            alert(`Error: ${error.response?.data?.message || 'Error al procesar'}`);
+            setFeedbackModal({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Error al procesar' });
         } finally {
             setIsBulkSubmitting(false);
         }
@@ -176,6 +192,20 @@ export default function GestionarSalida() {
         fetchSalidas();
     }, [viewAll]);
 
+    // Close modals on Escape key
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (feedbackModal.type) setFeedbackModal({ type: null, title: '', message: '' });
+                else if (bulkModal.type) setBulkModal({ type: null });
+                else if (actionModal.type) { setActionModal({ type: null, salidaId: null }); setComment(''); }
+                else if (detailsModal.isOpen) setDetailsModal({ isOpen: false, salida: null });
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [feedbackModal.type, bulkModal.type, actionModal.type, detailsModal.isOpen]);
+
     const handleResetFilters = () => {
         setSearchTerm('');
         setFilterArea('');
@@ -206,13 +236,13 @@ export default function GestionarSalida() {
                 delete: 'eliminada'
             }[actionModal.type];
 
-            alert(`Salida ${actionText} exitosamente.`);
+            setFeedbackModal({ type: 'success', title: '¡Éxito!', message: `Salida ${actionText} exitosamente.` });
             setActionModal({ type: null, salidaId: null });
             setComment('');
             fetchSalidas();
         } catch (error: any) {
             console.error('Error processing action:', error);
-            alert(`Error: ${error.response?.data?.message || 'Error al procesar la solicitud'}`);
+            setFeedbackModal({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Error al procesar la solicitud' });
         } finally {
             setIsSubmitting(false);
         }
@@ -449,10 +479,14 @@ export default function GestionarSalida() {
                                             <th className="px-4 py-4 w-10">
                                                 <input
                                                     type="checkbox"
-                                                    checked={filteredSalidas.length > 0 && selectedIds.size === filteredSalidas.length}
+                                                    checked={(() => {
+                                                        const selectableIds = filteredSalidas.filter(canBulkSelect).map(s => s.id);
+                                                        return selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
+                                                    })()}
                                                     onChange={toggleSelectAll}
-                                                    className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer"
-                                                    title="Seleccionar todas"
+                                                    disabled={filteredSalidas.filter(canBulkSelect).length === 0}
+                                                    className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    title="Seleccionar todas las pendientes de mi área"
                                                 />
                                             </th>
                                         )}
@@ -478,7 +512,9 @@ export default function GestionarSalida() {
                                                             type="checkbox"
                                                             checked={selectedIds.has(salida.id)}
                                                             onChange={() => toggleSelect(salida.id)}
-                                                            className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer"
+                                                            disabled={!canBulkSelect(salida)}
+                                                            className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                                            title={!canBulkSelect(salida) ? (salida.estado !== 'pendiente' ? 'No se puede seleccionar (ya procesada)' : 'No pertenece a su área') : ''}
                                                         />
                                                     </td>
                                                 )}
@@ -598,7 +634,7 @@ export default function GestionarSalida() {
 
                 {/* Confirm Action Modal */}
                 {actionModal.type && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) { setActionModal({ type: null, salidaId: null }); setComment(''); } }}>
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
                             <div className="p-6 border-b border-zinc-200">
                                 <h3 className="text-lg font-bold text-zinc-900">
@@ -651,7 +687,7 @@ export default function GestionarSalida() {
 
                 {/* Bulk Action Modal */}
                 {bulkModal.type && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setBulkModal({ type: null }); }}>
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
                             <div className={`p-6 border-b ${bulkModal.type === 'approve' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                                 <h3 className={`text-lg font-bold ${bulkModal.type === 'approve' ? 'text-green-900' : 'text-red-900'}`}>
@@ -703,7 +739,7 @@ export default function GestionarSalida() {
 
                 {/* Details Modal */}
                 {detailsModal.isOpen && detailsModal.salida && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setDetailsModal({ isOpen: false, salida: null }); }}>
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp">
                             <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
                                 <div>
@@ -910,6 +946,36 @@ export default function GestionarSalida() {
                                     className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors shadow-lg shadow-zinc-200"
                                 >
                                     Cerrar Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Feedback Modal (Success / Error) */}
+                {feedbackModal.type && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModal({ type: null, title: '', message: '' }); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
+                            <div className={`p-6 flex flex-col items-center text-center ${feedbackModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'
+                                }`}>
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                    }`}>
+                                    {feedbackModal.type === 'success'
+                                        ? <CheckCircle size={28} />
+                                        : <AlertCircle size={28} />}
+                                </div>
+                                <h3 className={`text-lg font-bold mb-2 ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'
+                                    }`}>{feedbackModal.title}</h3>
+                                <p className={`text-sm whitespace-pre-line ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
+                                    }`}>{feedbackModal.message}</p>
+                            </div>
+                            <div className="p-4 flex justify-center bg-white border-t border-zinc-100">
+                                <button
+                                    onClick={() => setFeedbackModal({ type: null, title: '', message: '' })}
+                                    className={`px-6 py-2 text-white font-medium rounded-lg transition-colors text-sm shadow-sm ${feedbackModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                                        }`}
+                                >
+                                    Aceptar
                                 </button>
                             </div>
                         </div>
