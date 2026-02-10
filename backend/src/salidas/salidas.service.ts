@@ -89,13 +89,50 @@ export class SalidasService {
             throw new BadRequestException('El usuario no tiene un área asignada');
         }
 
-        // Check Unique Code
-        const existingCodigo = await this.prisma.salidas.findUnique({
-            where: { codigo: createSalidaDto.codigo },
+        // Auto-generate code if not provided (though it should always be auto-generated now)
+        // Format: YYYYMMDD-AAA##
+
+        // 1. Get User's Area Name
+        const userArea = await this.prisma.areas.findUnique({
+            where: { id: user.area_id },
+            select: { name: true }
         });
 
-        if (existingCodigo) {
-            throw new BadRequestException('El código de salida ya existe');
+        if (!userArea) throw new BadRequestException('El usuario no tiene un área válida asignada');
+
+        // 2. Generate Parts
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const dateStr = `${year}${month}${day}`;
+
+        const areaCode = userArea.name.substring(0, 3).toUpperCase();
+
+        // 3. Count existing for this Area + Day to get consecutive
+        // We need to count how many salidas have a code starting with YYYYMMDD-AAA
+        // simpler: findMany with startsWith and count? Or count directly.
+        // We need to match the pattern.
+
+        const pattern = `${dateStr}-${areaCode}`;
+
+        const count = await this.prisma.salidas.count({
+            where: {
+                codigo: {
+                    startsWith: pattern
+                }
+            }
+        });
+
+        const consecutive = String(count + 1).padStart(2, '0');
+        const newCodigo = `${pattern}${consecutive}`;
+
+        // Verify uniqueness just in case (race condition unlikely but possible)
+        const checkUnique = await this.prisma.salidas.findUnique({ where: { codigo: newCodigo } });
+        if (checkUnique) {
+            // fallback or retry? For now let's just error or add seconds? 
+            // With low volume it is fine.
+            throw new ConflictException('Error generando código único, intente nuevamente');
         }
 
         // Check Conflicts
@@ -113,7 +150,7 @@ export class SalidasService {
         // Create
         return this.prisma.salidas.create({
             data: {
-                codigo: createSalidaDto.codigo,
+                codigo: newCodigo,
                 tipo_salida: createSalidaDto.tipo_salida,
                 subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema,

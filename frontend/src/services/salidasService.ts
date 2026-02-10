@@ -14,7 +14,7 @@ export interface CatalogosResponse {
 }
 
 export interface CreateSalidaPayload {
-    codigo: string;
+    codigo?: string;
     tipo_salida: string;
     subtipo_salida?: string;
     tema: string;

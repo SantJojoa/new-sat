@@ -177,7 +177,7 @@ export default function SolicitarSalida() {
 
         try {
             const payload = {
-                codigo: formData.codigo,
+
                 tipo_salida: formData.tipoSalida,
                 subtipo_salida: selectedSubtipos.map(s => s.name).join(', '),
                 tema: formData.tema,
@@ -321,18 +321,19 @@ export default function SolicitarSalida() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Código
+                                                Código {isEditing ? '(Autogenerado)' : '(Se generará al guardar)'}
                                             </label>
                                             <input
                                                 type="text"
                                                 name="codigo"
                                                 value={formData.codigo}
-                                                onChange={handleInputChange}
-                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
-                                                placeholder="Ej: VIS-2026-0001"
+                                                readOnly
+                                                disabled
+                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-500 cursor-not-allowed"
+                                                placeholder="Generado automáticamente"
                                             />
                                         </div>
+                                        {/* Code field removed - Auto-generated */}
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Tipo de Salida

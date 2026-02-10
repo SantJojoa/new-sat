@@ -2,8 +2,8 @@ import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString } from 
 
 export class CreateSalidaDto {
     @IsString()
-    @IsNotEmpty()
-    codigo: string;
+    @IsOptional()
+    codigo?: string;
 
     @IsString()
     @IsNotEmpty()
