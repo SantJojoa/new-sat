@@ -3,7 +3,7 @@ import MultiSelectModal from "../ui/MultiSelectModal"
 import { useEffect, useState } from "react"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
-import { CheckCircle, AlertCircle, ClipboardList } from "lucide-react"
+import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, MapPin } from "lucide-react"
 // import { useAuth } from "../../hooks/useAuth"
 
 export default function SolicitarSalida() {
@@ -50,6 +50,20 @@ export default function SolicitarSalida() {
         message: string;
         codigo?: string;
     }>({ type: null, title: '', message: '' });
+
+    // Conflict modal state
+    interface ConflictItem {
+        codigo: string;
+        tipo_salida: string;
+        tema: string;
+        fecha_inicio: string;
+        fecha_final: string;
+        jornada: string;
+        area: string;
+        solicitante: string;
+        municipios: string[];
+    }
+    const [conflictModal, setConflictModal] = useState<ConflictItem[]>([]);
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
@@ -250,8 +264,13 @@ export default function SolicitarSalida() {
             }
         } catch (error: any) {
             console.error("Error saving salida:", error);
-            const msg = error.response?.data?.message || "Error al guardar la solicitud";
-            setFeedbackModal({ type: 'error', title: 'Error', message: msg });
+            // Check if it's a conflict with structured data
+            if (error.response?.status === 409 && error.response?.data?.conflicts) {
+                setConflictModal(error.response.data.conflicts);
+            } else {
+                const msg = error.response?.data?.message || "Error al guardar la solicitud";
+                setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
+            }
         } finally {
             setIsLoading(false);
             setPendingPayload(null);
@@ -262,10 +281,8 @@ export default function SolicitarSalida() {
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (feedbackModal.type) {
-                    if (feedbackModal.type === 'success' && feedbackModal.codigo) {
-                        // If created successfully, don't just dismiss — user should see the code
-                    }
+                if (conflictModal.length > 0) setConflictModal([]);
+                else if (feedbackModal.type) {
                     setFeedbackModal({ type: null, title: '', message: '' });
                 } else if (confirmModal) {
                     setConfirmModal(false);
@@ -274,7 +291,7 @@ export default function SolicitarSalida() {
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [feedbackModal.type, confirmModal]);
+    }, [conflictModal.length, feedbackModal.type, confirmModal]);
 
     const removeChip = (item: CatalogoItem, setterFunction: React.Dispatch<React.SetStateAction<CatalogoItem[]>>, currentArray: CatalogoItem[]) => {
         setterFunction(currentArray.filter(i => i.id !== item.id));
@@ -949,6 +966,75 @@ export default function SolicitarSalida() {
                 </div>
             )}
 
+            {/* Conflict Modal */}
+            {conflictModal.length > 0 && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConflictModal([]); }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
+                        <div className="p-6 border-b border-amber-200 bg-amber-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-amber-900">Conflictos Detectados</h3>
+                                    <p className="text-amber-700 text-sm">Se encontraron {conflictModal.length} actividad(es) que se cruzan con la solicitud</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                            <table className="w-full text-left">
+                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider sticky top-0">
+                                    <tr>
+                                        <th className="px-6 py-3">Código</th>
+                                        <th className="px-6 py-3">Solicitante / Área</th>
+                                        <th className="px-6 py-3">Detalles</th>
+                                        <th className="px-6 py-3">Fecha / Jornada</th>
+                                        <th className="px-6 py-3">Municipios</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-200">
+                                    {conflictModal.map((c, idx) => (
+                                        <tr key={idx} className="hover:bg-amber-50/50 transition-colors text-sm">
+                                            <td className="px-6 py-4 font-mono font-bold text-zinc-900">{c.codigo}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-zinc-900">{c.solicitante}</div>
+                                                <div className="text-zinc-500 text-xs">{c.area}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-600">
+                                                <div className="font-medium">{c.tipo_salida}</div>
+                                                <div className="text-xs text-zinc-500 truncate max-w-[200px]">{c.tema}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-600">
+                                                <div>{new Date(c.fecha_inicio).toLocaleDateString('es-CO')}</div>
+                                                <div className="text-xs text-zinc-500">{new Date(c.fecha_final).toLocaleDateString('es-CO')} • {c.jornada}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {c.municipios.length > 0 ? c.municipios.map((m, i) => (
+                                                        <span key={i} className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-xs border border-zinc-200 flex items-center gap-0.5">
+                                                            <MapPin size={10} />{m}
+                                                        </span>
+                                                    )) : <span className="text-zinc-400 italic text-xs">Ninguno</span>}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="p-4 border-t border-zinc-200 flex justify-between items-center bg-zinc-50">
+                            <p className="text-zinc-500 text-xs">Modifique las fechas, jornada o entidades para evitar conflictos.</p>
+                            <button
+                                onClick={() => setConflictModal([])}
+                                className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors text-sm shadow-sm"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Feedback Modal (Success / Error) */}
             {feedbackModal.type && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModal({ type: null, title: '', message: '' }); }}>
@@ -963,7 +1049,7 @@ export default function SolicitarSalida() {
                             </div>
                             <h3 className={`text-lg font-bold mb-2 ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'
                                 }`}>{feedbackModal.title}</h3>
-                            <p className={`text-sm ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
+                            <p className={`text-sm whitespace-pre-line ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
                                 }`}>{feedbackModal.message}</p>
                             {feedbackModal.codigo && (
                                 <div className="mt-4 bg-white border-2 border-green-300 rounded-lg px-5 py-3">

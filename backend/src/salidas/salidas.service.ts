@@ -68,7 +68,7 @@ export class SalidasService {
             whereClause.AND.push({ id: { not: excludeId } });
         }
 
-        const conflict = await this.prisma.salidas.findFirst({
+        const conflicts = await this.prisma.salidas.findMany({
             where: whereClause,
             include: {
                 solicitante: true,
@@ -77,10 +77,21 @@ export class SalidasService {
             }
         });
 
-        if (conflict) {
-            throw new ConflictException(
-                `Conflicto detectado: La salida ${conflict.codigo} del área ${conflict.areas.name} ya tiene programada una actividad en esa fecha/jornada con las entidades seleccionadas.`
-            );
+        if (conflicts.length > 0) {
+            throw new ConflictException({
+                message: `Se encontraron ${conflicts.length} actividad(es) en conflicto`,
+                conflicts: conflicts.map(c => ({
+                    codigo: c.codigo,
+                    tipo_salida: c.tipo_salida,
+                    tema: c.tema,
+                    fecha_inicio: c.fecha_inicio,
+                    fecha_final: c.fecha_final,
+                    jornada: c.jornada,
+                    area: c.areas.name,
+                    solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,
+                    municipios: c.municipios.map(m => m.name),
+                }))
+            });
         }
     }
 
