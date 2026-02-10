@@ -3,6 +3,7 @@ import MultiSelectModal from "../ui/MultiSelectModal"
 import { useEffect, useState } from "react"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
+import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, MapPin } from "lucide-react"
 // import { useAuth } from "../../hooks/useAuth"
 
 export default function SolicitarSalida() {
@@ -39,6 +40,30 @@ export default function SolicitarSalida() {
     const [transporteResponsables, setTransporteResponsables] = useState<string[]>([]);
     const [nuevoResponsable, setNuevoResponsable] = useState('');
     const [selectedLugarEvento, setSelectedLugarEvento] = useState<CatalogoItem | null>(null);
+
+    // Modal states (replaces alerts)
+    const [confirmModal, setConfirmModal] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState<any>(null);
+    const [feedbackModal, setFeedbackModal] = useState<{
+        type: 'success' | 'error' | null;
+        title: string;
+        message: string;
+        codigo?: string;
+    }>({ type: null, title: '', message: '' });
+
+    // Conflict modal state
+    interface ConflictItem {
+        codigo: string;
+        tipo_salida: string;
+        tema: string;
+        fecha_inicio: string;
+        fecha_final: string;
+        jornada: string;
+        area: string;
+        solicitante: string;
+        municipios: string[];
+    }
+    const [conflictModal, setConflictModal] = useState<ConflictItem[]>([]);
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
@@ -84,7 +109,7 @@ export default function SolicitarSalida() {
                 setOrganizacionesData(data.organizaciones);
             } catch (error) {
                 console.error("Error fetching catalogos:", error);
-                alert("Error al cargar listados. Por favor recargue la página.");
+                setFeedbackModal({ type: 'error', title: 'Error de Carga', message: 'Error al cargar listados. Por favor recargue la página.' });
             }
         };
 
@@ -149,8 +174,7 @@ export default function SolicitarSalida() {
 
             } catch (error) {
                 console.error("Error loading salida:", error);
-                alert("Error al cargar la salida.");
-                navigate('/gestionar-salida');
+                setFeedbackModal({ type: 'error', title: 'Error', message: 'Error al cargar la salida.' });
             } finally {
                 setIsLoading(false);
             }
@@ -167,7 +191,6 @@ export default function SolicitarSalida() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setIsLoading(true);
 
         const mapJornada = (j: string) => {
             if (j === 'Mañana') return 'Manana';
@@ -175,35 +198,47 @@ export default function SolicitarSalida() {
             return 'Completa';
         };
 
+        const payload = {
+            tipo_salida: formData.tipoSalida,
+            subtipo_salida: selectedSubtipos.map(s => s.name).join(', '),
+            tema: formData.tema,
+            fecha_inicio: formData.fechaInicio,
+            fecha_final: formData.fechaFinal,
+            jornada: mapJornada(formData.jornada),
+            descripcion: formData.descripcion,
+            municipios_ids: selectedMunicipios.map(i => i.id),
+            ips_ids: selectedIPS.map(i => i.id),
+            entidades_ids: selectedEntidades.map(i => i.id),
+            eapb_ids: selectedEAPB.map(i => i.id),
+            organizaciones_ids: selectedOrganizaciones.map(i => i.id),
+            // Transport fields
+            transporte_medio: formData.transporteMedio || undefined,
+            transporte_responsables: transporteResponsables.length > 0 ? transporteResponsables.join(', ') : undefined,
+            instituciones_convocadas: formData.institucionesConvocadas ? parseInt(formData.institucionesConvocadas) : undefined,
+            lugar_evento_id: selectedLugarEvento?.id || undefined,
+        };
+
+        setPendingPayload(payload);
+        setConfirmModal(true);
+    };
+
+    const handleConfirmSubmit = async () => {
+        if (!pendingPayload) return;
+        setConfirmModal(false);
+        setIsLoading(true);
+
         try {
-            const payload = {
-
-                tipo_salida: formData.tipoSalida,
-                subtipo_salida: selectedSubtipos.map(s => s.name).join(', '),
-                tema: formData.tema,
-                fecha_inicio: formData.fechaInicio,
-                fecha_final: formData.fechaFinal,
-                jornada: mapJornada(formData.jornada),
-                descripcion: formData.descripcion,
-                municipios_ids: selectedMunicipios.map(i => i.id),
-                ips_ids: selectedIPS.map(i => i.id),
-                entidades_ids: selectedEntidades.map(i => i.id),
-                eapb_ids: selectedEAPB.map(i => i.id),
-                organizaciones_ids: selectedOrganizaciones.map(i => i.id),
-                // Transport fields
-                transporte_medio: formData.transporteMedio || undefined,
-                transporte_responsables: transporteResponsables.length > 0 ? transporteResponsables.join(', ') : undefined,
-                instituciones_convocadas: formData.institucionesConvocadas ? parseInt(formData.institucionesConvocadas) : undefined,
-                lugar_evento_id: selectedLugarEvento?.id || undefined,
-            };
-
             if (isEditing && id) {
-                await salidasService.updateSalida(id, payload);
-                alert("Salida actualizada exitosamente!");
-                navigate('/gestionar-salida');
+                await salidasService.updateSalida(id, pendingPayload);
+                setFeedbackModal({ type: 'success', title: '¡Salida Actualizada!', message: 'La salida fue actualizada exitosamente.' });
             } else {
-                await salidasService.createSalida(payload);
-                alert("Salida solicitada exitosamente!");
+                const result = await salidasService.createSalida(pendingPayload);
+                setFeedbackModal({
+                    type: 'success',
+                    title: '¡Salida Creada!',
+                    message: 'La solicitud de salida fue registrada exitosamente.',
+                    codigo: result.codigo
+                });
                 // Reset form
                 setFormData({
                     codigo: '',
@@ -229,12 +264,34 @@ export default function SolicitarSalida() {
             }
         } catch (error: any) {
             console.error("Error saving salida:", error);
-            const msg = error.response?.data?.message || "Error al guardar la solicitud";
-            alert(`Error: ${msg}`);
+            // Check if it's a conflict with structured data
+            if (error.response?.status === 409 && error.response?.data?.conflicts) {
+                setConflictModal(error.response.data.conflicts);
+            } else {
+                const msg = error.response?.data?.message || "Error al guardar la solicitud";
+                setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
+            }
         } finally {
             setIsLoading(false);
+            setPendingPayload(null);
         }
     };
+
+    // Close modals on Escape key
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (conflictModal.length > 0) setConflictModal([]);
+                else if (feedbackModal.type) {
+                    setFeedbackModal({ type: null, title: '', message: '' });
+                } else if (confirmModal) {
+                    setConfirmModal(false);
+                }
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [conflictModal.length, feedbackModal.type, confirmModal]);
 
     const removeChip = (item: CatalogoItem, setterFunction: React.Dispatch<React.SetStateAction<CatalogoItem[]>>, currentArray: CatalogoItem[]) => {
         setterFunction(currentArray.filter(i => i.id !== item.id));
@@ -824,6 +881,200 @@ export default function SolicitarSalida() {
                 icon="place"
                 singleSelect={true}
             />
+
+            {/* Confirmation Modal */}
+            {confirmModal && pendingPayload && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConfirmModal(false); }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-slideUp overflow-hidden max-h-[85vh] flex flex-col">
+                        <div className="p-6 border-b border-zinc-200 bg-blue-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <ClipboardList size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-blue-900">{isEditing ? 'Confirmar Actualización' : 'Confirmar Solicitud'}</h3>
+                                    <p className="text-blue-700 text-sm">Revise la información antes de continuar</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 overflow-y-auto space-y-4 text-sm">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo</span>
+                                    <p className="text-zinc-900 font-medium">{formData.tipoSalida}</p>
+                                </div>
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Jornada</span>
+                                    <p className="text-zinc-900 font-medium">{formData.jornada}</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tema</span>
+                                    <p className="text-zinc-900 font-medium">{formData.tema}</p>
+                                </div>
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Inicio</span>
+                                    <p className="text-zinc-900">{formData.fechaInicio}</p>
+                                </div>
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Final</span>
+                                    <p className="text-zinc-900">{formData.fechaFinal}</p>
+                                </div>
+                            </div>
+                            {selectedSubtipos.length > 0 && (
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtipos</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {selectedSubtipos.map(s => (
+                                            <span key={s.id} className="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded text-xs">{s.name}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {selectedMunicipios.length > 0 && (
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Municipios ({selectedMunicipios.length})</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {selectedMunicipios.map(m => (
+                                            <span key={m.id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">{m.name}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {selectedLugarEvento && (
+                                <div>
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Lugar del Evento</span>
+                                    <p className="text-zinc-900">{selectedLugarEvento.name}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
+                            <button
+                                onClick={() => setConfirmModal(false)}
+                                className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
+                            >
+                                Volver a Editar
+                            </button>
+                            <button
+                                onClick={handleConfirmSubmit}
+                                disabled={isLoading}
+                                className="px-5 py-2 bg-primary text-white font-medium rounded-lg hover:opacity-90 transition-colors text-sm shadow-sm disabled:opacity-50"
+                            >
+                                {isLoading ? 'Enviando...' : (isEditing ? 'Confirmar Actualización' : 'Confirmar y Enviar')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Conflict Modal */}
+            {conflictModal.length > 0 && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConflictModal([]); }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
+                        <div className="p-6 border-b border-amber-200 bg-amber-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-amber-900">Conflictos Detectados</h3>
+                                    <p className="text-amber-700 text-sm">Se encontraron {conflictModal.length} actividad(es) que se cruzan con la solicitud</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                            <table className="w-full text-left">
+                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider sticky top-0">
+                                    <tr>
+                                        <th className="px-6 py-3">Código</th>
+                                        <th className="px-6 py-3">Solicitante / Área</th>
+                                        <th className="px-6 py-3">Detalles</th>
+                                        <th className="px-6 py-3">Fecha / Jornada</th>
+                                        <th className="px-6 py-3">Municipios</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-200">
+                                    {conflictModal.map((c, idx) => (
+                                        <tr key={idx} className="hover:bg-amber-50/50 transition-colors text-sm">
+                                            <td className="px-6 py-4 font-mono font-bold text-zinc-900">{c.codigo}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-zinc-900">{c.solicitante}</div>
+                                                <div className="text-zinc-500 text-xs">{c.area}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-600">
+                                                <div className="font-medium">{c.tipo_salida}</div>
+                                                <div className="text-xs text-zinc-500 truncate max-w-[200px]">{c.tema}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-600">
+                                                <div>{new Date(c.fecha_inicio).toLocaleDateString('es-CO')}</div>
+                                                <div className="text-xs text-zinc-500">{new Date(c.fecha_final).toLocaleDateString('es-CO')} • {c.jornada}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {c.municipios.length > 0 ? c.municipios.map((m, i) => (
+                                                        <span key={i} className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-xs border border-zinc-200 flex items-center gap-0.5">
+                                                            <MapPin size={10} />{m}
+                                                        </span>
+                                                    )) : <span className="text-zinc-400 italic text-xs">Ninguno</span>}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="p-4 border-t border-zinc-200 flex justify-between items-center bg-zinc-50">
+                            <p className="text-zinc-500 text-xs">Modifique las fechas, jornada o entidades para evitar conflictos.</p>
+                            <button
+                                onClick={() => setConflictModal([])}
+                                className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors text-sm shadow-sm"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Feedback Modal (Success / Error) */}
+            {feedbackModal.type && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModal({ type: null, title: '', message: '' }); }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
+                        <div className={`p-6 flex flex-col items-center text-center ${feedbackModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'
+                            }`}>
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                }`}>
+                                {feedbackModal.type === 'success'
+                                    ? <CheckCircle size={28} />
+                                    : <AlertCircle size={28} />}
+                            </div>
+                            <h3 className={`text-lg font-bold mb-2 ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'
+                                }`}>{feedbackModal.title}</h3>
+                            <p className={`text-sm whitespace-pre-line ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
+                                }`}>{feedbackModal.message}</p>
+                            {feedbackModal.codigo && (
+                                <div className="mt-4 bg-white border-2 border-green-300 rounded-lg px-5 py-3">
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold block mb-1">Código Asignado</span>
+                                    <span className="text-2xl font-black text-green-700 font-mono">{feedbackModal.codigo}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 flex justify-center bg-white border-t border-zinc-100">
+                            <button
+                                onClick={() => {
+                                    setFeedbackModal({ type: null, title: '', message: '' });
+                                    if (feedbackModal.type === 'success' && isEditing) {
+                                        navigate('/gestionar-salida');
+                                    }
+                                }}
+                                className={`px-6 py-2 text-white font-medium rounded-lg transition-colors text-sm shadow-sm ${feedbackModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                                    }`}
+                            >
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

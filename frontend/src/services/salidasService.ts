@@ -72,5 +72,15 @@ export const salidasService = {
     deleteSalida: async (id: string) => {
         const response = await api.delete(`/salidas/${id}`);
         return response.data;
+    },
+
+    bulkApproveSalidas: async (ids: string[], observaciones: string) => {
+        const response = await api.post('/salidas/bulk-approve', { ids, observaciones });
+        return response.data;
+    },
+
+    bulkRejectSalidas: async (ids: string[], motivo: string) => {
+        const response = await api.post('/salidas/bulk-reject', { ids, motivo });
+        return response.data;
     }
 };
