@@ -2,8 +2,8 @@ import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString } from 
 
 export class CreateSalidaDto {
     @IsString()
-    @IsNotEmpty()
-    codigo: string;
+    @IsOptional()
+    codigo?: string;
 
     @IsString()
     @IsNotEmpty()
@@ -58,4 +58,20 @@ export class CreateSalidaDto {
     @IsString({ each: true })
     @IsOptional()
     organizaciones_ids?: string[];
+
+    // Transport Fields
+    @IsString()
+    @IsOptional()
+    transporte_medio?: string;
+
+    @IsString()
+    @IsOptional()
+    transporte_responsables?: string;
+
+    @IsOptional()
+    instituciones_convocadas?: number;
+
+    @IsString()
+    @IsOptional()
+    lugar_evento_id?: string;
 }

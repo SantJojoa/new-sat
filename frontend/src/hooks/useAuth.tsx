@@ -37,6 +37,28 @@ interface User {
         id: string;
         name: string;
         description: string;
+        permissions?: {
+            id: string;
+            module_id: string;
+            can_view: boolean;
+            can_create: boolean;
+            can_edit: boolean;
+            can_delete: boolean;
+            can_approve: boolean;
+            modules: {
+                id: string;
+                name: string;
+                path: string;
+                icon: string;
+                description: string;
+                order?: number;
+                is_active?: boolean;
+            }
+        }[];
+    };
+    area?: {
+        id: string;
+        name: string;
     };
 }
 
@@ -65,12 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (storedToken && storedUser) {
                 try {
-                    // Verificar si el token es válido
-                    await api.get('/auth/validate');
+                    // Restaurar sesión desde localStorage
+                    // Nota: Podríamos validar el token aquí si tuvieramos un endpoint ligero,
+                    // por ahora confiamos en el localStorage hasta que una petición falle con 401.
                     setToken(storedToken);
                     setUser(JSON.parse(storedUser));
                 } catch (error) {
-                    // Token inválido o expirado
+                    // Error al parsear o validar
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                 }

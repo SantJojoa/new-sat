@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { AreasService } from './areas.service';
+import { AreasController } from './areas.controller';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Module({
+    imports: [],
+    controllers: [AreasController],
+    providers: [AreasService, PrismaService],
+    exports: [AreasService],
+})
+export class AreasModule { }

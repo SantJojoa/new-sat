@@ -20,6 +20,12 @@ export class UsersController {
         return this.usersService.findAll();
     }
 
+    @Get('types')
+    @UseGuards(JwtAuthGuard)
+    getUserTypes() {
+        return this.usersService.findUserTypes();
+    }
+
     @Get(':id')
     @UseGuards(JwtAuthGuard)
     findOne(@Param('id') id: string) {

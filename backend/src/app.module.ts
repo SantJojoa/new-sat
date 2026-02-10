@@ -4,6 +4,8 @@ import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaService } from './prisma/prisma.service';
 import { SalidasModule } from './salidas/salidas.module';
+import { SubdireccionesModule } from './subdirecciones/subdirecciones.module';
+import { AreasModule } from './areas/areas.module';
 
 
 
@@ -15,6 +17,8 @@ import { SalidasModule } from './salidas/salidas.module';
     UsersModule,
     AuthModule,
     SalidasModule,
+    SubdireccionesModule,
+    AreasModule,
   ],
   controllers: [],
   providers: [PrismaService],

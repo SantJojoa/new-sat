@@ -25,42 +25,42 @@ export class SalidasController {
 
     @Post()
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'create')
+    @RequirePermissions('solicitar_salida', 'create')
     create(@Body() createSalidaDto: CreateSalidaDto, @Request() req) {
         return this.salidasService.create(createSalidaDto, req.user);
     }
 
     @Get()
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'view')
-    findAll(@Request() req) {
-        return this.salidasService.findAll(req.user);
+    @RequirePermissions('solicitar_salida', 'view')
+    findAll(@Request() req, @Query('viewAll') viewAll?: string) {
+        return this.salidasService.findAll(req.user, viewAll === 'true');
     }
 
     @Get('estadisticas')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'view')
+    @RequirePermissions('solicitar_salida', 'view')
     getEstadisticas(@Request() req) {
         return this.salidasService.getEstadisticas(req.user);
     }
 
     @Get('catalogos')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'view')
+    @RequirePermissions('solicitar_salida', 'view')
     getCatalogos() {
         return this.salidasService.getCatalogos();
     }
 
     @Get(':id')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'view')
+    @RequirePermissions('solicitar_salida', 'view')
     findOne(@Param('id') id: string, @Request() req) {
         return this.salidasService.findOne(id, req.user);
     }
 
     @Patch(':id')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'edit')
+    @RequirePermissions('solicitar_salida', 'edit')
     update(
         @Param('id') id: string,
         @Body() updateSalidaDto: UpdateSalidaDto,
@@ -71,14 +71,14 @@ export class SalidasController {
 
     @Delete(':id')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'delete')
+    @RequirePermissions('solicitar_salida', 'delete')
     remove(@Param('id') id: string, @Request() req) {
         return this.salidasService.remove(id, req.user);
     }
 
     @Post(':id/approve')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'approve')
+    @RequirePermissions('solicitar_salida', 'approve')
     approve(
         @Param('id') id: string,
         @Body() approveDto: ApproveSalidaDto,
@@ -89,7 +89,7 @@ export class SalidasController {
 
     @Post(':id/reject')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'approve')
+    @RequirePermissions('solicitar_salida', 'approve')
     reject(
         @Param('id') id: string,
         @Body() rejectDto: RejectSalidaDto,
@@ -100,7 +100,7 @@ export class SalidasController {
 
     @Get(':id/historial')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('salidas', 'view')
+    @RequirePermissions('solicitar_salida', 'view')
     getHistorial(@Param('id') id: string, @Request() req) {
         // Aquí podrías implementar un historial de cambios si lo necesitas
         return { message: 'Historial no implementado aún' };

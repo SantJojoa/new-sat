@@ -60,44 +60,111 @@ async function main() {
     const modules = await Promise.all([
         prisma.modules.upsert({
             where: { name: 'dashboard' },
-            update: {},
+            update: {
+                icon: 'dashboard',
+            },
             create: {
                 name: 'dashboard',
                 description: 'Panel Principal',
-                icon: 'LayoutDashboard',
+                icon: 'dashboard',
                 path: '/dashboard',
                 order: 1,
             },
         }),
         prisma.modules.upsert({
             where: { name: 'usuarios' },
-            update: {},
+            update: {
+                icon: 'person_add',
+                order: 6,
+            },
             create: {
                 name: 'usuarios',
                 description: 'Gestión de Usuarios',
-                icon: 'Users',
+                icon: 'person_add',
                 path: '/users',
+                order: 6,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'subdirecciones' },
+            update: {
+                icon: 'domain',
+                order: 4,
+            },
+            create: {
+                name: 'subdirecciones',
+                description: 'Gestión de Subdirecciones',
+                icon: 'domain',
+                path: '/subdirecciones',
+                order: 4,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'areas' },
+            update: {
+                icon: 'layers',
+                order: 5,
+            },
+            create: {
+                name: 'areas',
+                description: 'Gestión de Áreas',
+                icon: 'layers',
+                path: '/areas',
+                order: 5,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'solicitar_salida' },
+            update: {
+                icon: 'add_box',
+                order: 2,
+            },
+            create: {
+                name: 'solicitar_salida',
+                description: 'Solicitar Salida',
+                icon: 'add_box',
+                path: '/solicitar-salida',
                 order: 2,
             },
         }),
         prisma.modules.upsert({
-            where: { name: 'salidas' },
-            update: {},
+            where: { name: 'gestionar_salida' },
+            update: {
+                order: 3,
+                icon: 'data_table',
+                description: 'Gestionar Salida',
+            },
             create: {
-                name: 'salidas',
-                description: 'Gestión de Salidas',
-                icon: 'Package',
-                path: '/salidas',
+                name: 'gestionar_salida',
+                description: 'Gestionar Salida',
+                icon: 'data_table',
+                path: '/gestionar-salida',
                 order: 3,
             },
         }),
     ]);
 
+    // Eliminar el modulo 'salidas' antiguo si existe y 'modificar_salida'
+    try {
+        const modulesToDelete = ['salidas', 'modificar_salida'];
+        for (const modName of modulesToDelete) {
+            const mod = await prisma.modules.findUnique({ where: { name: modName } });
+            if (mod) {
+                await prisma.permissions.deleteMany({ where: { module_id: mod.id } });
+                await prisma.modules.delete({ where: { id: mod.id } });
+                console.log(`🗑️ Módulo antiguo "${modName}" eliminado`);
+            }
+        }
+    } catch (e) {
+        console.log('Nom se pudo eliminar el módulo antiguo o no existía:', e);
+    }
+
+
     console.log('✅ Módulos creados:', modules.length);
 
     // 3. Configurar permisos según jerarquía
 
-    // Permisos para SUPERADMIN (todo + usuarios)
+    // Permisos para SUPERADMIN (todo)
     for (const module of modules) {
         await prisma.permissions.upsert({
             where: {
@@ -111,7 +178,7 @@ async function main() {
                 user_type_id: userTypes[0].id,
                 module_id: module.id,
                 can_view: true,
-                can_create: module.name === 'usuarios' || module.name !== 'usuarios',
+                can_create: true,
                 can_edit: true,
                 can_delete: true,
                 can_approve: true,
@@ -119,10 +186,11 @@ async function main() {
         });
     }
 
-    // Permisos para ADMIN_SUBDIRECCION (todo - usuarios + aprobar salidas)
+    // Permisos para ADMIN_SUBDIRECCION (usuarios solo ver, lo demas depende)
+    // Asumiremos que admin subdireccion no crea salidas solicitadas, solo aprueba (pero aprobación va en otra tabla probablemente, aquí es acceso al modulo)
+    // Por ahora le damos vista a todo menos usuarios (solo vista) y sin crear en solicitar salida
     for (const module of modules) {
-        if (module.name === 'usuarios') {
-            // Solo vista para usuarios, no puede crear/editar/eliminar
+        if (module.name === 'usuarios' || module.name === 'subdirecciones' || module.name === 'areas') {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {
@@ -134,14 +202,35 @@ async function main() {
                 create: {
                     user_type_id: userTypes[1].id,
                     module_id: module.id,
-                    can_view: true,
+                    can_view: false, // Changed to false: Only superadmin
                     can_create: false,
                     can_edit: false,
                     can_delete: false,
                     can_approve: false,
                 },
             });
-        } else {
+        } else if (module.name === 'solicitar_salida' || module.name === 'gestionar_salida') {
+            // Admin subdireccion no solicita ni modifica salidas de otros por esta vía estándar (quizas aprobar)
+            await prisma.permissions.upsert({
+                where: {
+                    user_type_id_module_id: {
+                        user_type_id: userTypes[1].id,
+                        module_id: module.id,
+                    },
+                },
+                update: {},
+                create: {
+                    user_type_id: userTypes[1].id,
+                    module_id: module.id,
+                    can_view: true,
+                    can_create: false,
+                    can_edit: false,
+                    can_delete: false,
+                    can_approve: true, // Puede aprobar
+                },
+            });
+        }
+        else {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {
@@ -157,20 +246,60 @@ async function main() {
                     can_create: true,
                     can_edit: true,
                     can_delete: true,
-                    can_approve: module.name === 'salidas', // Puede aprobar solo en salidas
+                    can_approve: true,
                 },
             });
         }
     }
 
-    // Permisos para LÍDER (todo - usuarios + crear/modificar salidas)
+    // Permisos para LÍDER (usuarios vista, solicitar y modificar ACTIVOS)
     for (const module of modules) {
-        if (module.name === 'usuarios') {
-            // Solo vista para usuarios
+        if (module.name === 'usuarios' || module.name === 'subdirecciones' || module.name === 'areas') {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {
                         user_type_id: userTypes[2].id, // lider
+                        module_id: module.id,
+                    },
+                },
+                update: {
+                    can_view: false, // Quitar acceso
+                },
+                create: {
+                    user_type_id: userTypes[2].id,
+                    module_id: module.id,
+                    can_view: false, // Quitar acceso
+                    can_create: false,
+                    can_edit: false,
+                    can_delete: false,
+                    can_approve: false,
+                },
+            });
+        } else if (module.name === 'solicitar_salida' || module.name === 'gestionar_salida') {
+            await prisma.permissions.upsert({
+                where: {
+                    user_type_id_module_id: {
+                        user_type_id: userTypes[2].id,
+                        module_id: module.id,
+                    },
+                },
+                update: {},
+                create: {
+                    user_type_id: userTypes[2].id,
+                    module_id: module.id,
+                    can_view: true,
+                    can_create: true, // SI
+                    can_edit: true, // SI
+                    can_delete: module.name === 'solicitar_salida', // Puede eliminar sus solicitudes
+                    can_approve: false,
+                },
+            });
+        } else {
+            // Otros modulos (dashboard)
+            await prisma.permissions.upsert({
+                where: {
+                    user_type_id_module_id: {
+                        user_type_id: userTypes[2].id,
                         module_id: module.id,
                     },
                 },
@@ -185,30 +314,11 @@ async function main() {
                     can_approve: false,
                 },
             });
-        } else {
-            await prisma.permissions.upsert({
-                where: {
-                    user_type_id_module_id: {
-                        user_type_id: userTypes[2].id,
-                        module_id: module.id,
-                    },
-                },
-                update: {},
-                create: {
-                    user_type_id: userTypes[2].id,
-                    module_id: module.id,
-                    can_view: true,
-                    can_create: module.name === 'salidas', // Puede crear solo en salidas
-                    can_edit: module.name === 'salidas', // Puede editar solo en salidas
-                    can_delete: module.name === 'salidas', // Puede eliminar solo en salidas
-                    can_approve: false, // No puede aprobar
-                },
-            });
         }
     }
 
-    // Permisos para USUARIO NORMAL (vista básica, sin crear/gestionar)
-    const userModules = ['dashboard', 'salidas', 'reportes'];
+    // Permisos para USUARIO NORMAL
+    const userModules = ['dashboard']; // Solo dashboard por ahora, no solicitar?
 
     for (const module of modules) {
         if (userModules.includes(module.name)) {

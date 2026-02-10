@@ -40,6 +40,10 @@ export class UsersService {
         return result;
     }
 
+    async findUserTypes() {
+        return await this.prisma.user_types.findMany();
+    }
+
     async findAll() {
         const users = await this.prisma.users.findMany({
             include: {
@@ -61,7 +65,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
 
@@ -81,7 +93,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
     }
@@ -93,7 +113,15 @@ export class UsersService {
             },
             include: {
                 areas: true,
-                user_types: true
+                user_types: {
+                    include: {
+                        permissions: {
+                            include: {
+                                modules: true
+                            }
+                        }
+                    }
+                }
             },
         });
     }
