@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSalidaDto } from './dto/create-salida.dto';
 import { UpdateSalidaDto } from './dto/update-salida.dto';
-import { ApproveSalidaDto, RejectSalidaDto } from './dto/aprove-salida.dto';
+import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { users } from '@prisma/client';
 
 @Injectable()
@@ -472,5 +472,127 @@ export class SalidasService {
     async getEstadisticas(user: users) {
         // Implement valid statistics later or return basics
         return { message: "Calculando estadisticas..." };
+    }
+
+    async bulkApprove(dto: BulkApproveSalidaDto, user: users) {
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) {
+            throw new ForbiddenException('No autorizado para aprobar salidas');
+        }
+
+        const salidas = await this.prisma.salidas.findMany({
+            where: { id: { in: dto.ids } },
+            include: { areas: true }
+        });
+
+        // Validate: only pending salidas can be approved
+        const results: { aprobadas: string[]; errores: { id: string; codigo: string; motivo: string }[] } = {
+            aprobadas: [],
+            errores: []
+        };
+
+        const validIds: string[] = [];
+
+        for (const salida of salidas) {
+            if (salida.estado !== 'pendiente') {
+                results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` });
+                continue;
+            }
+
+            // For admin_subdireccion, check subdirection ownership
+            if (userType?.name === 'admin_subdireccion') {
+                const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
+                if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) {
+                    results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' });
+                    continue;
+                }
+            }
+
+            validIds.push(salida.id);
+        }
+
+        // Check for IDs not found
+        const foundIds = salidas.map(s => s.id);
+        const notFound = dto.ids.filter(id => !foundIds.includes(id));
+        for (const id of notFound) {
+            results.errores.push({ id, codigo: 'N/A', motivo: 'Salida no encontrada' });
+        }
+
+        if (validIds.length > 0) {
+            await this.prisma.salidas.updateMany({
+                where: { id: { in: validIds } },
+                data: {
+                    estado: 'aprobada',
+                    fecha_aprobacion: new Date(),
+                    aprobador_id: user.id,
+                    observaciones: dto.observaciones || null
+                }
+            });
+            results.aprobadas = validIds;
+        }
+
+        return results;
+    }
+
+    async bulkReject(dto: BulkRejectSalidaDto, user: users) {
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) {
+            throw new ForbiddenException('No autorizado para rechazar salidas');
+        }
+
+        const salidas = await this.prisma.salidas.findMany({
+            where: { id: { in: dto.ids } },
+            include: { areas: true }
+        });
+
+        const results: { rechazadas: string[]; errores: { id: string; codigo: string; motivo: string }[] } = {
+            rechazadas: [],
+            errores: []
+        };
+
+        const validIds: string[] = [];
+
+        for (const salida of salidas) {
+            // Allow reject if pending, or if approved and superadmin
+            const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
+
+            if (!canReject) {
+                results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` });
+                continue;
+            }
+
+            // For admin_subdireccion, check subdirection ownership
+            if (userType?.name === 'admin_subdireccion') {
+                const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
+                if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) {
+                    results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' });
+                    continue;
+                }
+            }
+
+            validIds.push(salida.id);
+        }
+
+        // Check for IDs not found
+        const foundIds = salidas.map(s => s.id);
+        const notFound = dto.ids.filter(id => !foundIds.includes(id));
+        for (const id of notFound) {
+            results.errores.push({ id, codigo: 'N/A', motivo: 'Salida no encontrada' });
+        }
+
+        if (validIds.length > 0) {
+            await this.prisma.salidas.updateMany({
+                where: { id: { in: validIds } },
+                data: {
+                    estado: 'rechazada',
+                    fecha_aprobacion: new Date(),
+                    aprobador_id: user.id,
+                    observaciones: dto.motivo
+                }
+            });
+            results.rechazadas = validIds;
+        }
+
+        return results;
     }
 }

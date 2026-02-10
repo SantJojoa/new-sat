@@ -13,7 +13,7 @@ import {
 import { SalidasService } from './salidas.service';
 import { CreateSalidaDto } from './dto/create-salida.dto';
 import { UpdateSalidaDto } from './dto/update-salida.dto';
-import { ApproveSalidaDto, RejectSalidaDto } from './dto/aprove-salida.dto';
+import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
@@ -49,6 +49,20 @@ export class SalidasController {
     @RequirePermissions('solicitar_salida', 'view')
     getCatalogos() {
         return this.salidasService.getCatalogos();
+    }
+
+    @Post('bulk-approve')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'approve')
+    bulkApprove(@Body() dto: BulkApproveSalidaDto, @Request() req) {
+        return this.salidasService.bulkApprove(dto, req.user);
+    }
+
+    @Post('bulk-reject')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'approve')
+    bulkReject(@Body() dto: BulkRejectSalidaDto, @Request() req) {
+        return this.salidasService.bulkReject(dto, req.user);
     }
 
     @Get(':id')
