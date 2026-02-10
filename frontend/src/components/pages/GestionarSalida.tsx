@@ -26,7 +26,24 @@ interface Salida {
         };
     };
     municipios: { name: string }[];
+    municipios_convocados?: string;
     lugar_evento?: { name: string };
+    // New fields for details view
+    tema: string;
+    descripcion: string;
+    transporte_medio?: string;
+    transporte_responsables?: string;
+    instituciones_convocadas?: number;
+    ips: { name: string }[];
+    entidades: { name: string }[];
+    eapb: { name: string }[];
+    organizaciones: { name: string }[];
+    aprobador?: {
+        names: string;
+        email: string;
+    };
+    observaciones_aprobacion?: string;
+    motivo_rechazo?: string;
 }
 
 export default function GestionarSalida() {
@@ -57,6 +74,11 @@ export default function GestionarSalida() {
         type: 'approve' | 'reject' | 'delete' | null;
         salidaId: string | null;
     }>({ type: null, salidaId: null });
+
+    const [detailsModal, setDetailsModal] = useState<{
+        isOpen: boolean;
+        salida: Salida | null;
+    }>({ isOpen: false, salida: null });
 
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -395,6 +417,13 @@ export default function GestionarSalida() {
                                                     {getStatusBadge(salida.estado)}
                                                 </td>
                                                 <td className="px-6 py-4 flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => setDetailsModal({ isOpen: true, salida })}
+                                                        className="px-3 py-1.5 bg-zinc-100 text-zinc-700 hover:bg-zinc-200 rounded-lg text-xs font-semibold transition-colors border border-zinc-200 flex items-center gap-1"
+                                                        title="Ver Detalles"
+                                                    >
+                                                        <Search size={12} /> Ver
+                                                    </button>
                                                     {canEdit(salida) && (
                                                         <button
                                                             onClick={() => navigate(`/gestionar-salida/editar/${salida.id}`)}
@@ -422,8 +451,8 @@ export default function GestionarSalida() {
                                                                 }}
                                                                 disabled={salida.estado === 'aprobada'}
                                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'aprobada'
-                                                                        ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
-                                                                        : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
+                                                                    ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+                                                                    : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
                                                                     }`}
                                                             >
                                                                 Aprobar
@@ -435,8 +464,8 @@ export default function GestionarSalida() {
                                                                 }}
                                                                 disabled={salida.estado === 'rechazada'}
                                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'rechazada'
-                                                                        ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
-                                                                        : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
+                                                                    ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+                                                                    : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
                                                                     }`}
                                                             >
                                                                 Rechazar
@@ -500,6 +529,221 @@ export default function GestionarSalida() {
                                     {isSubmitting ? 'Procesando...' :
                                         actionModal.type === 'approve' ? 'Confirmar Aprobación' :
                                             actionModal.type === 'reject' ? 'Rechazar Solicitud' : 'Confirmar Eliminación'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Details Modal */}
+                {detailsModal.isOpen && detailsModal.salida && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp">
+                            <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                                <div>
+                                    <h3 className="text-xl font-black text-zinc-900">Detalles de la Solicitud</h3>
+                                    <p className="text-zinc-500 text-sm">Código: <span className="font-mono font-bold text-primary">{detailsModal.salida.codigo}</span></p>
+                                </div>
+                                <button
+                                    onClick={() => setDetailsModal({ isOpen: false, salida: null })}
+                                    className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors"
+                                >
+                                    <XCircle size={24} />
+                                </button>
+                            </div>
+                            <div className="p-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* General Info */}
+                                    <div className="space-y-6">
+                                        <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                            <Layers size={18} className="text-primary" /> Información General
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Estado</span>
+                                                <div className="mt-1">{getStatusBadge(detailsModal.salida.estado)}</div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Solicitante</span>
+                                                <span className="text-zinc-900 font-medium">{detailsModal.salida.solicitante.names}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Área</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.areas?.name}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subdirección</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.areas?.subdirecciones?.name || 'N/A'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo Salida</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.tipo_salida}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtipo</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.subtipo_salida || 'N/A'}</span>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tema</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.tema}</span>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Descripción</span>
+                                                <p className="text-zinc-600 mt-1 leading-relaxed bg-zinc-50 p-3 rounded-lg border border-zinc-100">
+                                                    {detailsModal.salida.descripcion || 'Sin descripción'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Logistics & Transport */}
+                                    <div className="space-y-6">
+                                        <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                            <Calendar size={18} className="text-primary" /> Logística y Transporte
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Inicio</span>
+                                                <span className="text-zinc-900">{new Date(detailsModal.salida.fecha_inicio).toLocaleDateString()}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Final</span>
+                                                <span className="text-zinc-900">{new Date(detailsModal.salida.fecha_final).toLocaleDateString()}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Jornada</span>
+                                                <span className="text-zinc-900">{detailsModal.salida.jornada}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Lugar Evento</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.lugar_evento?.name || 'No aplica'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Medio Transporte</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.transporte_medio || 'No requerido'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Instituciones Inv.</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.instituciones_convocadas || 0}</span>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Responsables Transporte</span>
+                                                <span className="text-zinc-700">{detailsModal.salida.transporte_responsables || 'Ninguno'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Locations & Participants */}
+                                    <div className="col-span-1 md:col-span-2 space-y-6">
+                                        <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                            <MapPin size={18} className="text-primary" /> Ubicaciones y Participantes
+                                        </h4>
+                                        {/* Municipios Convocados */}
+                                        <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Municipios Convocados</span>
+                                            <p className="text-zinc-700 text-sm">
+                                                {detailsModal.salida.municipios_convocados || 'Ninguno'}
+                                            </p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Municipios ({detailsModal.salida.municipios.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.municipios.length > 0 ? (
+                                                        detailsModal.salida.municipios.map((m, idx) => (
+                                                            <span key={idx} className="bg-zinc-100 text-zinc-600 px-2 py-1 rounded text-xs border border-zinc-200">{m.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguno</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IPS ({detailsModal.salida.ips.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.ips.length > 0 ? (
+                                                        detailsModal.salida.ips.map((i, idx) => (
+                                                            <span key={idx} className="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs border border-blue-100">{i.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Entidades ({detailsModal.salida.entidades.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.entidades.length > 0 ? (
+                                                        detailsModal.salida.entidades.map((e, idx) => (
+                                                            <span key={idx} className="bg-purple-50 text-purple-600 px-2 py-1 rounded text-xs border border-purple-100">{e.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">EAPB ({detailsModal.salida.eapb.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.eapb.length > 0 ? (
+                                                        detailsModal.salida.eapb.map((e, idx) => (
+                                                            <span key={idx} className="bg-orange-50 text-orange-600 px-2 py-1 rounded text-xs border border-orange-100">{e.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Organizaciones ({detailsModal.salida.organizaciones.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.organizaciones.length > 0 ? (
+                                                        detailsModal.salida.organizaciones.map((o, idx) => (
+                                                            <span key={idx} className="bg-rose-50 text-rose-600 px-2 py-1 rounded text-xs border border-rose-100">{o.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Approval Info */}
+                                    {detailsModal.salida.aprobador && (
+                                        <div className="col-span-1 md:col-span-2 bg-zinc-50 rounded-lg p-4 border border-zinc-200">
+                                            <h4 className="font-bold text-zinc-900 border-b border-zinc-200 pb-2 mb-3 flex items-center gap-2">
+                                                <CheckCircle size={18} className="text-green-600" /> Información de Aprobación
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Aprobado Por</span>
+                                                    <span className="text-zinc-900">{detailsModal.salida.aprobador.names}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Email</span>
+                                                    <span className="text-zinc-700">{detailsModal.salida.aprobador.email}</span>
+                                                </div>
+                                                {detailsModal.salida.observaciones_aprobacion && (
+                                                    <div className="col-span-2">
+                                                        <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Observaciones Aprobación</span>
+                                                        <p className="text-zinc-600 mt-1">{detailsModal.salida.observaciones_aprobacion}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Rejection Info */}
+                                    {detailsModal.salida.estado === 'rechazada' && detailsModal.salida.motivo_rechazo && (
+                                        <div className="col-span-1 md:col-span-2 bg-red-50 rounded-lg p-4 border border-red-200">
+                                            <h4 className="font-bold text-red-900 border-b border-red-200 pb-2 mb-3 flex items-center gap-2">
+                                                <XCircle size={18} className="text-red-600" /> Motivo del Rechazo
+                                            </h4>
+                                            <p className="text-red-700 text-sm">
+                                                {detailsModal.salida.motivo_rechazo}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-zinc-200 flex justify-end bg-zinc-50 rounded-b-xl sticky bottom-0">
+                                <button
+                                    onClick={() => setDetailsModal({ isOpen: false, salida: null })}
+                                    className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors shadow-lg shadow-zinc-200"
+                                >
+                                    Cerrar Detalles
                                 </button>
                             </div>
                         </div>

@@ -169,6 +169,7 @@ model salidas {
   transporte_medio         String? // 'Pasajero', 'Permanente', 'Institucional', 'No Aplica'
   transporte_responsables  String? // Nombres de responsables
   instituciones_convocadas Int?        @default(0)
+  municipios_convocados    String?
   lugar_evento_id          String? // ID del municipio del evento
   lugar_evento             municipios? @relation("SalidaLugarEvento", fields: [lugar_evento_id], references: [id])
 

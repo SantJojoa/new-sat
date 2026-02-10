@@ -147,6 +147,16 @@ export class SalidasService {
             createSalidaDto.organizaciones_ids
         );
 
+        // Obtener nombres de municipios convocados
+        let municipiosConvocadosStr: string | undefined;
+        if (createSalidaDto.municipios_ids?.length) {
+            const munis = await this.prisma.municipios.findMany({
+                where: { id: { in: createSalidaDto.municipios_ids } },
+                select: { name: true }
+            });
+            municipiosConvocadosStr = munis.map(m => m.name).join(', ');
+        }
+
         // Create
         return this.prisma.salidas.create({
             data: {
@@ -166,6 +176,7 @@ export class SalidasService {
                 transporte_medio: createSalidaDto.transporte_medio,
                 transporte_responsables: createSalidaDto.transporte_responsables,
                 instituciones_convocadas: createSalidaDto.instituciones_convocadas,
+                municipios_convocados: municipiosConvocadosStr,
                 lugar_evento_id: createSalidaDto.lugar_evento_id,
 
                 // Connect Relations
@@ -329,6 +340,16 @@ export class SalidasService {
             );
         }
 
+        // Obtener nombres de municipios convocados si se actualizan
+        let municipiosConvocadosStr: string | undefined;
+        if (updateSalidaDto.municipios_ids?.length) {
+            const munis = await this.prisma.municipios.findMany({
+                where: { id: { in: updateSalidaDto.municipios_ids } },
+                select: { name: true }
+            });
+            municipiosConvocadosStr = munis.map(m => m.name).join(', ');
+        }
+
         // Prepare data for Prisma update (handling relations is tricky with connect/disconnect)
         // For simplicity, we use set (replace all)
         return this.prisma.salidas.update({
@@ -346,6 +367,7 @@ export class SalidasService {
                 transporte_medio: updateSalidaDto.transporte_medio,
                 transporte_responsables: updateSalidaDto.transporte_responsables,
                 instituciones_convocadas: updateSalidaDto.instituciones_convocadas,
+                municipios_convocados: municipiosConvocadosStr,
                 lugar_evento_id: updateSalidaDto.lugar_evento_id,
 
                 estado: updateSalidaDto.estado,
