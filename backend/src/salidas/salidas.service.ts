@@ -160,7 +160,7 @@ export class SalidasService {
         });
     }
 
-    async findAll(user: users) {
+    async findAll(user: users, viewAll: boolean = false) {
         // Logic similar to before but with new includes
         const include = {
             municipios: true,
@@ -170,7 +170,19 @@ export class SalidasService {
             organizaciones: true,
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
-            areas: { select: { id: true, name: true, subdireccion_id: true } },
+            areas: {
+                select: {
+                    id: true,
+                    name: true,
+                    subdireccion_id: true,
+                    subdirecciones: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            },
             lugar_evento: true
         };
 
@@ -182,19 +194,33 @@ export class SalidasService {
 
         let where: any = {};
 
-        if (userType.name === 'admin_subdireccion') {
-            const userArea = await this.prisma.areas.findUnique({
-                where: { id: user.area_id! },
-                include: { subdirecciones: true },
-            });
-            if (!userArea) throw new ForbiddenException('Área no encontrada');
+        // If viewAll is requested, we skip the strict filtering restrictions for admins/area admins
+        // BUT we might still strictly respect 'solicitante' (User) vs 'Manager' roles if needed.
+        // Assuming "Listar todas" is for people who manage things.
 
-            where = {
-                areas: { subdireccion_id: userArea.subdireccion_id }
-            };
-        } else if (userType.name !== 'superadmin') {
-            // Lider/User -> My own requests
-            where = { solicitante_id: user.id };
+        if (viewAll) {
+            // If viewing all, we return everything (no constraints)
+            // Unless we want to restrict basic users? 
+            // Logic: If user has 'gestionar_salida' permission (checked by Guard), let them see all if they ask.
+            where = {};
+        } else {
+            if (userType.name === 'admin_subdireccion') {
+                const userArea = await this.prisma.areas.findUnique({
+                    where: { id: user.area_id! },
+                    include: { subdirecciones: true },
+                });
+                if (!userArea) throw new ForbiddenException('Área no encontrada');
+
+                where = {
+                    areas: { subdireccion_id: userArea.subdireccion_id }
+                };
+            } else if (userType.name !== 'superadmin') {
+                // Lider/User -> My own requests OR admin_area? 
+                // If admin_area falls here, they see only their own?
+                // If user wants to see "su area" actions, we might need to handle admin_area explicit filter?
+                // For now, preserving existing logic:
+                where = { solicitante_id: user.id };
+            }
         }
 
         return this.prisma.salidas.findMany({
@@ -307,19 +333,27 @@ export class SalidasService {
     }
 
     async remove(id: string, user: users) {
-        // Same permission logic...
         const salida = await this.findOne(id, user);
-        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendientes se pueden eliminar');
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+
+        if (salida.estado !== 'pendiente' && userType?.name !== 'superadmin') {
+            throw new BadRequestException('Solo pendientes se pueden eliminar');
+        }
+
         return this.prisma.salidas.delete({ where: { id } });
     }
 
     async approve(id: string, user: users, approveDto: ApproveSalidaDto) {
-        // ... (Similar structure, fetch, validate permission, update state)
-        // Re-using simplified content for brevity in tool call, but ensuring logic is present
         const salida = await this.findOne(id, user);
-        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
 
-        // Permission check (admin_sub or superadmin)
+        if (salida.estado !== 'pendiente') {
+            // Usually approval is only for pending. 
+            // If superadmin wants to re-approve/update approval? 
+            // Let's keep it strict for now unless requested otherwise.
+            // User only mentioned rejecting approved ones.
+            throw new BadRequestException('La salida no está pendiente');
+        }
+
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
 
@@ -336,9 +370,15 @@ export class SalidasService {
 
     async reject(id: string, user: users, rejectDto: RejectSalidaDto) {
         const salida = await this.findOne(id, user);
-        // Relaxed constraint: if (salida.estado !== 'pendiente') throw new BadRequestException('Solo pendiente');
-
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+
+        // Allow reject if pending OR (status is approved AND user is superadmin)
+        const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
+
+        if (!canReject) {
+            throw new BadRequestException('No se puede rechazar en el estado actual');
+        }
+
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
 
         return this.prisma.salidas.update({

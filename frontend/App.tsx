@@ -51,19 +51,19 @@ function App() {
                         } />
 
                         <Route path="subdirecciones" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['superadmin']}>
                                 <Subdirecciones />
                             </ProtectedRoute>
                         } />
 
                         <Route path="areas" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['superadmin']}>
                                 <Areas />
                             </ProtectedRoute>
                         } />
 
                         <Route path="users" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['superadmin']}>
                                 <Users />
                             </ProtectedRoute>
                         } />

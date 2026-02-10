@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 interface ProtectedRouteProps {
     children: React.ReactNode
-    requiredRole?: string
+    allowedRoles?: string[] // Changed from requiredRole (ID) to allowedRoles (names)
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     const { isAuthenticated, user, isLoading } = useAuth()
     const location = useLocation()
 
@@ -27,9 +27,13 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     }
 
     // Si se requiere un rol específico y el usuario no lo tiene
-    if (requiredRole && user?.user_type_id !== requiredRole) {
-        // Redirigir al dashboard si no tiene permisos
-        return <Navigate to="/dashboard" replace />
+    // Access user_type.name. Assuming user structure has user_type: { name: string }
+    if (allowedRoles && allowedRoles.length > 0) {
+        if (!user?.user_type?.name || !allowedRoles.includes(user.user_type.name)) {
+            // Redirigir al dashboard si no tiene permisos
+            // If already on dashboard (prevent loop), usually irrelevant as dashboard is allowed for all logged in
+            return <Navigate to="/dashboard" replace />
+        }
     }
 
     return <>{children}</>

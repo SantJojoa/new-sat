@@ -33,8 +33,8 @@ export class SalidasController {
     @Get()
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
-    findAll(@Request() req) {
-        return this.salidasService.findAll(req.user);
+    findAll(@Request() req, @Query('viewAll') viewAll?: string) {
+        return this.salidasService.findAll(req.user, viewAll === 'true');
     }
 
     @Get('estadisticas')

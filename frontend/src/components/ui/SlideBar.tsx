@@ -8,6 +8,14 @@ export default function SlideBar() {
     // Generate nav items from permissions
     const allNavItems = user?.user_type?.permissions
         ?.filter(p => p.can_view && p.modules.is_active)
+        ?.filter(p => {
+            // Restriction: Only superadmin can see areas, subdirecciones, usuarios
+            const restrictedModules = ['areas', 'subdirecciones', 'usuarios'];
+            if (restrictedModules.includes(p.modules.name)) {
+                return user?.user_type?.name === 'superadmin';
+            }
+            return true;
+        })
         ?.sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0))
         ?.map(p => ({
             id: p.modules.id,

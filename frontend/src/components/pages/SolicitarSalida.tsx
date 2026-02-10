@@ -44,8 +44,27 @@ export default function SolicitarSalida() {
     const subtiposItems: CatalogoItem[] = [
         { id: 'Inspección y Vigilancia SP', name: 'Inspección y Vigilancia SP' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
+        { id: 'Capacitación', name: 'Capacitación' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
+
+    // Filter subtypes based on Tipo de Salida
+    const getAvailableSubtypes = () => {
+        if (formData.tipoSalida === 'Virtual') {
+            return subtiposItems.filter(s => s.name === 'Capacitación');
+        }
+        return subtiposItems;
+    };
+
+    // Effect to clear/validate subtypes when Type changes
+    useEffect(() => {
+        if (formData.tipoSalida === 'Virtual') {
+            const hasInvalidSubtypes = selectedSubtipos.some(s => s.name !== 'Capacitación');
+            if (hasInvalidSubtypes) {
+                setSelectedSubtipos([]);
+            }
+        }
+    }, [formData.tipoSalida, selectedSubtipos]);
 
     // Catalog Data State
     const [municipiosData, setMunicipiosData] = useState<CatalogoItem[]>([]);
@@ -79,6 +98,11 @@ export default function SolicitarSalida() {
             try {
                 const salida = await salidasService.getSalidaById(id);
                 // Map API data to form state
+                let type = salida.tipo_salida;
+                // Legacy support
+                if (type === 'Capacitación Presencial') type = 'Presencial';
+                if (type === 'Capacitación Virtual') type = 'Virtual';
+
                 setFormData({
                     codigo: salida.codigo,
                     tipoSalida: salida.tipo_salida,
@@ -321,8 +345,8 @@ export default function SolicitarSalida() {
                                              focus:ring-primary focus:border-primary transition-all"
                                             >
                                                 <option value="">Seleccione tipo</option>
-                                                <option>Capacitación Presencial</option>
-                                                <option>Capacitación Virtual</option>
+                                                <option value="Presencial">Presencial</option>
+                                                <option value="Virtual">Virtual</option>
                                             </select>
                                         </div>
                                         <div className="flex flex-col gap-2">
@@ -780,7 +804,7 @@ export default function SolicitarSalida() {
                 isOpen={activeModal === 'subtipo'}
                 onClose={() => setActiveModal(null)}
                 title="Seleccionar Subtipos"
-                items={subtiposItems}
+                items={getAvailableSubtypes()}
                 selectedItems={selectedSubtipos}
                 onSave={setSelectedSubtipos}
                 searchPlaceholder="Buscar subtipo..."

@@ -11,7 +11,16 @@ export default function Dashboard() {
             permission.can_view &&
             permission.modules.is_active &&
             permission.modules.name !== 'dashboard'
-    ).sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0)) || [];
+    )
+        .filter(p => {
+            // Restriction: Only superadmin can see areas, subdirecciones, usuarios
+            const restrictedModules = ['areas', 'subdirecciones', 'usuarios'];
+            if (restrictedModules.includes(p.modules.name)) {
+                return user?.user_type?.name === 'superadmin';
+            }
+            return true;
+        })
+        .sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0)) || [];
 
     // Helper to format date
     const today = new Date().toLocaleDateString('es-CO', {

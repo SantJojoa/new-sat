@@ -19,7 +19,11 @@ interface Salida {
         email: string;
     };
     areas: {
+        id?: string;
         name: string;
+        subdirecciones?: {
+            name: string;
+        };
     };
     municipios: { name: string }[];
     lugar_evento?: { name: string };
@@ -30,15 +34,22 @@ export default function GestionarSalida() {
     const navigate = useNavigate();
     const [salidas, setSalidas] = useState<Salida[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewAll, setViewAll] = useState(false);
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [filterArea, setFilterArea] = useState('');
+    const [filterSubdireccion, setFilterSubdireccion] = useState('');
+    const [filterTipo, setFilterTipo] = useState('');
+    const [filterSubtipo, setFilterSubtipo] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
     const [filterMunicipio, setFilterMunicipio] = useState('');
 
     const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
+    const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
+    const [uniqueTipos, setUniqueTipos] = useState<string[]>([]);
+    const [uniqueSubtipos, setUniqueSubtipos] = useState<string[]>([]);
     const [uniqueMunicipios, setUniqueMunicipios] = useState<string[]>([]);
 
     // Action Modals
@@ -53,14 +64,20 @@ export default function GestionarSalida() {
     const fetchSalidas = async () => {
         setLoading(true);
         try {
-            const data = await salidasService.getSalidas();
+            const data = await salidasService.getSalidas(viewAll);
             setSalidas(data);
 
             // Extract unique values for filters
             const areas = Array.from(new Set(data.map((s: Salida) => s.areas?.name).filter(Boolean))) as string[];
+            const subdirecciones = Array.from(new Set(data.map((s: Salida) => s.areas?.subdirecciones?.name).filter(Boolean))) as string[];
+            const tipos = Array.from(new Set(data.map((s: Salida) => s.tipo_salida).filter(Boolean))) as string[];
+            const subtipos = Array.from(new Set(data.map((s: Salida) => s.subtipo_salida).filter(Boolean))) as string[];
             const municipios = Array.from(new Set(data.map((s: Salida) => s.lugar_evento?.name).filter(Boolean))) as string[];
 
             setUniqueAreas(areas);
+            setUniqueSubdirecciones(subdirecciones);
+            setUniqueTipos(tipos);
+            setUniqueSubtipos(subtipos);
             setUniqueMunicipios(municipios);
         } catch (error) {
             console.error('Error fetching salidas:', error);
@@ -71,11 +88,14 @@ export default function GestionarSalida() {
 
     useEffect(() => {
         fetchSalidas();
-    }, []);
+    }, [viewAll]);
 
     const handleResetFilters = () => {
         setSearchTerm('');
         setFilterArea('');
+        setFilterSubdireccion('');
+        setFilterTipo('');
+        setFilterSubtipo('');
         setFilterDateStart('');
         setFilterDateEnd('');
         setFilterMunicipio('');
@@ -112,26 +132,59 @@ export default function GestionarSalida() {
         }
     };
 
+    const checkOwnership = (salida: Salida) => {
+        // If superadmin, always true
+        if (user?.user_type?.name === 'superadmin') return true;
+        // If user has 'admin_area' or 'admin_subdireccion', they should only act on their area/subdirection
+        // Note: Frontend user object might not have full area details populated deep, but let's try.
+        // If not populated, we fallback to backend check (it will fail), but UIwise let's be strict if possible.
+        // Assuming user.area_id is available.
+        if (user?.area_id && salida.areas?.id) {
+            // Basic check: if area ID matches.
+            // Warning: admin_subdireccion can manage ANY area in their subdirection?
+            // Not strictly checked here without more user data.
+            // Simplest approach: If viewing ALL, disable actions for records that are NOT my area? 
+            // Or better: relying on backend is safer, but user asked for UI behavior.
+            // Let's rely on the fact that if I am an admin_area, my area_id should match salida.areas.id
+            return user.area_id === salida.areas.id;
+        }
+        // If we can't verify area, assume they can try (backend will block).
+        // But for 'View All' requested behavior: "Listar... y las de su area permita realizar acciones".
+        // This implies if it's NOT my area, return false.
+        // If user.area_id is present and mismatches, return false.
+        if (user?.area_id && salida.areas?.id && user.area_id !== salida.areas.id) return false;
+
+        return true;
+    };
+
     const canApprove = (salida: Salida) => {
-        // Can approve if NOT already approved, or if we want to allow re-approval (update obs). 
-        // User asked: "las rechazadas se puedan aprobar" (so rejected -> approve OK).
-        // "Approved -> Approve"? Maybe redundant but harmless. 
-        // Let's hide Approve button if ALREADY approved.
-        return salida.estado !== 'aprobada' && user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_approve);
+        if (!checkOwnership(salida)) return false;
+        const isSuperAdmin = user?.user_type?.name === 'superadmin';
+        const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_approve);
+
+        if (!hasPerm) return false;
+
+        // If superadmin, can manage even if approved (to reject it)
+        if (isSuperAdmin) return true;
+
+        // Normal admin: only pending
+        return salida.estado !== 'aprobada' && salida.estado !== 'rechazada';
     };
 
     const canEdit = (salida: Salida) => {
-        // Logic: User has edit permission AND (is superadmin OR is solicitante OR (is admin_sub and own area? - usually admin edits any in area))
-        // Checking simple permission first:
+        if (!checkOwnership(salida)) return false;
         const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_edit);
-        // If pending, usually editable. If approved, usually not editable unless superadmin.
-        // Let's assume pending only for now to be safe, or follow backend rules.
+        // Edit usually restricted to pending for data integrity
         return hasPerm && salida.estado === 'pendiente';
     };
 
     const canDelete = (salida: Salida) => {
-        // Can delete if permission calls for it and is pending (safety)
-        return salida.estado === 'pendiente' && user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_delete);
+        if (!checkOwnership(salida)) return false;
+        const isSuperAdmin = user?.user_type?.name === 'superadmin';
+        const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_delete);
+
+        if (!hasPerm) return false;
+        return isSuperAdmin || salida.estado === 'pendiente';
     };
 
     const getStatusBadge = (status: string) => {
@@ -152,6 +205,9 @@ export default function GestionarSalida() {
             s.solicitante.names.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesArea = filterArea ? s.areas?.name === filterArea : true;
+        const matchesSubdireccion = filterSubdireccion ? s.areas?.subdirecciones?.name === filterSubdireccion : true;
+        const matchesTipo = filterTipo ? s.tipo_salida === filterTipo : true;
+        const matchesSubtipo = filterSubtipo ? s.subtipo_salida === filterSubtipo : true;
 
         const matchesMunicipio = filterMunicipio ? s.lugar_evento?.name === filterMunicipio : true;
 
@@ -165,7 +221,7 @@ export default function GestionarSalida() {
             matchesDate = salidaDate === filterDateStart;
         }
 
-        return matchesSearch && matchesArea && matchesMunicipio && matchesDate;
+        return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate;
     });
 
     return (
@@ -176,6 +232,18 @@ export default function GestionarSalida() {
                     <div className="mb-8">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Salidas</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de salida.</p>
+                        <div className="mt-4">
+                            <button
+                                onClick={() => setViewAll(!viewAll)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll
+                                    ? 'bg-primary text-white border-primary shadow-sm'
+                                    : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'
+                                    }`}
+                            >
+                                <RefreshCcw size={16} className={loading && viewAll ? "animate-spin" : ""} />
+                                {viewAll ? 'Viendo Todas las Áreas' : 'Ver Todas las Áreas'}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mb-6">
@@ -185,7 +253,7 @@ export default function GestionarSalida() {
                                 <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-2">
                                     <Search size={16} /> Filtros de Búsqueda
                                 </h3>
-                                {(searchTerm || filterArea || filterMunicipio || filterDateStart || filterDateEnd) && (
+                                {(searchTerm || filterArea || filterSubdireccion || filterTipo || filterSubtipo || filterMunicipio || filterDateStart || filterDateEnd) && (
                                     <button
                                         onClick={handleResetFilters}
                                         className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover font-medium transition-colors"
@@ -215,6 +283,45 @@ export default function GestionarSalida() {
                                         <option value="">Todas las Áreas</option>
                                         {uniqueAreas.map(area => (
                                             <option key={area} value={area}>{area}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <select
+                                        value={filterSubdireccion}
+                                        onChange={(e) => setFilterSubdireccion(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Todas las Subdirecciones</option>
+                                        {uniqueSubdirecciones.map(sub => (
+                                            <option key={sub} value={sub}>{sub}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <select
+                                        value={filterTipo}
+                                        onChange={(e) => setFilterTipo(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Todos los Tipos</option>
+                                        {uniqueTipos.map(t => (
+                                            <option key={t} value={t}>{t}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <select
+                                        value={filterSubtipo}
+                                        onChange={(e) => setFilterSubtipo(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Todos los Subtipos</option>
+                                        {uniqueSubtipos.map(st => (
+                                            <option key={st} value={st}>{st}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -313,7 +420,11 @@ export default function GestionarSalida() {
                                                                     setComment('');
                                                                     setActionModal({ type: 'approve', salidaId: salida.id });
                                                                 }}
-                                                                className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition-colors border border-green-200"
+                                                                disabled={salida.estado === 'aprobada'}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'aprobada'
+                                                                        ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+                                                                        : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
+                                                                    }`}
                                                             >
                                                                 Aprobar
                                                             </button>
@@ -322,7 +433,11 @@ export default function GestionarSalida() {
                                                                     setComment('');
                                                                     setActionModal({ type: 'reject', salidaId: salida.id });
                                                                 }}
-                                                                className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200"
+                                                                disabled={salida.estado === 'rechazada'}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'rechazada'
+                                                                        ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+                                                                        : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
+                                                                    }`}
                                                             >
                                                                 Rechazar
                                                             </button>

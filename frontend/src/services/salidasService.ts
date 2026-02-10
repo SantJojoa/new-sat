@@ -44,8 +44,8 @@ export const salidasService = {
         return response.data;
     },
 
-    getSalidas: async () => {
-        const response = await api.get('/salidas');
+    getSalidas: async (viewAll: boolean = false) => {
+        const response = await api.get('/salidas', { params: { viewAll } });
         return response.data;
     },
 

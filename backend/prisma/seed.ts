@@ -202,7 +202,7 @@ async function main() {
                 create: {
                     user_type_id: userTypes[1].id,
                     module_id: module.id,
-                    can_view: true,
+                    can_view: false, // Changed to false: Only superadmin
                     can_create: false,
                     can_edit: false,
                     can_delete: false,
