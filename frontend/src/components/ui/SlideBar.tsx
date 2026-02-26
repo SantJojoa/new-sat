@@ -28,7 +28,7 @@ export default function SlideBar() {
     // Define categories
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
-        'Salidas': ['solicitar_salida', 'gestionar_salida'],
+        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };

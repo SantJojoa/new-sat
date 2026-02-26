@@ -32,7 +32,7 @@ export default function Dashboard() {
 
     // Categories Logic
     const categories: Record<string, string[]> = {
-        'Salidas': ['solicitar_salida', 'gestionar_salida'],
+        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
