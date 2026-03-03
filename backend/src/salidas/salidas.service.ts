@@ -98,8 +98,10 @@ export class SalidasService {
     }
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
-        if (!user.area_id) {
-            throw new BadRequestException('El usuario no tiene un área asignada');
+        const targetAreaId = createSalidaDto.area_id || user.area_id;
+
+        if (!targetAreaId) {
+            throw new BadRequestException('No se ha especificado o no tiene un área asignada');
         }
 
         // Auto-generate code if not provided (though it should always be auto-generated now)
@@ -107,11 +109,11 @@ export class SalidasService {
 
         // 1. Get User's Area Name
         const userArea = await this.prisma.areas.findUnique({
-            where: { id: user.area_id },
+            where: { id: targetAreaId },
             select: { name: true }
         });
 
-        if (!userArea) throw new BadRequestException('El usuario no tiene un área válida asignada');
+        if (!userArea) throw new BadRequestException('El área especificada no es válida');
 
         // 2. Generate Parts
         const now = new Date();
@@ -184,7 +186,7 @@ export class SalidasService {
                 jornada: createSalidaDto.jornada,
                 estado: 'pendiente',
                 solicitante_id: user.id,
-                area_id: user.area_id,
+                area_id: targetAreaId,
 
                 // Transport Fields
                 transporte_medio: createSalidaDto.transporte_medio,
@@ -475,13 +477,14 @@ export class SalidasService {
     }
 
     async getCatalogos() {
-        const [municipios, ips, entidades, eapb, organizaciones, idsn] = await Promise.all([
+        const [municipios, ips, entidades, eapb, organizaciones, idsn, areas] = await Promise.all([
             this.prisma.municipios.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.ips.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.entidades.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.eapb.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.organizaciones.findMany({ orderBy: { name: 'asc' } }),
-            this.prisma.idsn.findMany({ orderBy: { name: 'asc' } })
+            this.prisma.idsn.findMany({ orderBy: { name: 'asc' } }),
+            this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
         ]);
 
         return {
@@ -490,7 +493,8 @@ export class SalidasService {
             entidades,
             eapb,
             organizaciones,
-            idsn
+            idsn,
+            areas
         };
     }
 

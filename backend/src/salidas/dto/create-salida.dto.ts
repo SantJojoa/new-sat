@@ -79,4 +79,8 @@ export class CreateSalidaDto {
     @IsString()
     @IsOptional()
     lugar_evento_id?: string;
+
+    @IsString()
+    @IsOptional()
+    area_id?: string;
 }

@@ -12,6 +12,7 @@ export interface CatalogosResponse {
     eapb: CatalogoItem[];
     organizaciones: CatalogoItem[];
     idsn: CatalogoItem[];
+    areas: CatalogoItem[];
 }
 
 export interface CreateSalidaPayload {
@@ -33,6 +34,7 @@ export interface CreateSalidaPayload {
     transporte_responsables?: string;
     instituciones_convocadas?: number;
     lugar_evento_id?: string;
+    area_id?: string;
 }
 
 export const salidasService = {

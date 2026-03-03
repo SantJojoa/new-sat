@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
 import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, MapPin } from "lucide-react"
-// import { useAuth } from "../../hooks/useAuth"
+import { useAuth } from "../../hooks/useAuth"
 
 export default function SolicitarSalida() {
-    // const { user } = useAuth();
+    const { user } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditing = !!id;
@@ -21,9 +21,9 @@ export default function SolicitarSalida() {
         fechaFinal: '',
         jornada: 'Día Completo',
         descripcion: '',
-        // Transport fields
         transporteMedio: '',
-        institucionesConvocadas: ''
+        institucionesConvocadas: '',
+        areaId: ''
     });
 
     const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -99,6 +99,7 @@ export default function SolicitarSalida() {
     const [eapbData, setEapbData] = useState<CatalogoItem[]>([]);
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
     const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
+    const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
 
     useEffect(() => {
         const fetchCatalogos = async () => {
@@ -110,6 +111,7 @@ export default function SolicitarSalida() {
                 setEapbData(data.eapb);
                 setOrganizacionesData(data.organizaciones);
                 setIdsnData(data.idsn);
+                setAreasData(data.areas);
             } catch (error) {
                 console.error("Error fetching catalogos:", error);
                 setFeedbackModal({ type: 'error', title: 'Error de Carga', message: 'Error al cargar listados. Por favor recargue la página.' });
@@ -141,7 +143,8 @@ export default function SolicitarSalida() {
                     jornada: salida.jornada === 'Manana' ? 'Mañana' : (salida.jornada === 'Completa' ? 'Día Completo' : salida.jornada),
                     descripcion: salida.descripcion || '',
                     transporteMedio: salida.transporte_medio || '',
-                    institucionesConvocadas: salida.instituciones_convocadas?.toString() || ''
+                    institucionesConvocadas: salida.instituciones_convocadas?.toString() || '',
+                    areaId: salida.area_id || ''
                 });
 
                 // Map relations
@@ -221,6 +224,7 @@ export default function SolicitarSalida() {
             transporte_responsables: transporteResponsables.length > 0 ? transporteResponsables.join(', ') : undefined,
             instituciones_convocadas: formData.institucionesConvocadas ? parseInt(formData.institucionesConvocadas) : undefined,
             lugar_evento_id: selectedLugarEvento?.id || undefined,
+            area_id: user?.user_type?.name === 'superadmin' ? formData.areaId : undefined,
         };
 
         setPendingPayload(payload);
@@ -255,7 +259,8 @@ export default function SolicitarSalida() {
                     jornada: 'Día Completo',
                     descripcion: '',
                     transporteMedio: '',
-                    institucionesConvocadas: ''
+                    institucionesConvocadas: '',
+                    areaId: ''
                 });
                 setSelectedMunicipios([]);
                 setSelectedIPS([]);
@@ -382,21 +387,30 @@ export default function SolicitarSalida() {
 
                                 <form onSubmit={handleSubmit} className="p-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm font-semibold text-zinc-700">
-                                                Código {isEditing ? '(Autogenerado)' : '(Se generará al guardar)'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="codigo"
-                                                value={formData.codigo}
-                                                readOnly
-                                                disabled
-                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-500 cursor-not-allowed"
-                                                placeholder="Generado automáticamente"
-                                            />
-                                        </div>
+
                                         {/* Code field removed - Auto-generated */}
+
+                                        {/* Selector de Área para Superadmin */}
+                                        {user?.user_type?.name === 'superadmin' && (
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-semibold text-zinc-700">
+                                                    Área <span className="text-xs text-primary font-normal">(Selección Superadmin)</span>
+                                                </label>
+                                                <select
+                                                    name="areaId"
+                                                    value={formData.areaId}
+                                                    onChange={handleInputChange}
+                                                    className="w-full h-12 rounded-lg border border-zinc-200 focus:ring-primary focus:border-primary transition-all px-4 bg-white"
+                                                    required={user?.user_type?.name === 'superadmin'}
+                                                >
+                                                    <option value="" disabled>Seleccione un área...</option>
+                                                    {areasData.map(area => (
+                                                        <option key={area.id} value={area.id}>{area.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Tipo de Salida
