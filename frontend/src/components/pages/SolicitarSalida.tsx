@@ -35,6 +35,7 @@ export default function SolicitarSalida() {
     const [selectedEntidades, setSelectedEntidades] = useState<CatalogoItem[]>([]);
     const [selectedEAPB, setSelectedEAPB] = useState<CatalogoItem[]>([]);
     const [selectedOrganizaciones, setSelectedOrganizaciones] = useState<CatalogoItem[]>([]);
+    const [selectedIDSN, setSelectedIDSN] = useState<CatalogoItem[]>([]);
 
     // Transport section state
     const [transporteResponsables, setTransporteResponsables] = useState<string[]>([]);
@@ -97,6 +98,7 @@ export default function SolicitarSalida() {
     const [entidadesData, setEntidadesData] = useState<CatalogoItem[]>([]);
     const [eapbData, setEapbData] = useState<CatalogoItem[]>([]);
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
+    const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
 
     useEffect(() => {
         const fetchCatalogos = async () => {
@@ -107,6 +109,7 @@ export default function SolicitarSalida() {
                 setEntidadesData(data.entidades);
                 setEapbData(data.eapb);
                 setOrganizacionesData(data.organizaciones);
+                setIdsnData(data.idsn);
             } catch (error) {
                 console.error("Error fetching catalogos:", error);
                 setFeedbackModal({ type: 'error', title: 'Error de Carga', message: 'Error al cargar listados. Por favor recargue la página.' });
@@ -147,6 +150,7 @@ export default function SolicitarSalida() {
                 setSelectedEntidades(salida.entidades.map((e: any) => ({ id: e.id, name: e.name })));
                 setSelectedEAPB(salida.eapb.map((e: any) => ({ id: e.id, name: e.name })));
                 setSelectedOrganizaciones(salida.organizaciones.map((o: any) => ({ id: o.id, name: o.name })));
+                setSelectedIDSN(salida.idsn.map((i: any) => ({ id: i.id, name: i.name })));
 
                 // Subtipos (string split)
                 if (salida.subtipo_salida) {
@@ -211,6 +215,7 @@ export default function SolicitarSalida() {
             entidades_ids: selectedEntidades.map(i => i.id),
             eapb_ids: selectedEAPB.map(i => i.id),
             organizaciones_ids: selectedOrganizaciones.map(i => i.id),
+            idsn_ids: selectedIDSN.map(i => i.id),
             // Transport fields
             transporte_medio: formData.transporteMedio || undefined,
             transporte_responsables: transporteResponsables.length > 0 ? transporteResponsables.join(', ') : undefined,
@@ -257,6 +262,7 @@ export default function SolicitarSalida() {
                 setSelectedEntidades([]);
                 setSelectedEAPB([]);
                 setSelectedOrganizaciones([]);
+                setSelectedIDSN([]);
                 setSelectedSubtipos([]);
                 setTransporteResponsables([]);
                 setNuevoResponsable('');
@@ -630,6 +636,28 @@ export default function SolicitarSalida() {
                                                 />
                                             </div>
                                         </div>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-semibold text-zinc-700">
+                                                    IDSN
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveModal('idsn')}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">add</span>
+                                                    Seleccionar IDSN
+                                                </button>
+                                            </div>
+                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
+                                                <ChipList
+                                                    items={selectedIDSN}
+                                                    onRemove={(item) => removeChip(item, setSelectedIDSN, selectedIDSN)}
+                                                    emptyText="No hay IDSN seleccionados"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Sección de Transporte */}
@@ -856,6 +884,17 @@ export default function SolicitarSalida() {
                 onSave={setSelectedOrganizaciones}
                 searchPlaceholder="Buscar organización..."
                 icon="groups"
+            />
+
+            <MultiSelectModal
+                isOpen={activeModal === 'idsn'}
+                onClose={() => setActiveModal(null)}
+                title="Seleccionar IDSN"
+                items={idsnData}
+                selectedItems={selectedIDSN}
+                onSave={setSelectedIDSN}
+                searchPlaceholder="Buscar IDSN..."
+                icon="health_and_safety"
             />
 
             <MultiSelectModal

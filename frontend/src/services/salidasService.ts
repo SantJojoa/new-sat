@@ -11,6 +11,7 @@ export interface CatalogosResponse {
     entidades: CatalogoItem[];
     eapb: CatalogoItem[];
     organizaciones: CatalogoItem[];
+    idsn: CatalogoItem[];
 }
 
 export interface CreateSalidaPayload {
@@ -27,6 +28,7 @@ export interface CreateSalidaPayload {
     entidades_ids?: string[];
     eapb_ids?: string[];
     organizaciones_ids?: string[];
+    idsn_ids?: string[];
     transporte_medio?: string;
     transporte_responsables?: string;
     instituciones_convocadas?: number;

@@ -59,6 +59,11 @@ export class CreateSalidaDto {
     @IsOptional()
     organizaciones_ids?: string[];
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    idsn_ids?: string[];
+
     // Transport Fields
     @IsString()
     @IsOptional()

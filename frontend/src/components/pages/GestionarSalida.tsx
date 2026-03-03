@@ -38,6 +38,7 @@ interface Salida {
     entidades: { name: string }[];
     eapb: { name: string }[];
     organizaciones: { name: string }[];
+    idsn: { name: string }[];
     aprobador?: {
         names: string;
         email: string;
@@ -896,6 +897,16 @@ export default function GestionarSalida() {
                                                             <span key={idx} className="bg-rose-50 text-rose-600 px-2 py-1 rounded text-xs border border-rose-100">{o.name}</span>
                                                         ))
                                                     ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IDSN ({detailsModal.salida.idsn.length})</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detailsModal.salida.idsn.length > 0 ? (
+                                                        detailsModal.salida.idsn.map((i, idx) => (
+                                                            <span key={idx} className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs border border-emerald-100">{i.name}</span>
+                                                        ))
+                                                    ) : <span className="text-zinc-400 italic">Ninguno</span>}
                                                 </div>
                                             </div>
                                         </div>

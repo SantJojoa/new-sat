@@ -144,6 +144,15 @@ model organizaciones {
   salidas salidas[] @relation("SalidasOrganizaciones")
 }
 
+model idsn {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salidas salidas[] @relation("SalidasIdsn")
+}
+
 model salidas {
   id     String @id @default(cuid())
   codigo String @unique
@@ -184,6 +193,7 @@ model salidas {
   entidades      entidades[]      @relation("SalidasEntidades")
   eapb           eapb[]           @relation("SalidasEapb")
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
+  idsn           idsn[]           @relation("SalidasIdsn")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
