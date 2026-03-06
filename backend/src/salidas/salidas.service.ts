@@ -9,6 +9,20 @@ import { users } from '@prisma/client';
 export class SalidasService {
     constructor(private prisma: PrismaService) { }
 
+    /**
+     * Parses a date string safely to avoid timezone shift.
+     * "2026-01-02" parsed with new Date() becomes UTC midnight,
+     * which in UTC-5 shifts to 2026-01-01. Using T12:00:00 (noon)
+     * ensures the date stays on the correct day.
+     */
+    private parseDateLocal(dateStr: string | Date): Date {
+        if (dateStr instanceof Date) return dateStr;
+        // If already has time component, parse as-is
+        if (dateStr.includes('T')) return new Date(dateStr);
+        // Append noon to avoid timezone day shift
+        return new Date(`${dateStr}T12:00:00`);
+    }
+
     private async checkConflicts(
         start: Date,
         end: Date,
@@ -18,6 +32,7 @@ export class SalidasService {
         entidades: string[] = [],
         eapb: string[] = [],
         organizaciones: string[] = [],
+        idsn: string[] = [],
         excludeId?: string
     ) {
         // Validation logic:
@@ -51,6 +66,9 @@ export class SalidasService {
                     fecha_inicio: { lte: end },
                     fecha_final: { gte: start },
                 },
+                {
+                    estado: 'aprobada'
+                },
                 jornadaFilter,
                 {
                     OR: [
@@ -59,6 +77,7 @@ export class SalidasService {
                         { entidades: { some: { id: { in: entidades } } } },
                         { eapb: { some: { id: { in: eapb } } } },
                         { organizaciones: { some: { id: { in: organizaciones } } } },
+                        { idsn: { some: { id: { in: idsn } } } },
                     ]
                 }
             ]
@@ -96,8 +115,10 @@ export class SalidasService {
     }
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
-        if (!user.area_id) {
-            throw new BadRequestException('El usuario no tiene un área asignada');
+        const targetAreaId = createSalidaDto.area_id || user.area_id;
+
+        if (!targetAreaId) {
+            throw new BadRequestException('No se ha especificado o no tiene un área asignada');
         }
 
         // Auto-generate code if not provided (though it should always be auto-generated now)
@@ -105,11 +126,11 @@ export class SalidasService {
 
         // 1. Get User's Area Name
         const userArea = await this.prisma.areas.findUnique({
-            where: { id: user.area_id },
+            where: { id: targetAreaId },
             select: { name: true }
         });
 
-        if (!userArea) throw new BadRequestException('El usuario no tiene un área válida asignada');
+        if (!userArea) throw new BadRequestException('El área especificada no es válida');
 
         // 2. Generate Parts
         const now = new Date();
@@ -148,14 +169,15 @@ export class SalidasService {
 
         // Check Conflicts
         await this.checkConflicts(
-            new Date(createSalidaDto.fecha_inicio),
-            new Date(createSalidaDto.fecha_final),
+            this.parseDateLocal(createSalidaDto.fecha_inicio),
+            this.parseDateLocal(createSalidaDto.fecha_final),
             createSalidaDto.jornada,
             createSalidaDto.municipios_ids,
             createSalidaDto.ips_ids,
             createSalidaDto.entidades_ids,
             createSalidaDto.eapb_ids,
-            createSalidaDto.organizaciones_ids
+            createSalidaDto.organizaciones_ids,
+            createSalidaDto.idsn_ids
         );
 
         // Obtener nombres de municipios convocados
@@ -176,12 +198,12 @@ export class SalidasService {
                 subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema,
                 descripcion: createSalidaDto.descripcion,
-                fecha_inicio: new Date(createSalidaDto.fecha_inicio),
-                fecha_final: new Date(createSalidaDto.fecha_final),
+                fecha_inicio: this.parseDateLocal(createSalidaDto.fecha_inicio),
+                fecha_final: this.parseDateLocal(createSalidaDto.fecha_final),
                 jornada: createSalidaDto.jornada,
                 estado: 'pendiente',
                 solicitante_id: user.id,
-                area_id: user.area_id,
+                area_id: targetAreaId,
 
                 // Transport Fields
                 transporte_medio: createSalidaDto.transporte_medio,
@@ -205,6 +227,9 @@ export class SalidasService {
                 },
                 organizaciones: {
                     connect: createSalidaDto.organizaciones_ids?.map(id => ({ id })) || []
+                },
+                idsn: {
+                    connect: createSalidaDto.idsn_ids?.map(id => ({ id })) || []
                 }
             },
             include: {
@@ -213,6 +238,7 @@ export class SalidasService {
                 entidades: true,
                 eapb: true,
                 organizaciones: true,
+                idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true } }
             }
@@ -227,6 +253,7 @@ export class SalidasService {
             entidades: true,
             eapb: true,
             organizaciones: true,
+            idsn: true,
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
             areas: {
@@ -298,6 +325,7 @@ export class SalidasService {
                 entidades: true,
                 eapb: true,
                 organizaciones: true,
+                idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true } }
@@ -339,14 +367,15 @@ export class SalidasService {
         if (updateSalidaDto.fecha_inicio || updateSalidaDto.municipios_ids) {
             // Re-check conflict if critical fields change
             await this.checkConflicts(
-                updateSalidaDto.fecha_inicio ? new Date(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
-                updateSalidaDto.fecha_final ? new Date(updateSalidaDto.fecha_final) : salida.fecha_final,
+                updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
+                updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
                 updateSalidaDto.jornada || salida.jornada,
                 updateSalidaDto.municipios_ids || salida.municipios.map(m => m.id),
                 updateSalidaDto.ips_ids || salida.ips.map(m => m.id),
                 updateSalidaDto.entidades_ids || salida.entidades.map(m => m.id),
                 updateSalidaDto.eapb_ids || salida.eapb.map(m => m.id),
                 updateSalidaDto.organizaciones_ids || salida.organizaciones.map(m => m.id),
+                updateSalidaDto.idsn_ids || salida.idsn.map(m => m.id),
                 id
             );
         }
@@ -370,8 +399,8 @@ export class SalidasService {
                 subtipo_salida: updateSalidaDto.subtipo_salida,
                 tema: updateSalidaDto.tema,
                 descripcion: updateSalidaDto.descripcion,
-                fecha_inicio: updateSalidaDto.fecha_inicio ? new Date(updateSalidaDto.fecha_inicio) : undefined,
-                fecha_final: updateSalidaDto.fecha_final ? new Date(updateSalidaDto.fecha_final) : undefined,
+                fecha_inicio: updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : undefined,
+                fecha_final: updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : undefined,
                 jornada: updateSalidaDto.jornada,
 
                 // Transport Fields
@@ -391,6 +420,7 @@ export class SalidasService {
                 entidades: updateSalidaDto.entidades_ids ? { set: updateSalidaDto.entidades_ids.map(id => ({ id })) } : undefined,
                 eapb: updateSalidaDto.eapb_ids ? { set: updateSalidaDto.eapb_ids.map(id => ({ id })) } : undefined,
                 organizaciones: updateSalidaDto.organizaciones_ids ? { set: updateSalidaDto.organizaciones_ids.map(id => ({ id })) } : undefined,
+                idsn: updateSalidaDto.idsn_ids ? { set: updateSalidaDto.idsn_ids.map(id => ({ id })) } : undefined,
             },
             include: {
                 municipios: true,
@@ -398,6 +428,7 @@ export class SalidasService {
                 entidades: true,
                 eapb: true,
                 organizaciones: true,
+                idsn: true,
             }
         });
     }
@@ -463,12 +494,14 @@ export class SalidasService {
     }
 
     async getCatalogos() {
-        const [municipios, ips, entidades, eapb, organizaciones] = await Promise.all([
+        const [municipios, ips, entidades, eapb, organizaciones, idsn, areas] = await Promise.all([
             this.prisma.municipios.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.ips.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.entidades.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.eapb.findMany({ orderBy: { name: 'asc' } }),
-            this.prisma.organizaciones.findMany({ orderBy: { name: 'asc' } })
+            this.prisma.organizaciones.findMany({ orderBy: { name: 'asc' } }),
+            this.prisma.idsn.findMany({ orderBy: { name: 'asc' } }),
+            this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
         ]);
 
         return {
@@ -476,7 +509,9 @@ export class SalidasService {
             ips,
             entidades,
             eapb,
-            organizaciones
+            organizaciones,
+            idsn,
+            areas
         };
     }
 

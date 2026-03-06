@@ -59,6 +59,11 @@ export class CreateSalidaDto {
     @IsOptional()
     organizaciones_ids?: string[];
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    idsn_ids?: string[];
+
     // Transport Fields
     @IsString()
     @IsOptional()
@@ -74,4 +79,8 @@ export class CreateSalidaDto {
     @IsString()
     @IsOptional()
     lugar_evento_id?: string;
+
+    @IsString()
+    @IsOptional()
+    area_id?: string;
 }

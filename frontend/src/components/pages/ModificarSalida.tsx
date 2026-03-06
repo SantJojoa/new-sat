@@ -28,6 +28,7 @@ interface Salida {
     entidades: { name: string }[];
     eapb: { name: string }[];
     organizaciones: { name: string }[];
+    idsn: { name: string }[];
 }
 
 export default function ModificarSalida() {
@@ -207,6 +208,9 @@ export default function ModificarSalida() {
                                                     )}
                                                     {salida.organizaciones?.length > 0 && (
                                                         <div><span className="font-semibold text-primary">Organizaciones:</span> {formatList(salida.organizaciones)}</div>
+                                                    )}
+                                                    {salida.idsn?.length > 0 && (
+                                                        <div><span className="font-semibold text-primary">IDSN:</span> {formatList(salida.idsn)}</div>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 align-top">

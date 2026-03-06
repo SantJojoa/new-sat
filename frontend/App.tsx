@@ -9,6 +9,7 @@ import Subdirecciones from './src/components/pages/admin/Subdirecciones'
 import Areas from './src/components/pages/admin/Areas'
 import Users from './src/components/pages/admin/Users'
 import GestionarSalida from './src/components/pages/GestionarSalida'
+import CalendarioSalidas from './src/components/pages/CalendarioSalidas'
 function App() {
     return (
         <AuthProvider>
@@ -47,6 +48,12 @@ function App() {
                         <Route path="gestionar-salida/editar/:id" element={
                             <ProtectedRoute>
                                 <SolicitarSalida />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="calendario-salidas" element={
+                            <ProtectedRoute>
+                                <CalendarioSalidas />
                             </ProtectedRoute>
                         } />
 
