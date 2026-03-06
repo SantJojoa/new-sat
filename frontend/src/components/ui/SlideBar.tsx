@@ -25,10 +25,23 @@ export default function SlideBar() {
             href: p.modules.path
         })) || [];
 
+    // Inject Reportes manually
+    const extraNavItems = [
+        {
+            id: 'reportes-salidas-module',
+            name: 'reportes_salidas',
+            label: 'Reportes y Estadísticas',
+            icon: 'bar_chart',
+            href: '/reportes-salidas'
+        }
+    ];
+
+    const allCombinedNavItems = [...allNavItems, ...extraNavItems];
+
     // Define categories
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
-        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
+        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -42,7 +55,7 @@ export default function SlideBar() {
     };
 
     // Group items by category
-    const groupedItems = allNavItems.reduce((acc, item) => {
+    const groupedItems = allCombinedNavItems.reduce((acc, item) => {
         const category = getCategory(item.name);
         if (!acc[category]) acc[category] = [];
         acc[category].push(item);

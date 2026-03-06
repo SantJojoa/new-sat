@@ -32,7 +32,7 @@ export default function Dashboard() {
 
     // Categories Logic
     const categories: Record<string, string[]> = {
-        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
+        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -44,7 +44,23 @@ export default function Dashboard() {
         return 'Otras Funciones';
     };
 
-    const groupedModules = allowedModules.reduce((acc, perm) => {
+    const extraModules = [
+        {
+            id: 'reportes-salidas-module',
+            modules: {
+                id: 'reportes-salidas-module',
+                name: 'reportes_salidas',
+                description: 'Reportes y Estadísticas',
+                icon: 'bar_chart',
+                path: '/reportes-salidas',
+                is_active: true,
+                order: 99
+            },
+            can_view: true
+        }
+    ] as any;
+
+    const groupedModules = [...allowedModules, ...extraModules].reduce((acc, perm) => {
         const cat = getCategory(perm.modules.name);
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(perm);
@@ -78,7 +94,7 @@ export default function Dashboard() {
                     {/* Modules Grid */}
                     <div className="p-8">
                         <div className="max-w-6xl mx-auto space-y-12">
-                            {allowedModules.length > 0 ? (
+                            {[...allowedModules, ...extraModules].length > 0 ? (
                                 categoryOrder.map(category => {
                                     const modules = groupedModules[category];
                                     if (!modules || modules.length === 0) return null;
@@ -90,7 +106,7 @@ export default function Dashboard() {
                                                 <div className="h-px bg-zinc-200 flex-1"></div>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                                {modules.map((permission) => (
+                                                {modules.map((permission: any) => (
                                                     <Link
                                                         key={permission.id}
                                                         to={permission.modules.path || '#'}
@@ -103,7 +119,7 @@ export default function Dashboard() {
                                                         </div>
                                                         <div>
                                                             <h3 className="text-lg font-bold text-zinc-900 group-hover:text-primary transition-colors">
-                                                                {permission.modules.description || permission.modules.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                                                {permission.modules.description || permission.modules.name.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                                             </h3>
                                                             <p className="text-sm text-zinc-500 mt-1 line-clamp-2">
                                                                 {permission.modules.name === 'gestionar_salida' ? 'Administrar y auditar salidas' :

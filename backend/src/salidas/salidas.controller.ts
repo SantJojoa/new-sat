@@ -40,8 +40,13 @@ export class SalidasController {
     @Get('estadisticas')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
-    getEstadisticas(@Request() req) {
-        return this.salidasService.getEstadisticas(req.user);
+    getEstadisticas(
+        @Request() req,
+        @Query('month') month?: string,
+        @Query('area_id') areaId?: string
+    ) {
+        const monthNum = month ? parseInt(month, 10) : undefined;
+        return this.salidasService.getEstadisticas(req.user, monthNum, areaId);
     }
 
     @Get('catalogos')

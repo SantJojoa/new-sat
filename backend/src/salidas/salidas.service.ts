@@ -515,9 +515,94 @@ export class SalidasService {
         };
     }
 
-    async getEstadisticas(user: users) {
-        // Implement valid statistics later or return basics
-        return { message: "Calculando estadisticas..." };
+    async getEstadisticas(user: users, month?: number, areaId?: string) {
+        // Build the where clause for filters
+        const where: any = {};
+
+        if (areaId) {
+            where.area_id = areaId;
+        }
+
+        if (month) {
+            // month is 1-12. We need the first and last day of that month for the current year.
+            const year = new Date().getFullYear();
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+            where.fecha_inicio = {
+                gte: startDate,
+                lte: endDate
+            };
+        }
+
+        // Group by state
+        const byEstado = await this.prisma.salidas.groupBy({
+            by: ['estado'],
+            where,
+            _count: {
+                _all: true
+            }
+        });
+
+        // Group by solicitante
+        const bySolicitante = await this.prisma.salidas.groupBy({
+            by: ['solicitante_id'],
+            where,
+            _count: {
+                _all: true
+            },
+            orderBy: {
+                _count: {
+                    solicitante_id: 'desc'
+                }
+            },
+            take: 10
+        });
+
+        // Fetch user names for solicitantes
+        const usersIds = bySolicitante.map(s => s.solicitante_id);
+        const usersInfo = await this.prisma.users.findMany({
+            where: { id: { in: usersIds } },
+            select: { id: true, names: true, last_name: true }
+        });
+
+        const topSolicitantes = bySolicitante.map(s => {
+            const u = usersInfo.find(u => u.id === s.solicitante_id);
+            return {
+                name: u ? `${u.names} ${u.last_name}` : 'Desconocido',
+                count: s._count._all
+            }
+        });
+
+        // Group by area
+        const byArea = await this.prisma.salidas.groupBy({
+            by: ['area_id'],
+            where,
+            _count: {
+                _all: true
+            }
+        });
+
+        const areaIds = byArea.map(a => a.area_id);
+        const areaInfo = await this.prisma.areas.findMany({
+            where: { id: { in: areaIds } },
+            select: { id: true, name: true }
+        });
+
+        const salidasByArea = byArea.map(a => {
+            const i = areaInfo.find(area => area.id === a.area_id);
+            return {
+                name: i ? i.name : 'Desconocido',
+                count: a._count._all
+            }
+        });
+
+        return {
+            estados: byEstado.map(e => ({ name: e.estado, count: e._count._all })),
+            topSolicitantes,
+            areas: salidasByArea,
+            total: byEstado.reduce((acc, curr) => acc + curr._count._all, 0)
+        };
     }
 
     async bulkApprove(dto: BulkApproveSalidaDto, user: users) {

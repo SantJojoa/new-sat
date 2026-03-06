@@ -78,6 +78,15 @@ export const salidasService = {
         return response.data;
     },
 
+    getEstadisticas: async (month?: number, areaId?: string) => {
+        const params: any = {};
+        if (month) params.month = month;
+        if (areaId) params.area_id = areaId;
+
+        const response = await api.get('/salidas/estadisticas', { params });
+        return response.data;
+    },
+
     bulkApproveSalidas: async (ids: string[], observaciones: string) => {
         const response = await api.post('/salidas/bulk-approve', { ids, observaciones });
         return response.data;
