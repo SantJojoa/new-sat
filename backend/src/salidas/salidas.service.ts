@@ -9,6 +9,20 @@ import { users } from '@prisma/client';
 export class SalidasService {
     constructor(private prisma: PrismaService) { }
 
+    /**
+     * Parses a date string safely to avoid timezone shift.
+     * "2026-01-02" parsed with new Date() becomes UTC midnight,
+     * which in UTC-5 shifts to 2026-01-01. Using T12:00:00 (noon)
+     * ensures the date stays on the correct day.
+     */
+    private parseDateLocal(dateStr: string | Date): Date {
+        if (dateStr instanceof Date) return dateStr;
+        // If already has time component, parse as-is
+        if (dateStr.includes('T')) return new Date(dateStr);
+        // Append noon to avoid timezone day shift
+        return new Date(`${dateStr}T12:00:00`);
+    }
+
     private async checkConflicts(
         start: Date,
         end: Date,
@@ -51,6 +65,9 @@ export class SalidasService {
                     // Date overlap: (StartA <= EndB) and (EndA >= StartB)
                     fecha_inicio: { lte: end },
                     fecha_final: { gte: start },
+                },
+                {
+                    estado: 'aprobada'
                 },
                 jornadaFilter,
                 {
@@ -152,8 +169,8 @@ export class SalidasService {
 
         // Check Conflicts
         await this.checkConflicts(
-            new Date(createSalidaDto.fecha_inicio),
-            new Date(createSalidaDto.fecha_final),
+            this.parseDateLocal(createSalidaDto.fecha_inicio),
+            this.parseDateLocal(createSalidaDto.fecha_final),
             createSalidaDto.jornada,
             createSalidaDto.municipios_ids,
             createSalidaDto.ips_ids,
@@ -181,8 +198,8 @@ export class SalidasService {
                 subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema,
                 descripcion: createSalidaDto.descripcion,
-                fecha_inicio: new Date(createSalidaDto.fecha_inicio),
-                fecha_final: new Date(createSalidaDto.fecha_final),
+                fecha_inicio: this.parseDateLocal(createSalidaDto.fecha_inicio),
+                fecha_final: this.parseDateLocal(createSalidaDto.fecha_final),
                 jornada: createSalidaDto.jornada,
                 estado: 'pendiente',
                 solicitante_id: user.id,
@@ -350,8 +367,8 @@ export class SalidasService {
         if (updateSalidaDto.fecha_inicio || updateSalidaDto.municipios_ids) {
             // Re-check conflict if critical fields change
             await this.checkConflicts(
-                updateSalidaDto.fecha_inicio ? new Date(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
-                updateSalidaDto.fecha_final ? new Date(updateSalidaDto.fecha_final) : salida.fecha_final,
+                updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
+                updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
                 updateSalidaDto.jornada || salida.jornada,
                 updateSalidaDto.municipios_ids || salida.municipios.map(m => m.id),
                 updateSalidaDto.ips_ids || salida.ips.map(m => m.id),
@@ -382,8 +399,8 @@ export class SalidasService {
                 subtipo_salida: updateSalidaDto.subtipo_salida,
                 tema: updateSalidaDto.tema,
                 descripcion: updateSalidaDto.descripcion,
-                fecha_inicio: updateSalidaDto.fecha_inicio ? new Date(updateSalidaDto.fecha_inicio) : undefined,
-                fecha_final: updateSalidaDto.fecha_final ? new Date(updateSalidaDto.fecha_final) : undefined,
+                fecha_inicio: updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : undefined,
+                fecha_final: updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : undefined,
                 jornada: updateSalidaDto.jornada,
 
                 // Transport Fields
