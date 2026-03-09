@@ -1,10 +1,13 @@
 import SlideBar from "../ui/SlideBar"
 import MultiSelectModal from "../ui/MultiSelectModal"
 import { useEffect, useState } from "react"
+import { AxiosError } from "axios"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
 import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
+import type { ApiErrorPayload } from "../../types/api"
+import type { CreateSalidaPayload } from "../../types/salidas"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -46,7 +49,7 @@ export default function SolicitarSalida() {
 
     // Modal states (replaces alerts)
     const [confirmModal, setConfirmModal] = useState(false);
-    const [pendingPayload, setPendingPayload] = useState<any>(null);
+    const [pendingPayload, setPendingPayload] = useState<CreateSalidaPayload | null>(null);
     const [feedbackModal, setFeedbackModal] = useState<{
         type: 'success' | 'error' | null;
         title: string;
@@ -160,12 +163,12 @@ export default function SolicitarSalida() {
                 });
 
                 // Map relations
-                setSelectedMunicipios(salida.municipios.map((m: any) => ({ id: m.id, name: m.name })));
-                setSelectedIPS(salida.ips.map((i: any) => ({ id: i.id, name: i.name })));
-                setSelectedEntidades(salida.entidades.map((e: any) => ({ id: e.id, name: e.name })));
-                setSelectedEAPB(salida.eapb.map((e: any) => ({ id: e.id, name: e.name })));
-                setSelectedOrganizaciones(salida.organizaciones.map((o: any) => ({ id: o.id, name: o.name })));
-                setSelectedIDSN(salida.idsn.map((i: any) => ({ id: i.id, name: i.name })));
+                setSelectedMunicipios(salida.municipios.map((m) => ({ id: m.id, name: m.name })));
+                setSelectedIPS(salida.ips.map((i) => ({ id: i.id, name: i.name })));
+                setSelectedEntidades(salida.entidades.map((e) => ({ id: e.id, name: e.name })));
+                setSelectedEAPB(salida.eapb.map((e) => ({ id: e.id, name: e.name })));
+                setSelectedOrganizaciones(salida.organizaciones.map((o) => ({ id: o.id, name: o.name })));
+                setSelectedIDSN(salida.idsn.map((i) => ({ id: i.id, name: i.name })));
 
                 // Subtipos (string split)
                 if (salida.subtipo_salida) {
@@ -378,13 +381,14 @@ export default function SolicitarSalida() {
                 setNuevoResponsable('');
                 setSelectedLugarEvento(null);
             }
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload & { conflicts?: ConflictItem[] }>;
             console.error("Error saving salida:", error);
             // Check if it's a conflict with structured data
-            if (error.response?.status === 409 && error.response?.data?.conflicts) {
-                setConflictModal(error.response.data.conflicts);
+            if (apiError.response?.status === 409 && apiError.response?.data?.conflicts) {
+                setConflictModal(apiError.response.data.conflicts);
             } else {
-                const msg = error.response?.data?.message || "Error al guardar la solicitud";
+                const msg = apiError.response?.data?.message || "Error al guardar la solicitud";
                 setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
             }
         } finally {

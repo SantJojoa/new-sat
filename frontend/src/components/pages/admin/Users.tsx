@@ -74,10 +74,10 @@ export default function Users() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const payload = { ...formData };
+            const payload: Partial<typeof formData> = { ...formData };
             if (editingId) {
                 // Remove password if empty during edit
-                if (!payload.password) delete (payload as any).password;
+                if (!payload.password) delete payload.password;
 
                 await api.patch(`/users/${editingId}`, payload);
             } else {

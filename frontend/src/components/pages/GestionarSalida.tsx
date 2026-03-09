@@ -1,56 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
 import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-
-interface Salida {
-    id: string;
-    codigo: string;
-    tipo_salida: string;
-    subtipo_salida: string;
-    fecha_inicio: string;
-    fecha_final: string;
-    jornada: string;
-    estado: string;
-    solicitante: {
-        names: string;
-        email: string;
-    };
-    areas: {
-        id?: string;
-        name: string;
-        subdirecciones?: {
-            name: string;
-        };
-    };
-    municipios: { name: string }[];
-    municipios_convocados?: string;
-    lugar_evento?: { name: string };
-    // New fields for details view
-    tema: string;
-    descripcion: string;
-    transporte_medio?: string;
-    transporte_responsables?: string;
-    instituciones_convocadas?: number;
-    ips: { name: string }[];
-    entidades: { name: string }[];
-    eapb: { name: string }[];
-    organizaciones: { name: string }[];
-    idsn: { name: string }[];
-    aprobador?: {
-        names: string;
-        email: string;
-    };
-    observaciones_aprobacion?: string;
-    motivo_rechazo?: string;
-}
+import type { ApiErrorPayload } from '../../types/api';
+import type { BulkActionResult, SalidaRecord } from '../../types/salidas';
 
 export default function GestionarSalida() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [salidas, setSalidas] = useState<Salida[]>([]);
+    const [salidas, setSalidas] = useState<SalidaRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewAll, setViewAll] = useState(false);
 
@@ -78,7 +39,7 @@ export default function GestionarSalida() {
 
     const [detailsModal, setDetailsModal] = useState<{
         isOpen: boolean;
-        salida: Salida | null;
+        salida: SalidaRecord | null;
     }>({ isOpen: false, salida: null });
 
     const [comment, setComment] = useState('');
@@ -103,7 +64,7 @@ export default function GestionarSalida() {
         p => p.modules.name === 'gestionar_salida' && p.can_approve
     ) || ['superadmin', 'admin_subdireccion'].includes(user?.user_type?.name || '');
 
-    const canBulkSelect = (salida: Salida) => {
+    const canBulkSelect = (salida: SalidaRecord) => {
         // Cannot select already approved or rejected salidas
         if (salida.estado === 'aprobada' || salida.estado === 'rechazada') return false;
         // Must belong to user's area/subdirección (reuse checkOwnership)
@@ -134,7 +95,7 @@ export default function GestionarSalida() {
         setIsBulkSubmitting(true);
         try {
             const ids = Array.from(selectedIds);
-            let result: any;
+            let result: BulkActionResult;
             if (bulkModal.type === 'approve') {
                 result = await salidasService.bulkApproveSalidas(ids, bulkComment);
             } else {
@@ -156,26 +117,27 @@ export default function GestionarSalida() {
             setBulkComment('');
             setSelectedIds(new Set());
             fetchSalidas();
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload>;
             console.error('Error bulk action:', error);
-            setFeedbackModal({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Error al procesar' });
+            setFeedbackModal({ type: 'error', title: 'Error', message: typeof apiError.response?.data?.message === 'string' ? apiError.response.data.message : 'Error al procesar' });
         } finally {
             setIsBulkSubmitting(false);
         }
     };
 
-    const fetchSalidas = async () => {
+    const fetchSalidas = useCallback(async () => {
         setLoading(true);
         try {
             const data = await salidasService.getSalidas(viewAll);
             setSalidas(data);
 
             // Extract unique values for filters
-            const areas = Array.from(new Set(data.map((s: Salida) => s.areas?.name).filter(Boolean))) as string[];
-            const subdirecciones = Array.from(new Set(data.map((s: Salida) => s.areas?.subdirecciones?.name).filter(Boolean))) as string[];
-            const tipos = Array.from(new Set(data.map((s: Salida) => s.tipo_salida).filter(Boolean))) as string[];
-            const subtipos = Array.from(new Set(data.map((s: Salida) => s.subtipo_salida).filter(Boolean))) as string[];
-            const municipios = Array.from(new Set(data.map((s: Salida) => s.lugar_evento?.name).filter(Boolean))) as string[];
+            const areas = Array.from(new Set(data.map((s) => s.areas?.name).filter(Boolean))) as string[];
+            const subdirecciones = Array.from(new Set(data.map((s) => s.areas?.subdirecciones?.name).filter(Boolean))) as string[];
+            const tipos = Array.from(new Set(data.map((s) => s.tipo_salida).filter(Boolean))) as string[];
+            const subtipos = Array.from(new Set(data.map((s) => s.subtipo_salida).filter(Boolean))) as string[];
+            const municipios = Array.from(new Set(data.map((s) => s.lugar_evento?.name).filter(Boolean))) as string[];
 
             setUniqueAreas(areas);
             setUniqueSubdirecciones(subdirecciones);
@@ -187,11 +149,11 @@ export default function GestionarSalida() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [viewAll]);
 
     useEffect(() => {
-        fetchSalidas();
-    }, [viewAll]);
+        void fetchSalidas();
+    }, [fetchSalidas]);
 
     // Close modals on Escape key
     useEffect(() => {
@@ -241,15 +203,16 @@ export default function GestionarSalida() {
             setActionModal({ type: null, salidaId: null });
             setComment('');
             fetchSalidas();
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload>;
             console.error('Error processing action:', error);
-            setFeedbackModal({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Error al procesar la solicitud' });
+            setFeedbackModal({ type: 'error', title: 'Error', message: typeof apiError.response?.data?.message === 'string' ? apiError.response.data.message : 'Error al procesar la solicitud' });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const checkOwnership = (salida: Salida) => {
+    const checkOwnership = (salida: SalidaRecord) => {
         // If superadmin, always true
         if (user?.user_type?.name === 'superadmin') return true;
         // If user has 'admin_area' or 'admin_subdireccion', they should only act on their area/subdirection
@@ -274,7 +237,7 @@ export default function GestionarSalida() {
         return true;
     };
 
-    const canApprove = (salida: Salida) => {
+    const canApprove = (salida: SalidaRecord) => {
         if (!checkOwnership(salida)) return false;
         const isSuperAdmin = user?.user_type?.name === 'superadmin';
         const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_approve);
@@ -288,14 +251,14 @@ export default function GestionarSalida() {
         return salida.estado !== 'aprobada' && salida.estado !== 'rechazada';
     };
 
-    const canEdit = (salida: Salida) => {
+    const canEdit = (salida: SalidaRecord) => {
         if (!checkOwnership(salida)) return false;
         const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_edit);
         // Edit usually restricted to pending for data integrity
         return hasPerm && salida.estado === 'pendiente';
     };
 
-    const canDelete = (salida: Salida) => {
+    const canDelete = (salida: SalidaRecord) => {
         if (!checkOwnership(salida)) return false;
         const isSuperAdmin = user?.user_type?.name === 'superadmin';
         const hasPerm = user?.user_type?.permissions?.some(p => p.modules.name === 'gestionar_salida' && p.can_delete);
@@ -328,15 +291,11 @@ export default function GestionarSalida() {
 
         const matchesMunicipio = filterMunicipio ? s.lugar_evento?.name === filterMunicipio : true;
 
-        let matchesDate = true;
-        if (filterDateStart) {
-            // Check if start date matches the filter date (ignoring time)
-            // Backend date is usually ISO string with time info or just date string.
-            // Assuming s.fecha_inicio is ISO string. 
-            // We compare YYYY-MM-DD parts.
-            const salidaDate = new Date(s.fecha_inicio).toISOString().split('T')[0];
-            matchesDate = salidaDate === filterDateStart;
-        }
+        const salidaStartDate = new Date(s.fecha_inicio).toISOString().split('T')[0];
+        const salidaEndDate = new Date(s.fecha_final).toISOString().split('T')[0];
+        const matchesStartDate = filterDateStart ? salidaStartDate >= filterDateStart : true;
+        const matchesEndDate = filterDateEnd ? salidaEndDate <= filterDateEnd : true;
+        const matchesDate = matchesStartDate && matchesEndDate;
 
         return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate;
     });

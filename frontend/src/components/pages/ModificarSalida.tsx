@@ -1,39 +1,15 @@
 import { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
 import { Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-
-interface Salida {
-    id: string;
-    codigo: string;
-    tipo_salida: string;
-    subtipo_salida: string;
-    fecha_inicio: string;
-    fecha_final: string;
-    jornada: string;
-    estado: string;
-    solicitante: {
-        names: string;
-        email: string;
-    };
-    areas: {
-        name: string;
-        subdirecciones?: {
-            name: string;
-        }
-    };
-    municipios: { name: string }[];
-    ips: { name: string }[];
-    entidades: { name: string }[];
-    eapb: { name: string }[];
-    organizaciones: { name: string }[];
-    idsn: { name: string }[];
-}
+import type { ApiErrorPayload } from '../../types/api';
+import type { SalidaRecord } from '../../types/salidas';
 
 export default function ModificarSalida() {
     const { user } = useAuth();
-    const [salidas, setSalidas] = useState<Salida[]>([]);
+    const [salidas, setSalidas] = useState<SalidaRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSubdireccion, setSelectedSubdireccion] = useState('');
@@ -78,15 +54,16 @@ export default function ModificarSalida() {
             setActionModal({ type: null, salidaId: null });
             setComment('');
             fetchSalidas();
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload>;
             console.error('Error processing action:', error);
-            alert(`Error: ${error.response?.data?.message || 'Error al procesar la solicitud'}`);
+            alert(`Error: ${apiError.response?.data?.message || 'Error al procesar la solicitud'}`);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const canApprove = (salida: Salida) => {
+    const canApprove = (salida: SalidaRecord) => {
         return salida.estado === 'pendiente' && user?.user_type?.permissions?.some(p => p.modules.name === 'modificar_salida' && p.can_approve);
     };
 

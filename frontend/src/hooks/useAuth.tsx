@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, type ReactNode } from 'react';
 import axios from 'axios';
+import type { AuthUser } from '../types/auth';
 
 // Configurar axios
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -24,58 +25,20 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Interfaces
-interface User {
-    id: string;
-    username: string;
-    names: string;
-    last_name: string;
-    email: string;
-    user_type_id: string;
-    area_id?: string;
-    user_type?: {
-        id: string;
-        name: string;
-        description: string;
-        permissions?: {
-            id: string;
-            module_id: string;
-            can_view: boolean;
-            can_create: boolean;
-            can_edit: boolean;
-            can_delete: boolean;
-            can_approve: boolean;
-            modules: {
-                id: string;
-                name: string;
-                path: string;
-                icon: string;
-                description: string;
-                order?: number;
-                is_active?: boolean;
-            }
-        }[];
-    };
-    area?: {
-        id: string;
-        name: string;
-    };
-}
-
 interface AuthContextType {
-    user: User | null;
+    user: AuthUser | null;
     token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
-    updateUser: (userData: Partial<User>) => void;
+    updateUser: (userData: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -92,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // por ahora confiamos en el localStorage hasta que una petición falle con 401.
                     setToken(storedToken);
                     setUser(JSON.parse(storedUser));
-                } catch (error) {
+                } catch {
                     // Error al parsear o validar
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
@@ -142,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.href = '/login';
     };
 
-    const updateUser = (userData: Partial<User>) => {
+    const updateUser = (userData: Partial<AuthUser>) => {
         if (user) {
             const updatedUser = { ...user, ...userData };
             setUser(updatedUser);
