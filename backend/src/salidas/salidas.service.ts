@@ -67,7 +67,7 @@ export class SalidasService {
                     fecha_final: { gte: start },
                 },
                 {
-                    estado: 'aprobada'
+                    estado: { in: ['aprobada', 'pendiente'] }
                 },
                 jornadaFilter,
                 {
@@ -92,7 +92,12 @@ export class SalidasService {
             include: {
                 solicitante: true,
                 areas: true,
-                municipios: true
+                municipios: true,
+                ips: true,
+                entidades: true,
+                eapb: true,
+                organizaciones: true,
+                idsn: true
             }
         });
 
@@ -109,12 +114,27 @@ export class SalidasService {
                     area: c.areas.name,
                     solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,
                     municipios: c.municipios.map(m => m.name),
+                    ips: c.ips.map(m => m.name),
+                    entidades: c.entidades.map(m => m.name),
+                    eapb: c.eapb.map(m => m.name),
+                    organizaciones: c.organizaciones.map(m => m.name),
+                    idsn: c.idsn.map(m => m.name),
                 }))
             });
         }
     }
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
+        // Validación de fecha pasada
+        // Usamos la fecha local asegurando el formato YYYY-MM-DD
+        const today = new Date();
+        // Restar el offset de zona horaria para obtener la fecha local correcta en ISO
+        const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+        if (createSalidaDto.fecha_inicio < todayStr) {
+            throw new BadRequestException('No se puede programar una salida en una fecha anterior a la actual');
+        }
+
         const targetAreaId = createSalidaDto.area_id || user.area_id;
 
         if (!targetAreaId) {
@@ -202,7 +222,7 @@ export class SalidasService {
                 fecha_final: this.parseDateLocal(createSalidaDto.fecha_final),
                 jornada: createSalidaDto.jornada,
                 estado: 'pendiente',
-                solicitante_id: user.id,
+                solicitante_id: createSalidaDto.solicitante_id || user.id,
                 area_id: targetAreaId,
 
                 // Transport Fields
@@ -493,7 +513,7 @@ export class SalidasService {
         });
     }
 
-    async getCatalogos() {
+    async getCatalogos(user?: users) {
         const [municipios, ips, entidades, eapb, organizaciones, idsn, areas] = await Promise.all([
             this.prisma.municipios.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.ips.findMany({ orderBy: { name: 'asc' } }),
@@ -504,6 +524,45 @@ export class SalidasService {
             this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
         ]);
 
+        let lideres: { id: string, name: string, area_id?: string }[] | undefined = undefined;
+
+        if (user) {
+            const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+            if (userType?.name === 'admin_subdireccion' && user.area_id) {
+                const userArea = await this.prisma.areas.findUnique({
+                    where: { id: user.area_id },
+                    select: { subdireccion_id: true }
+                });
+
+                if (userArea?.subdireccion_id) {
+                    const liderRole = await this.prisma.user_types.findUnique({ where: { name: 'lider' } });
+                    if (liderRole) {
+                        const lideresRaw = await this.prisma.users.findMany({
+                            where: {
+                                user_type_id: liderRole.id,
+                                is_active: true,
+                                areas: { subdireccion_id: userArea.subdireccion_id }
+                            },
+                            select: { id: true, names: true, last_name: true, area_id: true }
+                        });
+                        lideres = lideresRaw.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}`, area_id: l.area_id || undefined }));
+                    }
+                }
+            } else if (userType?.name === 'superadmin') {
+                const liderRole = await this.prisma.user_types.findUnique({ where: { name: 'lider' } });
+                if (liderRole) {
+                    const lideresRaw = await this.prisma.users.findMany({
+                        where: {
+                            user_type_id: liderRole.id,
+                            is_active: true
+                        },
+                        select: { id: true, names: true, last_name: true, area_id: true }
+                    });
+                    lideres = lideresRaw.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}`, area_id: l.area_id || undefined }));
+                }
+            }
+        }
+
         return {
             municipios,
             ips,
@@ -511,7 +570,8 @@ export class SalidasService {
             eapb,
             organizaciones,
             idsn,
-            areas
+            areas,
+            ...(lideres ? { lideres } : {})
         };
     }
 

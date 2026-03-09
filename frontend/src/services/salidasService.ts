@@ -3,6 +3,7 @@ import api from './api';
 export interface CatalogoItem {
     id: string;
     name: string;
+    area_id?: string;
 }
 
 export interface CatalogosResponse {
@@ -13,6 +14,7 @@ export interface CatalogosResponse {
     organizaciones: CatalogoItem[];
     idsn: CatalogoItem[];
     areas: CatalogoItem[];
+    lideres?: CatalogoItem[];
 }
 
 export interface CreateSalidaPayload {
@@ -35,6 +37,7 @@ export interface CreateSalidaPayload {
     instituciones_convocadas?: number;
     lugar_evento_id?: string;
     area_id?: string;
+    solicitante_id?: string;
 }
 
 export const salidasService = {

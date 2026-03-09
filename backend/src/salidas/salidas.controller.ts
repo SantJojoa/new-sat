@@ -52,8 +52,8 @@ export class SalidasController {
     @Get('catalogos')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
-    getCatalogos() {
-        return this.salidasService.getCatalogos();
+    getCatalogos(@Request() req: any) {
+        return this.salidasService.getCatalogos(req.user);
     }
 
     @Post('bulk-approve')

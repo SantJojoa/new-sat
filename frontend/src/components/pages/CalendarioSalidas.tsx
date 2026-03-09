@@ -32,10 +32,12 @@ interface Salida {
     transporte_medio?: string;
     transporte_responsables?: string;
     instituciones_convocadas?: number;
+    municipios_convocados?: string;
     ips: { name: string }[];
     entidades: { name: string }[];
     eapb: { name: string }[];
     organizaciones: { name: string }[];
+    idsn?: { name: string }[];
     aprobador?: {
         names: string;
         email: string;
@@ -336,6 +338,119 @@ export default function CalendarioSalidas() {
                                         </p>
                                     </div>
                                 )}
+
+                                {/* Transporte y Logística */}
+                                {(selectedSalida.transporte_medio || selectedSalida.transporte_responsables) && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-4">
+                                        {selectedSalida.transporte_medio && (
+                                            <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                                                <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Transporte/Medio</span>
+                                                <p className="text-zinc-900 font-medium mt-1">{selectedSalida.transporte_medio}</p>
+                                            </div>
+                                        )}
+                                        {selectedSalida.transporte_responsables && (
+                                            <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                                                <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Responsables Transporte</span>
+                                                <p className="text-zinc-900 font-medium mt-1">{selectedSalida.transporte_responsables}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Participantes e Instituciones */}
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-bold text-zinc-900 border-b pb-2">Participantes / Convocados</h4>
+
+                                    {/* Municipios */}
+                                    {selectedSalida.municipios?.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">Municipios ({selectedSalida.municipios.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.municipios.map((m, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100">{m.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* IPS */}
+                                    {selectedSalida.ips?.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">IPS ({selectedSalida.ips.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.ips.map((item, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded-md border border-indigo-100">{item.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* EAPB */}
+                                    {selectedSalida.eapb?.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">EAPB ({selectedSalida.eapb.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.eapb.map((item, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md border border-purple-100">{item.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Entidades */}
+                                    {selectedSalida.entidades?.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">Otras Entidades ({selectedSalida.entidades.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.entidades.map((item, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded-md border border-teal-100">{item.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Organizaciones */}
+                                    {selectedSalida.organizaciones?.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">Org. Sociales/Comunitarias ({selectedSalida.organizaciones.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.organizaciones.map((item, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-md border border-orange-100">{item.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* IDSN */}
+                                    {selectedSalida.idsn && selectedSalida.idsn.length > 0 && (
+                                        <div>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase">IDSN ({selectedSalida.idsn.length})</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {selectedSalida.idsn.map((item, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-rose-50 text-rose-700 text-xs rounded-md border border-rose-100">{item.name}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Otras Instituciones/Municipios Convocados */}
+                                    {(selectedSalida.instituciones_convocadas != null && selectedSalida.instituciones_convocadas > 0 || selectedSalida.municipios_convocados) && (
+                                        <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100 mt-2">
+                                            {selectedSalida.instituciones_convocadas != null && selectedSalida.instituciones_convocadas > 0 && (
+                                                <div className="mb-2">
+                                                    <span className="text-xs font-semibold text-zinc-500 uppercase">Instituciones Convocadas (Cantidad)</span>
+                                                    <p className="text-sm font-medium mt-1 text-zinc-800">{selectedSalida.instituciones_convocadas}</p>
+                                                </div>
+                                            )}
+                                            {selectedSalida.municipios_convocados && (
+                                                <div>
+                                                    <span className="text-xs font-semibold text-zinc-500 uppercase">Municipios Convocados</span>
+                                                    <p className="text-sm font-medium mt-1 text-zinc-800">{selectedSalida.municipios_convocados}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Approval/Rejection info */}
                                 {selectedSalida.aprobador && (
