@@ -94,6 +94,7 @@ export interface EstadisticasData {
     topSolicitantes: { name: string; count: number }[];
     areas: { name: string; count: number }[];
     total: number;
+    items?: SalidaRecord[];
 }
 
 export interface BulkActionResult {

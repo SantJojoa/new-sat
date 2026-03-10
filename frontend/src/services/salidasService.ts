@@ -50,11 +50,11 @@ export const salidasService = {
         return response.data;
     },
 
-    getEstadisticas: async (month?: number, areaId?: string, year?: number, estado?: string, jornada?: string): Promise<EstadisticasData> => {
+    getEstadisticas: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string): Promise<EstadisticasData> => {
         const params: Record<string, number | string> = {};
-        if (month) params.month = month;
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
         if (areaId) params.area_id = areaId;
-        if (year) params.year = year;
         if (estado) params.estado = estado;
         if (jornada) params.jornada = jornada;
 

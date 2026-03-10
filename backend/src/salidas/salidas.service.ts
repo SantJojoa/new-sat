@@ -575,7 +575,7 @@ export class SalidasService {
         };
     }
 
-    async getEstadisticas(user: users, month?: number, areaId?: string, year?: number, estado?: string, jornada?: string) {
+    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
         // Build the where clause for filters
         const where: any = {};
 
@@ -591,26 +591,18 @@ export class SalidasService {
             where.jornada = jornada;
         }
 
-        // Determine the year to use: provided year or current year
-        const targetYear = year || new Date().getFullYear();
-
-        if (month) {
-            // month is 1-12. We need the first and last day of that month for the target year.
-            const startDate = new Date(targetYear, month - 1, 1);
-            const endDate = new Date(targetYear, month, 0, 23, 59, 59, 999);
-
+        if (startDate && endDate) {
             where.fecha_inicio = {
-                gte: startDate,
-                lte: endDate
+                gte: new Date(`${startDate}T00:00:00`),
+                lte: new Date(`${endDate}T23:59:59.999`)
             };
-        } else if (year) {
-            // If only year is provided, filter by the entire year
-            const startDate = new Date(targetYear, 0, 1);
-            const endDate = new Date(targetYear, 11, 31, 23, 59, 59, 999);
-
+        } else if (startDate) {
             where.fecha_inicio = {
-                gte: startDate,
-                lte: endDate
+                gte: new Date(`${startDate}T00:00:00`)
+            };
+        } else if (endDate) {
+            where.fecha_inicio = {
+                lte: new Date(`${endDate}T23:59:59.999`)
             };
         }
 
@@ -676,11 +668,30 @@ export class SalidasService {
             }
         });
 
+        // Get the actual items for the report, sorted by date desc
+        const items = await this.prisma.salidas.findMany({
+            where,
+            include: {
+                municipios: true,
+                ips: true,
+                entidades: true,
+                eapb: true,
+                organizaciones: true,
+                idsn: true,
+                solicitante: { select: { id: true, names: true, last_name: true, email: true } },
+                aprobador: { select: { id: true, names: true, last_name: true, email: true } },
+                areas: { select: { id: true, name: true, subdireccion_id: true } },
+                lugar_evento: true
+            },
+            orderBy: { fecha_inicio: 'desc' }
+        });
+
         return {
             estados: byEstado.map(e => ({ name: e.estado, count: e._count._all })),
             topSolicitantes,
             areas: salidasByArea,
-            total: byEstado.reduce((acc, curr) => acc + curr._count._all, 0)
+            total: byEstado.reduce((acc, curr) => acc + curr._count._all, 0),
+            items
         };
     }
 

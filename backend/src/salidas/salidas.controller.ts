@@ -42,15 +42,13 @@ export class SalidasController {
     @RequirePermissions('solicitar_salida', 'view')
     getEstadisticas(
         @Request() req,
-        @Query('month') month?: string,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
-        @Query('year') year?: string,
         @Query('estado') estado?: string,
         @Query('jornada') jornada?: string
     ) {
-        const monthNum = month ? parseInt(month, 10) : undefined;
-        const yearNum = year ? parseInt(year, 10) : undefined;
-        return this.salidasService.getEstadisticas(req.user, monthNum, areaId, yearNum, estado, jornada);
+        return this.salidasService.getEstadisticas(req.user, startDate, endDate, areaId, estado, jornada);
     }
 
     @Get('catalogos')

@@ -9,20 +9,9 @@ import SlideBar from '../ui/SlideBar';
 import type { ApiErrorPayload } from '../../types/api';
 import type { EstadisticasData } from '../../types/salidas';
 
-const MONTHS = [
-    { value: 1, label: 'Enero' },
-    { value: 2, label: 'Febrero' },
-    { value: 3, label: 'Marzo' },
-    { value: 4, label: 'Abril' },
-    { value: 5, label: 'Mayo' },
-    { value: 6, label: 'Junio' },
-    { value: 7, label: 'Julio' },
-    { value: 8, label: 'Agosto' },
-    { value: 9, label: 'Septiembre' },
-    { value: 10, label: 'Octubre' },
-    { value: 11, label: 'Noviembre' },
-    { value: 12, label: 'Diciembre' },
-];
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
 
 const ESTADOS = [
     { value: 'pendiente', label: 'Pendiente' },
@@ -36,10 +25,6 @@ const JORNADAS = [
     { value: 'Completa', label: 'Completa' },
 ];
 
-// Generar últimos 5 años
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 5 }, (_, i) => currentYear - i);
-
 // Paleta de colores más moderna y vibrante
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -50,9 +35,9 @@ export default function ReportesSalidas() {
     const [areas, setAreas] = useState<{ id: string, name: string }[]>([]);
 
     // Estados de filtros
-    const [selectedMonth, setSelectedMonth] = useState<number | ''>('');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
     const [selectedArea, setSelectedArea] = useState<string>('');
-    const [selectedYear, setSelectedYear] = useState<number | ''>(currentYear);
     const [selectedEstado, setSelectedEstado] = useState<string>('');
     const [selectedJornada, setSelectedJornada] = useState<string>('');
 
@@ -72,13 +57,13 @@ export default function ReportesSalidas() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const month = selectedMonth !== '' ? Number(selectedMonth) : undefined;
+            const start = startDate || undefined;
+            const end = endDate || undefined;
             const areaId = selectedArea || undefined;
-            const year = selectedYear !== '' ? Number(selectedYear) : undefined;
             const estado = selectedEstado || undefined;
             const jornada = selectedJornada || undefined;
 
-            const res = await salidasService.getEstadisticas(month, areaId, year, estado, jornada);
+            const res = await salidasService.getEstadisticas(start, end, areaId, estado, jornada);
             setData(res);
             setError(null);
         } catch (err) {
@@ -92,12 +77,12 @@ export default function ReportesSalidas() {
 
     useEffect(() => {
         void fetchData();
-    }, [selectedMonth, selectedArea, selectedYear, selectedEstado, selectedJornada]);
+    }, [startDate, endDate, selectedArea, selectedEstado, selectedJornada]);
 
     const handleClearFilters = () => {
-        setSelectedMonth('');
+        setStartDate('');
+        setEndDate('');
         setSelectedArea('');
-        setSelectedYear(currentYear);
         setSelectedEstado('');
         setSelectedJornada('');
     };
@@ -132,9 +117,85 @@ export default function ReportesSalidas() {
                         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
 
                             {/* Header Section */}
-                            <div className="flex flex-col gap-2">
-                                <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Reportes y Estadísticas</h1>
-                                <p className="text-zinc-500">Analiza el rendimiento y distribución de las salidas en el sistema.</p>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Reportes y Estadísticas</h1>
+                                    <p className="text-zinc-500">Analiza el rendimiento y distribución de las salidas en el sistema.</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (!data?.items || data.items.length === 0) return;
+
+                                        const doc = new jsPDF({ orientation: 'landscape' });
+
+                                        // Header
+                                        doc.setFontSize(20);
+                                        doc.text('Reporte de Salidas', 14, 22);
+                                        doc.setFontSize(11);
+                                        doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 30);
+
+                                        // Fechas
+                                        let filterText = 'Intervalo: ';
+                                        if (startDate && endDate) {
+                                            filterText += `${startDate} al ${endDate}`;
+                                        } else if (startDate) {
+                                            filterText += `Desde ${startDate}`;
+                                        } else if (endDate) {
+                                            filterText += `Hasta ${endDate}`;
+                                        } else {
+                                            filterText += 'Histórico completo';
+                                        }
+                                        doc.text(filterText, 14, 36);
+
+                                        // Stats box
+                                        doc.text(`Total Resultados: ${data.total}`, 14, 42);
+
+                                        // Table
+                                        const tableColumn = ["Código", "Fecha Inicio", "Fecha Fin", "Jornada", "Área", "Solicitante", "Estado", "Tema", "Lugar/Destino", "Convocados"];
+                                        const tableRows: any[] = [];
+
+                                        data.items.forEach(item => {
+                                            const parts = [];
+                                            if (item.ips?.length) parts.push(`IPS: ${item.ips.map((x: any) => x.name).join(', ')}`);
+                                            if (item.entidades?.length) parts.push(`ENT: ${item.entidades.map((x: any) => x.name).join(', ')}`);
+                                            if (item.eapb?.length) parts.push(`EAPB: ${item.eapb.map((x: any) => x.name).join(', ')}`);
+                                            if (item.organizaciones?.length) parts.push(`ORG: ${item.organizaciones.map((x: any) => x.name).join(', ')}`);
+                                            if (item.idsn?.length) parts.push(`IDSN: ${item.idsn.map((x: any) => x.name).join(', ')}`);
+                                            if (item.municipios_convocados) parts.push(`MUN: ${item.municipios_convocados}`);
+
+                                            const convocadosStr = parts.length > 0 ? parts.join('\n') : 'Ninguno';
+
+                                            const itemData = [
+                                                item.codigo,
+                                                format(new Date(item.fecha_inicio), 'dd/MM/yyyy'),
+                                                format(new Date(item.fecha_final), 'dd/MM/yyyy'),
+                                                item.jornada,
+                                                item.areas?.name || 'N/A',
+                                                item.solicitante ? `${item.solicitante.names} ${item.solicitante.email}` : 'N/A',
+                                                item.estado.toUpperCase(),
+                                                item.tema,
+                                                item.lugar_evento?.name || item.municipios?.map((m: any) => m.name).join(', ') || 'N/A',
+                                                convocadosStr
+                                            ];
+                                            tableRows.push(itemData);
+                                        });
+
+                                        autoTable(doc, {
+                                            head: [tableColumn],
+                                            body: tableRows,
+                                            startY: 50,
+                                            styles: { fontSize: 8 },
+                                            headStyles: { fillColor: [99, 102, 241] } // Primary color
+                                        });
+
+                                        doc.save(`Reporte_Salidas_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+                                    }}
+                                    disabled={!data?.items || data.items.length === 0}
+                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm whitespace-nowrap"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">file_download</span>
+                                    Descargar PDF
+                                </button>
                             </div>
 
                             {/* Filters Section */}
@@ -155,36 +216,26 @@ export default function ReportesSalidas() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Año</label>
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Fecha Inicial</label>
                                         <div className="relative">
-                                            <select
-                                                value={selectedYear}
-                                                onChange={(e) => setSelectedYear(e.target.value === '' ? '' : Number(e.target.value))}
-                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
-                                            >
-                                                <option value="">Todos los años</option>
-                                                {YEARS.map((year) => (
-                                                    <option key={year} value={year}>{year}</option>
-                                                ))}
-                                            </select>
-                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                            <input
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                className="w-full h-10 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium"
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Mes</label>
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Fecha Final</label>
                                         <div className="relative">
-                                            <select
-                                                value={selectedMonth}
-                                                onChange={(e) => setSelectedMonth(e.target.value === '' ? '' : Number(e.target.value))}
-                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
-                                            >
-                                                <option value="">Todos los meses</option>
-                                                {MONTHS.map((month) => (
-                                                    <option key={month.value} value={month.value}>{month.label}</option>
-                                                ))}
-                                            </select>
-                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                            <input
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                className="w-full h-10 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium"
+                                            />
                                         </div>
                                     </div>
 
