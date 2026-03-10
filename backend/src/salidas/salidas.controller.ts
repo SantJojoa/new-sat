@@ -40,15 +40,22 @@ export class SalidasController {
     @Get('estadisticas')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
-    getEstadisticas(@Request() req) {
-        return this.salidasService.getEstadisticas(req.user);
+    getEstadisticas(
+        @Request() req,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+        @Query('jornada') jornada?: string
+    ) {
+        return this.salidasService.getEstadisticas(req.user, startDate, endDate, areaId, estado, jornada);
     }
 
     @Get('catalogos')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
-    getCatalogos() {
-        return this.salidasService.getCatalogos();
+    getCatalogos(@Request() req: any) {
+        return this.salidasService.getCatalogos(req.user);
     }
 
     @Post('bulk-approve')

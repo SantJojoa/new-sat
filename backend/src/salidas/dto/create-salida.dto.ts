@@ -83,4 +83,8 @@ export class CreateSalidaDto {
     @IsString()
     @IsOptional()
     area_id?: string;
+
+    @IsString()
+    @IsOptional()
+    solicitante_id?: string;
 }

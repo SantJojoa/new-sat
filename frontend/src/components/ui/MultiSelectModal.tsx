@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface MultiSelectModalProps {
     isOpen: boolean;
@@ -12,57 +12,22 @@ interface MultiSelectModalProps {
     singleSelect?: boolean;
 }
 
-const MultiSelectModal = ({
-    isOpen,
+function MultiSelectModalContent({
     onClose,
     title,
     items,
     selectedItems,
     onSave,
-    searchPlaceholder = "Buscar...",
-    icon = "search",
-    singleSelect = false
-}: MultiSelectModalProps) => {
+    searchPlaceholder = 'Buscar...',
+    icon = 'search',
+    singleSelect = false,
+}: Omit<MultiSelectModalProps, 'isOpen'>) {
     const [search, setSearch] = useState('');
-    const [tempSelected, setTempSelected] = useState<{ id: string; name: string }[]>([]);
+    const [tempSelected, setTempSelected] = useState<{ id: string; name: string }[]>(() => [...selectedItems]);
 
-    useEffect(() => {
-        if (isOpen) {
-            setTempSelected([...selectedItems]);
-            setSearch('');
-        }
-    }, [isOpen, selectedItems]);
-
-    const filteredItems = items.filter(item =>
-        item.name.toLowerCase().includes(search.toLowerCase())
+    const filteredItems = items.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase()),
     );
-
-    const toggleItem = (item: { id: string; name: string }) => {
-        setTempSelected(prev => {
-            const exists = prev.some(i => i.id === item.id);
-            if (exists) {
-                return prev.filter(i => i.id !== item.id);
-            } else {
-                // Si es selección única, reemplazar; si no, añadir
-                return singleSelect ? [item] : [...prev, item];
-            }
-        });
-    };
-
-    const handleSave = () => {
-        onSave(tempSelected);
-        onClose();
-    };
-
-    const handleSelectAll = () => {
-        setTempSelected(filteredItems);
-    };
-
-    const handleClearAll = () => {
-        setTempSelected([]);
-    };
-
-    if (!isOpen) return null;
 
     return (
         <div
@@ -72,26 +37,19 @@ const MultiSelectModal = ({
             }}
         >
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col border border-zinc-200 animate-slideUp">
-                {/* Header */}
                 <div className="p-6 border-b border-zinc-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="bg-primary/10 size-10 rounded-lg flex items-center justify-center text-primary">
                                 <span className="material-symbols-outlined">{icon}</span>
                             </div>
-                            <h3 className="text-xl font-bold text-zinc-900">
-                                {title}
-                            </h3>
+                            <h3 className="text-xl font-bold text-zinc-900">{title}</h3>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="text-zinc-400 hover:text-zinc-600 transition-colors"
-                        >
+                        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
 
-                    {/* Search Bar */}
                     <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">
                             search
@@ -106,13 +64,13 @@ const MultiSelectModal = ({
                         />
                     </div>
 
-                    {/* Quick Actions - ocultar "Seleccionar todos" en modo single select */}
                     <div className="flex gap-2 mt-3">
                         {!singleSelect && (
                             <>
                                 <button
-                                    onClick={handleSelectAll}
+                                    onClick={() => setTempSelected(filteredItems)}
                                     className="text-xs font-semibold text-primary hover:underline"
+                                    type="button"
                                 >
                                     Seleccionar todos ({filteredItems.length})
                                 </button>
@@ -120,29 +78,25 @@ const MultiSelectModal = ({
                             </>
                         )}
                         <button
-                            onClick={handleClearAll}
+                            onClick={() => setTempSelected([])}
                             className="text-xs font-semibold text-zinc-500 hover:underline"
+                            type="button"
                         >
-                            Limpiar selección
+                            Limpiar seleccion
                         </button>
                     </div>
                 </div>
 
-                {/* Items List */}
                 <div className="flex-1 overflow-y-auto p-6">
                     {filteredItems.length === 0 ? (
                         <div className="text-center py-12">
-                            <span className="material-symbols-outlined text-zinc-300 text-5xl mb-3">
-                                search_off
-                            </span>
-                            <p className="text-zinc-500">
-                                No se encontraron resultados
-                            </p>
+                            <span className="material-symbols-outlined text-zinc-300 text-5xl mb-3">search_off</span>
+                            <p className="text-zinc-500">No se encontraron resultados</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {filteredItems.map((item) => {
-                                const isSelected = tempSelected.some(i => i.id === item.id);
+                                const isSelected = tempSelected.some((current) => current.id === item.id);
                                 return (
                                     <label
                                         key={item.id}
@@ -152,16 +106,21 @@ const MultiSelectModal = ({
                                             }`}
                                     >
                                         <input
-                                            type={singleSelect ? "radio" : "checkbox"}
+                                            type={singleSelect ? 'radio' : 'checkbox'}
                                             checked={isSelected}
-                                            onChange={() => toggleItem(item)}
-                                            name={singleSelect ? "singleSelectGroup" : undefined}
+                                            onChange={() =>
+                                                setTempSelected((prev) => {
+                                                    const exists = prev.some((current) => current.id === item.id);
+                                                    if (exists) {
+                                                        return prev.filter((current) => current.id !== item.id);
+                                                    }
+                                                    return singleSelect ? [item] : [...prev, item];
+                                                })
+                                            }
+                                            name={singleSelect ? 'singleSelectGroup' : undefined}
                                             className="rounded border-zinc-300 text-primary focus:ring-primary"
                                         />
-                                        <span className={`text-sm ${isSelected
-                                            ? 'font-semibold text-zinc-900'
-                                            : 'text-zinc-700'
-                                            }`}>
+                                        <span className={isSelected ? 'text-sm font-semibold text-zinc-900' : 'text-sm text-zinc-700'}>
                                             {item.name}
                                         </span>
                                     </label>
@@ -171,7 +130,6 @@ const MultiSelectModal = ({
                     )}
                 </div>
 
-                {/* Footer */}
                 <div className="p-6 border-t border-zinc-200">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm text-zinc-600">
@@ -182,21 +140,33 @@ const MultiSelectModal = ({
                         <button
                             onClick={onClose}
                             className="flex-1 px-4 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-100 transition-colors"
+                            type="button"
                         >
                             Cancelar
                         </button>
                         <button
-                            onClick={handleSave}
+                            onClick={() => {
+                                onSave(tempSelected);
+                                onClose();
+                            }}
                             className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
+                            type="button"
                         >
                             <span className="material-symbols-outlined text-[20px]">check</span>
-                            Aplicar Selección
+                            Aplicar seleccion
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     );
+}
+
+const MultiSelectModal = ({ isOpen, selectedItems, ...props }: MultiSelectModalProps) => {
+    if (!isOpen) return null;
+
+    const selectionKey = selectedItems.map((item) => item.id).sort().join('|');
+    return <MultiSelectModalContent key={`${props.title}-${selectionKey}`} selectedItems={selectedItems} {...props} />;
 };
 
 export default MultiSelectModal;

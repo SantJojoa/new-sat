@@ -1,41 +1,13 @@
 import api from './api';
+import type {
+    BulkActionResult,
+    CatalogosResponse,
+    CreateSalidaPayload,
+    EstadisticasData,
+    SalidaRecord,
+} from '../types/salidas';
 
-export interface CatalogoItem {
-    id: string;
-    name: string;
-}
-
-export interface CatalogosResponse {
-    municipios: CatalogoItem[];
-    ips: CatalogoItem[];
-    entidades: CatalogoItem[];
-    eapb: CatalogoItem[];
-    organizaciones: CatalogoItem[];
-    idsn: CatalogoItem[];
-    areas: CatalogoItem[];
-}
-
-export interface CreateSalidaPayload {
-    codigo?: string;
-    tipo_salida: string;
-    subtipo_salida?: string;
-    tema: string;
-    descripcion?: string;
-    fecha_inicio: string;
-    fecha_final: string;
-    jornada: string;
-    municipios_ids?: string[];
-    ips_ids?: string[];
-    entidades_ids?: string[];
-    eapb_ids?: string[];
-    organizaciones_ids?: string[];
-    idsn_ids?: string[];
-    transporte_medio?: string;
-    transporte_responsables?: string;
-    instituciones_convocadas?: number;
-    lugar_evento_id?: string;
-    area_id?: string;
-}
+export type { CatalogoItem } from '../types/salidas';
 
 export const salidasService = {
     getCatalogos: async (): Promise<CatalogosResponse> => {
@@ -48,8 +20,8 @@ export const salidasService = {
         return response.data;
     },
 
-    getSalidas: async (viewAll: boolean = false) => {
-        const response = await api.get('/salidas', { params: { viewAll } });
+    getSalidas: async (viewAll: boolean = false): Promise<SalidaRecord[]> => {
+        const response = await api.get<SalidaRecord[]>('/salidas', { params: { viewAll } });
         return response.data;
     },
 
@@ -63,8 +35,8 @@ export const salidasService = {
         return response.data;
     },
 
-    getSalidaById: async (id: string) => {
-        const response = await api.get(`/salidas/${id}`);
+    getSalidaById: async (id: string): Promise<SalidaRecord> => {
+        const response = await api.get<SalidaRecord>(`/salidas/${id}`);
         return response.data;
     },
 
@@ -78,13 +50,25 @@ export const salidasService = {
         return response.data;
     },
 
-    bulkApproveSalidas: async (ids: string[], observaciones: string) => {
-        const response = await api.post('/salidas/bulk-approve', { ids, observaciones });
+    getEstadisticas: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string): Promise<EstadisticasData> => {
+        const params: Record<string, number | string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        if (areaId) params.area_id = areaId;
+        if (estado) params.estado = estado;
+        if (jornada) params.jornada = jornada;
+
+        const response = await api.get<EstadisticasData>('/salidas/estadisticas', { params });
         return response.data;
     },
 
-    bulkRejectSalidas: async (ids: string[], motivo: string) => {
-        const response = await api.post('/salidas/bulk-reject', { ids, motivo });
+    bulkApproveSalidas: async (ids: string[], observaciones: string): Promise<BulkActionResult> => {
+        const response = await api.post<BulkActionResult>('/salidas/bulk-approve', { ids, observaciones });
+        return response.data;
+    },
+
+    bulkRejectSalidas: async (ids: string[], motivo: string): Promise<BulkActionResult> => {
+        const response = await api.post<BulkActionResult>('/salidas/bulk-reject', { ids, motivo });
         return response.data;
     }
 };

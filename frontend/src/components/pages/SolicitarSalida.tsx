@@ -1,10 +1,13 @@
 import SlideBar from "../ui/SlideBar"
 import MultiSelectModal from "../ui/MultiSelectModal"
 import { useEffect, useState } from "react"
+import { AxiosError } from "axios"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
-import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, MapPin } from "lucide-react"
+import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
+import type { ApiErrorPayload } from "../../types/api"
+import type { CreateSalidaPayload } from "../../types/salidas"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -23,11 +26,13 @@ export default function SolicitarSalida() {
         descripcion: '',
         transporteMedio: '',
         institucionesConvocadas: '',
-        areaId: ''
+        areaId: '',
+        solicitanteId: ''
     });
 
     const [activeModal, setActiveModal] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
 
     // Selected Items State
     const [selectedMunicipios, setSelectedMunicipios] = useState<CatalogoItem[]>([]);
@@ -44,7 +49,7 @@ export default function SolicitarSalida() {
 
     // Modal states (replaces alerts)
     const [confirmModal, setConfirmModal] = useState(false);
-    const [pendingPayload, setPendingPayload] = useState<any>(null);
+    const [pendingPayload, setPendingPayload] = useState<CreateSalidaPayload | null>(null);
     const [feedbackModal, setFeedbackModal] = useState<{
         type: 'success' | 'error' | null;
         title: string;
@@ -63,6 +68,11 @@ export default function SolicitarSalida() {
         area: string;
         solicitante: string;
         municipios: string[];
+        ips: string[];
+        entidades: string[];
+        eapb: string[];
+        organizaciones: string[];
+        idsn: string[];
     }
     const [conflictModal, setConflictModal] = useState<ConflictItem[]>([]);
 
@@ -100,6 +110,7 @@ export default function SolicitarSalida() {
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
     const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
     const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
+    const [lideresData, setLideresData] = useState<CatalogoItem[]>([]);
 
     useEffect(() => {
         const fetchCatalogos = async () => {
@@ -112,6 +123,9 @@ export default function SolicitarSalida() {
                 setOrganizacionesData(data.organizaciones);
                 setIdsnData(data.idsn);
                 setAreasData(data.areas);
+                if (data.lideres) {
+                    setLideresData(data.lideres);
+                }
             } catch (error) {
                 console.error("Error fetching catalogos:", error);
                 setFeedbackModal({ type: 'error', title: 'Error de Carga', message: 'Error al cargar listados. Por favor recargue la página.' });
@@ -144,16 +158,17 @@ export default function SolicitarSalida() {
                     descripcion: salida.descripcion || '',
                     transporteMedio: salida.transporte_medio || '',
                     institucionesConvocadas: salida.instituciones_convocadas?.toString() || '',
-                    areaId: salida.area_id || ''
+                    areaId: salida.area_id || '',
+                    solicitanteId: salida.solicitante_id || ''
                 });
 
                 // Map relations
-                setSelectedMunicipios(salida.municipios.map((m: any) => ({ id: m.id, name: m.name })));
-                setSelectedIPS(salida.ips.map((i: any) => ({ id: i.id, name: i.name })));
-                setSelectedEntidades(salida.entidades.map((e: any) => ({ id: e.id, name: e.name })));
-                setSelectedEAPB(salida.eapb.map((e: any) => ({ id: e.id, name: e.name })));
-                setSelectedOrganizaciones(salida.organizaciones.map((o: any) => ({ id: o.id, name: o.name })));
-                setSelectedIDSN(salida.idsn.map((i: any) => ({ id: i.id, name: i.name })));
+                setSelectedMunicipios(salida.municipios.map((m) => ({ id: m.id, name: m.name })));
+                setSelectedIPS(salida.ips.map((i) => ({ id: i.id, name: i.name })));
+                setSelectedEntidades(salida.entidades.map((e) => ({ id: e.id, name: e.name })));
+                setSelectedEAPB(salida.eapb.map((e) => ({ id: e.id, name: e.name })));
+                setSelectedOrganizaciones(salida.organizaciones.map((o) => ({ id: o.id, name: o.name })));
+                setSelectedIDSN(salida.idsn.map((i) => ({ id: i.id, name: i.name })));
 
                 // Subtipos (string split)
                 if (salida.subtipo_salida) {
@@ -194,10 +209,101 @@ export default function SolicitarSalida() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Clear related error when typing/selecting
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: false }));
+        }
     };
+
+    // Generic effect to clear errors for complex states
+    useEffect(() => {
+        const hasAnyParticipant = selectedMunicipios.length > 0 ||
+            selectedIPS.length > 0 ||
+            selectedEntidades.length > 0 ||
+            selectedEAPB.length > 0 ||
+            selectedOrganizaciones.length > 0 ||
+            selectedIDSN.length > 0;
+
+        if (hasAnyParticipant && errors.participantes) {
+            setErrors(prev => ({ ...prev, participantes: false }));
+        }
+    }, [selectedMunicipios, selectedIPS, selectedEntidades, selectedEAPB, selectedOrganizaciones, selectedIDSN, errors.participantes]);
+
+    useEffect(() => {
+        if (selectedSubtipos.length > 0 && errors.subtipoSalida) {
+            setErrors(prev => ({ ...prev, subtipoSalida: false }));
+        }
+    }, [selectedSubtipos, errors.subtipoSalida]);
+
+    useEffect(() => {
+        if (selectedLugarEvento && errors.lugarEvento) {
+            setErrors(prev => ({ ...prev, lugarEvento: false }));
+        }
+    }, [selectedLugarEvento, errors.lugarEvento]);
+
+    useEffect(() => {
+        if (transporteResponsables.length > 0 && errors.transporteResponsables) {
+            setErrors(prev => ({ ...prev, transporteResponsables: false }));
+        }
+    }, [transporteResponsables, errors.transporteResponsables]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        // VALIDATION SCHEME
+        const newErrors: Record<string, boolean> = {};
+
+        if (user?.user_type?.name === 'superadmin') {
+            if (!formData.areaId) newErrors.areaId = true;
+            if (formData.areaId && !formData.solicitanteId) newErrors.solicitanteId = true;
+        }
+
+        if (user?.user_type?.name === 'admin_subdireccion' && !formData.solicitanteId) newErrors.solicitanteId = true;
+
+        if (!formData.tipoSalida) newErrors.tipoSalida = true;
+        if (selectedSubtipos.length === 0) newErrors.subtipoSalida = true;
+        if (!formData.tema.trim()) newErrors.tema = true;
+        if (!formData.fechaInicio) newErrors.fechaInicio = true;
+        if (!formData.fechaFinal) newErrors.fechaFinal = true;
+        if (!formData.jornada) newErrors.jornada = true;
+
+        const hasAnyParticipant = selectedMunicipios.length > 0 ||
+            selectedIPS.length > 0 ||
+            selectedEntidades.length > 0 ||
+            selectedEAPB.length > 0 ||
+            selectedOrganizaciones.length > 0 ||
+            selectedIDSN.length > 0;
+
+        if (!hasAnyParticipant) {
+            newErrors.participantes = true;
+        }
+
+        if (!formData.transporteMedio) newErrors.transporteMedio = true;
+
+        if (formData.transporteMedio && formData.transporteMedio !== 'No Aplica') {
+            if (!formData.institucionesConvocadas || parseInt(formData.institucionesConvocadas) <= 0) {
+                newErrors.institucionesConvocadas = true;
+            }
+            if (transporteResponsables.length === 0) {
+                newErrors.transporteResponsables = true;
+            }
+        }
+
+        if (!selectedLugarEvento) newErrors.lugarEvento = true;
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setFeedbackModal({
+                type: 'error',
+                title: 'Campos Incompletos',
+                message: 'Por favor, diligencie todos los campos requeridos marcados en rojo.'
+            });
+            // Scroll to top to see errors or just let them see the modal
+            return;
+        }
+
+        setErrors({});
 
         const mapJornada = (j: string) => {
             if (j === 'Mañana') return 'Manana';
@@ -225,6 +331,7 @@ export default function SolicitarSalida() {
             instituciones_convocadas: formData.institucionesConvocadas ? parseInt(formData.institucionesConvocadas) : undefined,
             lugar_evento_id: selectedLugarEvento?.id || undefined,
             area_id: user?.user_type?.name === 'superadmin' ? formData.areaId : undefined,
+            solicitante_id: (user?.user_type?.name === 'admin_subdireccion' || (user?.user_type?.name === 'superadmin' && formData.solicitanteId)) ? formData.solicitanteId : undefined,
         };
 
         setPendingPayload(payload);
@@ -260,7 +367,8 @@ export default function SolicitarSalida() {
                     descripcion: '',
                     transporteMedio: '',
                     institucionesConvocadas: '',
-                    areaId: ''
+                    areaId: '',
+                    solicitanteId: ''
                 });
                 setSelectedMunicipios([]);
                 setSelectedIPS([]);
@@ -273,13 +381,14 @@ export default function SolicitarSalida() {
                 setNuevoResponsable('');
                 setSelectedLugarEvento(null);
             }
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload & { conflicts?: ConflictItem[] }>;
             console.error("Error saving salida:", error);
             // Check if it's a conflict with structured data
-            if (error.response?.status === 409 && error.response?.data?.conflicts) {
-                setConflictModal(error.response.data.conflicts);
+            if (apiError.response?.status === 409 && apiError.response?.data?.conflicts) {
+                setConflictModal(apiError.response.data.conflicts);
             } else {
-                const msg = error.response?.data?.message || "Error al guardar la solicitud";
+                const msg = apiError.response?.data?.message || "Error al guardar la solicitud";
                 setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
             }
         } finally {
@@ -400,14 +509,63 @@ export default function SolicitarSalida() {
                                                     name="areaId"
                                                     value={formData.areaId}
                                                     onChange={handleInputChange}
-                                                    className="w-full h-12 rounded-lg border border-zinc-200 focus:ring-primary focus:border-primary transition-all px-4 bg-white"
-                                                    required={user?.user_type?.name === 'superadmin'}
+                                                    className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all px-4 bg-white ${errors.areaId ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 >
                                                     <option value="" disabled>Seleccione un área...</option>
                                                     {areasData.map(area => (
                                                         <option key={area.id} value={area.id}>{area.name}</option>
                                                     ))}
                                                 </select>
+                                            </div>
+                                        )}
+
+                                        {/* Selector de Líder para Admin Subdirección */}
+                                        {user?.user_type?.name === 'admin_subdireccion' && (
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-semibold text-zinc-700">
+                                                    Líder Solicitante <span className="text-xs text-primary font-normal">(Requerido)</span>
+                                                </label>
+                                                <select
+                                                    name="solicitanteId"
+                                                    value={formData.solicitanteId}
+                                                    onChange={handleInputChange}
+                                                    className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all px-4 bg-white ${errors.solicitanteId ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
+                                                >
+                                                    <option value="" disabled>Seleccione un líder...</option>
+                                                    {lideresData.map(lider => (
+                                                        <option key={lider.id} value={lider.id}>{lider.name}</option>
+                                                    ))}
+                                                </select>
+                                                {errors.solicitanteId && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                                        <AlertCircle size={12} /> Seleccione un líder
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Selector de Líder para Superadmin (depende de Área) */}
+                                        {user?.user_type?.name === 'superadmin' && formData.areaId && (
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-semibold text-zinc-700">
+                                                    Líder Solicitante <span className="text-xs text-primary font-normal">(Requerido)</span>
+                                                </label>
+                                                <select
+                                                    name="solicitanteId"
+                                                    value={formData.solicitanteId}
+                                                    onChange={handleInputChange}
+                                                    className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all px-4 bg-white ${errors.solicitanteId ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
+                                                >
+                                                    <option value="" disabled>Seleccione un líder...</option>
+                                                    {lideresData.filter(l => l.area_id === formData.areaId).map(lider => (
+                                                        <option key={lider.id} value={lider.id}>{lider.name}</option>
+                                                    ))}
+                                                </select>
+                                                {errors.solicitanteId && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                                        <AlertCircle size={12} /> Seleccione un líder
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
 
@@ -419,8 +577,7 @@ export default function SolicitarSalida() {
                                                 name="tipoSalida"
                                                 value={formData.tipoSalida}
                                                 onChange={handleInputChange}
-                                                className="w-full h-12 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.tipoSalida ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             >
                                                 <option value="">Seleccione tipo</option>
                                                 <option value="Presencial">Presencial</option>
@@ -434,8 +591,7 @@ export default function SolicitarSalida() {
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveModal('subtipo')}
-                                                className="w-full min-h-[48px] px-4 py-2 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all bg-white text-left text-sm flex items-center justify-between"
+                                                className={`w-full min-h-[48px] px-4 py-2 rounded-lg border focus:ring-primary focus:border-primary transition-all bg-white text-left text-sm flex items-center justify-between ${errors.subtipoSalida ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             >
                                                 <span className={selectedSubtipos.length > 0 ? "text-zinc-900" : "text-zinc-500"}>
                                                     {selectedSubtipos.length > 0
@@ -454,8 +610,7 @@ export default function SolicitarSalida() {
                                                 name="tema"
                                                 value={formData.tema}
                                                 onChange={handleInputChange}
-                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.tema ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 placeholder="Ingrese el tema principal de la salida"
                                             />
                                         </div>
@@ -469,10 +624,10 @@ export default function SolicitarSalida() {
                                                     name="fechaInicio"
                                                     value={formData.fechaInicio}
                                                     onChange={handleInputChange}
-                                                    className="w-full h-12 pl-10 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                    min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                                                    className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaInicio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
-                                                <span className="material-symbols-outlined absolute left-3 top-3 text-zinc-400 pointer-events-none">
+                                                <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaInicio ? 'text-red-500' : 'text-zinc-400'}`}>
                                                     calendar_today
                                                 </span>
                                             </div>
@@ -488,10 +643,10 @@ export default function SolicitarSalida() {
                                                     name="fechaFinal"
                                                     value={formData.fechaFinal}
                                                     onChange={handleInputChange}
-                                                    className="w-full h-12 pl-10 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                    min={formData.fechaInicio || new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                                                    className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaFinal ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
-                                                <span className="material-symbols-outlined absolute left-3 top-3 text-zinc-400 pointer-events-none">
+                                                <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaFinal ? 'text-red-500' : 'text-zinc-400'}`}>
                                                     event_available
                                                 </span>
                                             </div>
@@ -504,8 +659,7 @@ export default function SolicitarSalida() {
                                                 name="jornada"
                                                 value={formData.jornada}
                                                 onChange={handleInputChange}
-                                                className="w-full h-12 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.jornada ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             >
                                                 <option>Mañana</option>
                                                 <option>Tarde</option>
@@ -535,6 +689,12 @@ export default function SolicitarSalida() {
                                         <p className="text-sm text-zinc-500 mt-1">
                                             Haga clic en cada sección para seleccionar uno o varios elementos
                                         </p>
+                                        {errors.participantes && (
+                                            <div className="bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 text-sm flex items-center gap-2 mb-4">
+                                                <AlertCircle size={18} />
+                                                Debe seleccionar al menos un participante (Municipio, IPS, Entidad, EAPB, Organización o IDSN).
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-6">
@@ -695,8 +855,7 @@ export default function SolicitarSalida() {
                                                 name="transporteMedio"
                                                 value={formData.transporteMedio}
                                                 onChange={handleInputChange}
-                                                className="w-full h-12 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.transporteMedio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             >
                                                 <option value="">Seleccione medio</option>
                                                 <option value="Pasajero">Pasajero</option>
@@ -717,8 +876,7 @@ export default function SolicitarSalida() {
                                                 value={formData.institucionesConvocadas}
                                                 onChange={handleInputChange}
                                                 min="0"
-                                                className="w-full h-12 px-4 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
+                                                className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.institucionesConvocadas ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 placeholder="Ej: 5"
                                             />
                                         </div>
@@ -760,9 +918,9 @@ export default function SolicitarSalida() {
                                                     Añadir
                                                 </button>
                                             </div>
-                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
+                                            <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center ${errors.transporteResponsables ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
                                                 {transporteResponsables.length === 0 ? (
-                                                    <p className="text-sm text-zinc-400 italic">
+                                                    <p className={`text-sm italic ${errors.transporteResponsables ? 'text-red-500' : 'text-zinc-400'}`}>
                                                         No hay responsables añadidos
                                                     </p>
                                                 ) : (
@@ -802,7 +960,7 @@ export default function SolicitarSalida() {
                                                     Seleccionar Municipio
                                                 </button>
                                             </div>
-                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
+                                            <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center ${errors.lugarEvento ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
                                                 {selectedLugarEvento ? (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
                                                         {selectedLugarEvento.name}
@@ -815,7 +973,7 @@ export default function SolicitarSalida() {
                                                         </button>
                                                     </span>
                                                 ) : (
-                                                    <p className="text-sm text-zinc-400 italic">
+                                                    <p className={`text-sm italic ${errors.lugarEvento ? 'text-red-500' : 'text-zinc-400'}`}>
                                                         No hay municipio seleccionado
                                                     </p>
                                                 )}
@@ -1042,7 +1200,7 @@ export default function SolicitarSalida() {
                                         <th className="px-6 py-3">Solicitante / Área</th>
                                         <th className="px-6 py-3">Detalles</th>
                                         <th className="px-6 py-3">Fecha / Jornada</th>
-                                        <th className="px-6 py-3">Municipios</th>
+                                        <th className="px-6 py-3 min-w-[200px]">Participantes</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-200">
@@ -1062,12 +1220,40 @@ export default function SolicitarSalida() {
                                                 <div className="text-xs text-zinc-500">{new Date(c.fecha_final).toLocaleDateString('es-CO')} • {c.jornada}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {c.municipios.length > 0 ? c.municipios.map((m, i) => (
-                                                        <span key={i} className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-xs border border-zinc-200 flex items-center gap-0.5">
-                                                            <MapPin size={10} />{m}
-                                                        </span>
-                                                    )) : <span className="text-zinc-400 italic text-xs">Ninguno</span>}
+                                                <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-2">
+                                                    {c.municipios?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.municipios.map((m, i) => <span key={`m-${i}`} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] border border-blue-200">{m}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {c.ips?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.ips.map((item, i) => <span key={`i-${i}`} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] border border-indigo-200">{item}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {c.eapb?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.eapb.map((item, i) => <span key={`e-${i}`} className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] border border-purple-200">{item}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {c.entidades?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.entidades.map((item, i) => <span key={`en-${i}`} className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] border border-teal-200">{item}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {c.organizaciones?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.organizaciones.map((item, i) => <span key={`o-${i}`} className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded text-[10px] border border-orange-200">{item}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {c.idsn?.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {c.idsn.map((item, i) => <span key={`id-${i}`} className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-[10px] border border-rose-200">{item}</span>)}
+                                                        </div>
+                                                    )}
+                                                    {(!c.municipios?.length && !c.ips?.length && !c.eapb?.length && !c.entidades?.length && !c.organizaciones?.length && !c.idsn?.length) && (
+                                                        <span className="text-zinc-400 italic text-xs">Ninguno</span>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

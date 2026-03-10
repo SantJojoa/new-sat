@@ -10,6 +10,8 @@ import Areas from './src/components/pages/admin/Areas'
 import Users from './src/components/pages/admin/Users'
 import GestionarSalida from './src/components/pages/GestionarSalida'
 import CalendarioSalidas from './src/components/pages/CalendarioSalidas'
+import ReportesSalidas from './src/components/pages/ReportesSalidas'
+
 function App() {
     return (
         <AuthProvider>
@@ -54,6 +56,12 @@ function App() {
                         <Route path="calendario-salidas" element={
                             <ProtectedRoute>
                                 <CalendarioSalidas />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="reportes-salidas" element={
+                            <ProtectedRoute>
+                                <ReportesSalidas />
                             </ProtectedRoute>
                         } />
 
