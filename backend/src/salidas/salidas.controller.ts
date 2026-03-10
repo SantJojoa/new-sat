@@ -43,10 +43,14 @@ export class SalidasController {
     getEstadisticas(
         @Request() req,
         @Query('month') month?: string,
-        @Query('area_id') areaId?: string
+        @Query('area_id') areaId?: string,
+        @Query('year') year?: string,
+        @Query('estado') estado?: string,
+        @Query('jornada') jornada?: string
     ) {
         const monthNum = month ? parseInt(month, 10) : undefined;
-        return this.salidasService.getEstadisticas(req.user, monthNum, areaId);
+        const yearNum = year ? parseInt(year, 10) : undefined;
+        return this.salidasService.getEstadisticas(req.user, monthNum, areaId, yearNum, estado, jornada);
     }
 
     @Get('catalogos')
