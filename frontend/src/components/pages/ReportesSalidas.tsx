@@ -9,9 +9,6 @@ import SlideBar from '../ui/SlideBar';
 import type { ApiErrorPayload } from '../../types/api';
 import type { EstadisticasData } from '../../types/salidas';
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { format } from 'date-fns';
 
 const ESTADOS = [
     { value: 'pendiente', label: 'Pendiente' },
@@ -40,6 +37,7 @@ export default function ReportesSalidas() {
     const [selectedArea, setSelectedArea] = useState<string>('');
     const [selectedEstado, setSelectedEstado] = useState<string>('');
     const [selectedJornada, setSelectedJornada] = useState<string>('');
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     useEffect(() => {
         const loadCatalogos = async () => {
@@ -123,78 +121,40 @@ export default function ReportesSalidas() {
                                     <p className="text-zinc-500">Analiza el rendimiento y distribución de las salidas en el sistema.</p>
                                 </div>
                                 <button
-                                    onClick={() => {
+                                    onClick={async () => {
                                         if (!data?.items || data.items.length === 0) return;
+                                        setIsGeneratingPdf(true);
 
-                                        const doc = new jsPDF({ orientation: 'landscape' });
+                                        try {
+                                            const result = await salidasService.downloadEstadisticasPdf(
+                                                startDate || undefined,
+                                                endDate || undefined,
+                                                selectedArea || undefined,
+                                                selectedEstado || undefined,
+                                                selectedJornada || undefined
+                                            );
 
-                                        // Header
-                                        doc.setFontSize(20);
-                                        doc.text('Reporte de Salidas', 14, 22);
-                                        doc.setFontSize(11);
-                                        doc.text(`Fecha de generación: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 30);
-
-                                        // Fechas
-                                        let filterText = 'Intervalo: ';
-                                        if (startDate && endDate) {
-                                            filterText += `${startDate} al ${endDate}`;
-                                        } else if (startDate) {
-                                            filterText += `Desde ${startDate}`;
-                                        } else if (endDate) {
-                                            filterText += `Hasta ${endDate}`;
-                                        } else {
-                                            filterText += 'Histórico completo';
+                                            const url = window.URL.createObjectURL(result.blob);
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.download = result.filename;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+                                            window.URL.revokeObjectURL(url);
+                                        } finally {
+                                            setIsGeneratingPdf(false);
                                         }
-                                        doc.text(filterText, 14, 36);
-
-                                        // Stats box
-                                        doc.text(`Total Resultados: ${data.total}`, 14, 42);
-
-                                        // Table
-                                        const tableColumn = ["Código", "Fecha Inicio", "Fecha Fin", "Jornada", "Área", "Solicitante", "Estado", "Tema", "Lugar/Destino", "Convocados"];
-                                        const tableRows: any[] = [];
-
-                                        data.items.forEach(item => {
-                                            const parts = [];
-                                            if (item.ips?.length) parts.push(`IPS: ${item.ips.map((x: any) => x.name).join(', ')}`);
-                                            if (item.entidades?.length) parts.push(`ENT: ${item.entidades.map((x: any) => x.name).join(', ')}`);
-                                            if (item.eapb?.length) parts.push(`EAPB: ${item.eapb.map((x: any) => x.name).join(', ')}`);
-                                            if (item.organizaciones?.length) parts.push(`ORG: ${item.organizaciones.map((x: any) => x.name).join(', ')}`);
-                                            if (item.idsn?.length) parts.push(`IDSN: ${item.idsn.map((x: any) => x.name).join(', ')}`);
-                                            if (item.municipios_convocados) parts.push(`MUN: ${item.municipios_convocados}`);
-
-                                            const convocadosStr = parts.length > 0 ? parts.join('\n') : 'Ninguno';
-
-                                            const itemData = [
-                                                item.codigo,
-                                                format(new Date(item.fecha_inicio), 'dd/MM/yyyy'),
-                                                format(new Date(item.fecha_final), 'dd/MM/yyyy'),
-                                                item.jornada,
-                                                item.areas?.name || 'N/A',
-                                                item.solicitante ? `${item.solicitante.names} ${item.solicitante.email}` : 'N/A',
-                                                item.estado.toUpperCase(),
-                                                item.tema,
-                                                item.lugar_evento?.name || item.municipios?.map((m: any) => m.name).join(', ') || 'N/A',
-                                                convocadosStr
-                                            ];
-                                            tableRows.push(itemData);
-                                        });
-
-                                        autoTable(doc, {
-                                            head: [tableColumn],
-                                            body: tableRows,
-                                            startY: 50,
-                                            styles: { fontSize: 8 },
-                                            headStyles: { fillColor: [99, 102, 241] } // Primary color
-                                        });
-
-                                        doc.save(`Reporte_Salidas_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
                                     }}
-                                    disabled={!data?.items || data.items.length === 0}
+                                    disabled={!data?.items || data.items.length === 0 || isGeneratingPdf}
                                     className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm whitespace-nowrap"
                                 >
-                                    <span className="material-symbols-outlined text-[20px]">file_download</span>
-                                    Descargar PDF
+                                    {isGeneratingPdf ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-[20px]">file_download</span>
+                                    )}
+                                    {isGeneratingPdf ? 'Generando...' : 'Descargar PDF'}
                                 </button>
                             </div>
 
@@ -317,7 +277,7 @@ export default function ReportesSalidas() {
                                 </div>
 
                                 {/* Charts Section */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                                <div id="charts-container" className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                                     {/* Pie Chart: Estados */}
                                     <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow duration-300">
                                         <div className="flex items-center gap-2 mb-6">
@@ -341,6 +301,7 @@ export default function ReportesSalidas() {
                                                             stroke="none"
                                                             label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
                                                             labelLine={false}
+                                                            isAnimationActive={false}
                                                         >
                                                             {data.estados.map((_entry, index) => (
                                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -391,7 +352,7 @@ export default function ReportesSalidas() {
                                                             contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
                                                             itemStyle={{ color: '#10b981', fontWeight: 700 }}
                                                         />
-                                                        <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={50}>
+                                                        <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={50} isAnimationActive={false}>
                                                             {data.topSolicitantes.map((_, index) => (
                                                                 <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#34d399'} />
                                                             ))}
@@ -436,7 +397,7 @@ export default function ReportesSalidas() {
                                                             contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
                                                             itemStyle={{ color: '#6366f1', fontWeight: 700 }}
                                                         />
-                                                        <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60}>
+                                                        <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
                                                             {data.areas.map((_, index) => (
                                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                             ))}
