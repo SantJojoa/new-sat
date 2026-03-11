@@ -8,8 +8,11 @@ import {
     Delete,
     UseGuards,
     Request,
-    Query
+    Query,
+    Res,
+    StreamableFile
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { SalidasService } from './salidas.service';
 import { CreateSalidaDto } from './dto/create-salida.dto';
 import { UpdateSalidaDto } from './dto/update-salida.dto';
@@ -49,6 +52,35 @@ export class SalidasController {
         @Query('jornada') jornada?: string
     ) {
         return this.salidasService.getEstadisticas(req.user, startDate, endDate, areaId, estado, jornada);
+    }
+
+    @Get('estadisticas/pdf')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadEstadisticasPdf(
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+        @Query('jornada') jornada?: string
+    ) {
+        const { buffer, filename } = await this.salidasService.exportEstadisticasPdf(
+            req.user,
+            startDate,
+            endDate,
+            areaId,
+            estado,
+            jornada
+        );
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${filename}"`
+        });
+
+        return new StreamableFile(buffer);
     }
 
     @Get('catalogos')

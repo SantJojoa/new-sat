@@ -62,6 +62,29 @@ export const salidasService = {
         return response.data;
     },
 
+    downloadEstadisticasPdf: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) => {
+        const params: Record<string, number | string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        if (areaId) params.area_id = areaId;
+        if (estado) params.estado = estado;
+        if (jornada) params.jornada = jornada;
+
+        const response = await api.get('/salidas/estadisticas/pdf', {
+            params,
+            responseType: 'blob'
+        });
+
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = 'Reporte_Salidas.pdf';
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+
+        return { blob: response.data as Blob, filename };
+    },
+
     bulkApproveSalidas: async (ids: string[], observaciones: string): Promise<BulkActionResult> => {
         const response = await api.post<BulkActionResult>('/salidas/bulk-approve', { ids, observaciones });
         return response.data;

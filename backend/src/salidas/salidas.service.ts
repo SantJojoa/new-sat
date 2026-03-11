@@ -4,22 +4,56 @@ import { CreateSalidaDto } from './dto/create-salida.dto';
 import { UpdateSalidaDto } from './dto/update-salida.dto';
 import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { users } from '@prisma/client';
+import PDFDocument from 'pdfkit';
+import type * as PDFKit from 'pdfkit';
+
+// ─── Design Tokens ──────────────────────────────────────────────────────────
+const COLORS = {
+    primary: '#1E3A5F',   // Deep navy
+    primaryLight: '#2563EB',   // Bright blue
+    accent: '#0EA5E9',   // Sky blue
+    success: '#10B981',   // Emerald
+    warning: '#F59E0B',   // Amber
+    danger: '#EF4444',   // Red
+    purple: '#8B5CF6',
+    pink: '#EC4899',
+    teal: '#14B8A6',
+    orange: '#F97316',
+
+    // Neutrals
+    white: '#FFFFFF',
+    gray50: '#F8FAFC',
+    gray100: '#F1F5F9',
+    gray200: '#E2E8F0',
+    gray300: '#CBD5E1',
+    gray400: '#94A3B8',
+    gray600: '#475569',
+    gray700: '#334155',
+    gray800: '#1E293B',
+    gray900: '#0F172A',
+    text: '#1E293B',
+    textMuted: '#64748B',
+};
+
+const CHART_PALETTE = [
+    '#2563EB', '#10B981', '#F59E0B', '#EF4444',
+    '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
+    '#06B6D4', '#84CC16',
+];
+
+const ESTADO_COLORS: Record<string, string> = {
+    aprobada: '#10B981',
+    pendiente: '#F59E0B',
+    rechazada: '#EF4444',
+};
 
 @Injectable()
 export class SalidasService {
     constructor(private prisma: PrismaService) { }
 
-    /**
-     * Parses a date string safely to avoid timezone shift.
-     * "2026-01-02" parsed with new Date() becomes UTC midnight,
-     * which in UTC-5 shifts to 2026-01-01. Using T12:00:00 (noon)
-     * ensures the date stays on the correct day.
-     */
     private parseDateLocal(dateStr: string | Date): Date {
         if (dateStr instanceof Date) return dateStr;
-        // If already has time component, parse as-is
         if (dateStr.includes('T')) return new Date(dateStr);
-        // Append noon to avoid timezone day shift
         return new Date(`${dateStr}T12:00:00`);
     }
 
@@ -35,40 +69,17 @@ export class SalidasService {
         idsn: string[] = [],
         excludeId?: string
     ) {
-        // Validation logic:
-        // 1. Date Overlap
-        // 2. Jornada Overlap (Same, or 'Completa' overlaps everything)
-        // 3. Entity Overlap (Any match in the lists)
-
-        const jornadaConditions: any[] = [
-            { jornada: 'Completa' }, // Existing is full day
-        ];
-        if (jornada === 'Completa') {
-            // New is full day -> All existing clash
-            // (Covered by general query, essentially we don't filter by jornada if new is complete, match any)
-        } else {
-            jornadaConditions.push({ jornada: jornada }); // Exact match
-        }
-
-        // Use OR for jornada collision: 
-        // (Existing is 'Completa') OR (New is 'Completa') OR (Existing == New)
-        // In Prisma 'OR', we list conditions.
-        // If new is 'Completa', we verify against ALL jornadas.
-
         const jornadaFilter = jornada === 'Completa'
-            ? {} // No filter, match all
+            ? {}
             : { OR: [{ jornada: 'Completa' }, { jornada: jornada }] };
 
         const whereClause: any = {
             AND: [
                 {
-                    // Date overlap: (StartA <= EndB) and (EndA >= StartB)
                     fecha_inicio: { lte: end },
                     fecha_final: { gte: start },
                 },
-                {
-                    estado: { in: ['aprobada', 'pendiente'] }
-                },
+                { estado: { in: ['aprobada', 'pendiente'] } },
                 jornadaFilter,
                 {
                     OR: [
@@ -125,10 +136,7 @@ export class SalidasService {
     }
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
-        // Validación de fecha pasada
-        // Usamos la fecha local asegurando el formato YYYY-MM-DD
         const today = new Date();
-        // Restar el offset de zona horaria para obtener la fecha local correcta en ISO
         const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
         if (createSalidaDto.fecha_inicio < todayStr) {
@@ -141,10 +149,6 @@ export class SalidasService {
             throw new BadRequestException('No se ha especificado o no tiene un área asignada');
         }
 
-        // Auto-generate code if not provided (though it should always be auto-generated now)
-        // Format: YYYYMMDD-AAA##
-
-        // 1. Get User's Area Name
         const userArea = await this.prisma.areas.findUnique({
             where: { id: targetAreaId },
             select: { name: true }
@@ -152,42 +156,26 @@ export class SalidasService {
 
         if (!userArea) throw new BadRequestException('El área especificada no es válida');
 
-        // 2. Generate Parts
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const dateStr = `${year}${month}${day}`;
-
         const areaCode = userArea.name.substring(0, 3).toUpperCase();
-
-        // 3. Count existing for this Area + Day to get consecutive
-        // We need to count how many salidas have a code starting with YYYYMMDD-AAA
-        // simpler: findMany with startsWith and count? Or count directly.
-        // We need to match the pattern.
-
         const pattern = `${dateStr}-${areaCode}`;
 
         const count = await this.prisma.salidas.count({
-            where: {
-                codigo: {
-                    startsWith: pattern
-                }
-            }
+            where: { codigo: { startsWith: pattern } }
         });
 
         const consecutive = String(count + 1).padStart(2, '0');
         const newCodigo = `${pattern}${consecutive}`;
 
-        // Verify uniqueness just in case (race condition unlikely but possible)
         const checkUnique = await this.prisma.salidas.findUnique({ where: { codigo: newCodigo } });
         if (checkUnique) {
-            // fallback or retry? For now let's just error or add seconds? 
-            // With low volume it is fine.
             throw new ConflictException('Error generando código único, intente nuevamente');
         }
 
-        // Check Conflicts
         await this.checkConflicts(
             this.parseDateLocal(createSalidaDto.fecha_inicio),
             this.parseDateLocal(createSalidaDto.fecha_final),
@@ -200,7 +188,6 @@ export class SalidasService {
             createSalidaDto.idsn_ids
         );
 
-        // Obtener nombres de municipios convocados
         let municipiosConvocadosStr: string | undefined;
         if (createSalidaDto.municipios_ids?.length) {
             const munis = await this.prisma.municipios.findMany({
@@ -210,7 +197,6 @@ export class SalidasService {
             municipiosConvocadosStr = munis.map(m => m.name).join(', ');
         }
 
-        // Create
         return this.prisma.salidas.create({
             data: {
                 codigo: newCodigo,
@@ -224,33 +210,17 @@ export class SalidasService {
                 estado: 'pendiente',
                 solicitante_id: createSalidaDto.solicitante_id || user.id,
                 area_id: targetAreaId,
-
-                // Transport Fields
                 transporte_medio: createSalidaDto.transporte_medio,
                 transporte_responsables: createSalidaDto.transporte_responsables,
                 instituciones_convocadas: createSalidaDto.instituciones_convocadas,
                 municipios_convocados: municipiosConvocadosStr,
                 lugar_evento_id: createSalidaDto.lugar_evento_id,
-
-                // Connect Relations
-                municipios: {
-                    connect: createSalidaDto.municipios_ids?.map(id => ({ id })) || []
-                },
-                ips: {
-                    connect: createSalidaDto.ips_ids?.map(id => ({ id })) || []
-                },
-                entidades: {
-                    connect: createSalidaDto.entidades_ids?.map(id => ({ id })) || []
-                },
-                eapb: {
-                    connect: createSalidaDto.eapb_ids?.map(id => ({ id })) || []
-                },
-                organizaciones: {
-                    connect: createSalidaDto.organizaciones_ids?.map(id => ({ id })) || []
-                },
-                idsn: {
-                    connect: createSalidaDto.idsn_ids?.map(id => ({ id })) || []
-                }
+                municipios: { connect: createSalidaDto.municipios_ids?.map(id => ({ id })) || [] },
+                ips: { connect: createSalidaDto.ips_ids?.map(id => ({ id })) || [] },
+                entidades: { connect: createSalidaDto.entidades_ids?.map(id => ({ id })) || [] },
+                eapb: { connect: createSalidaDto.eapb_ids?.map(id => ({ id })) || [] },
+                organizaciones: { connect: createSalidaDto.organizaciones_ids?.map(id => ({ id })) || [] },
+                idsn: { connect: createSalidaDto.idsn_ids?.map(id => ({ id })) || [] }
             },
             include: {
                 municipios: true,
@@ -266,7 +236,6 @@ export class SalidasService {
     }
 
     async findAll(user: users, viewAll: boolean = false) {
-        // Logic similar to before but with new includes
         const include = {
             municipios: true,
             ips: true,
@@ -281,59 +250,31 @@ export class SalidasService {
                     id: true,
                     name: true,
                     subdireccion_id: true,
-                    subdirecciones: {
-                        select: {
-                            id: true,
-                            name: true
-                        }
-                    }
+                    subdirecciones: { select: { id: true, name: true } }
                 }
             },
             lugar_evento: true
         };
 
-        const userType = await this.prisma.user_types.findUnique({
-            where: { id: user.user_type_id },
-        });
-
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
 
         let where: any = {};
 
-        // If viewAll is requested, we skip the strict filtering restrictions for admins/area admins
-        // BUT we might still strictly respect 'solicitante' (User) vs 'Manager' roles if needed.
-        // Assuming "Listar todas" is for people who manage things.
-
-        if (viewAll) {
-            // If viewing all, we return everything (no constraints)
-            // Unless we want to restrict basic users? 
-            // Logic: If user has 'gestionar_salida' permission (checked by Guard), let them see all if they ask.
-            where = {};
-        } else {
+        if (!viewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const userArea = await this.prisma.areas.findUnique({
                     where: { id: user.area_id! },
                     include: { subdirecciones: true },
                 });
                 if (!userArea) throw new ForbiddenException('Área no encontrada');
-
-                where = {
-                    areas: { subdireccion_id: userArea.subdireccion_id }
-                };
+                where = { areas: { subdireccion_id: userArea.subdireccion_id } };
             } else if (userType.name !== 'superadmin') {
-                // Lider/User -> My own requests OR admin_area? 
-                // If admin_area falls here, they see only their own?
-                // If user wants to see "su area" actions, we might need to handle admin_area explicit filter?
-                // For now, preserving existing logic:
                 where = { solicitante_id: user.id };
             }
         }
 
-        return this.prisma.salidas.findMany({
-            where,
-            include,
-            orderBy: { fecha_inicio: 'desc' }
-        });
+        return this.prisma.salidas.findMany({ where, include, orderBy: { fecha_inicio: 'desc' } });
     }
 
     async findOne(id: string, user: users) {
@@ -354,10 +295,7 @@ export class SalidasService {
 
         if (!salida) throw new NotFoundException(`Salida ${id} no encontrada`);
 
-        // Permission check (same as before)
-        const userType = await this.prisma.user_types.findUnique({
-            where: { id: user.user_type_id },
-        });
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
 
         if (userType?.name === 'admin_subdireccion') {
             const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
@@ -383,9 +321,7 @@ export class SalidasService {
             throw new ForbiddenException('Solo el creador puede editar');
         }
 
-        // Logic to update conflict, dates, etc
         if (updateSalidaDto.fecha_inicio || updateSalidaDto.municipios_ids) {
-            // Re-check conflict if critical fields change
             await this.checkConflicts(
                 updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
                 updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
@@ -400,7 +336,6 @@ export class SalidasService {
             );
         }
 
-        // Obtener nombres de municipios convocados si se actualizan
         let municipiosConvocadosStr: string | undefined;
         if (updateSalidaDto.municipios_ids?.length) {
             const munis = await this.prisma.municipios.findMany({
@@ -410,8 +345,6 @@ export class SalidasService {
             municipiosConvocadosStr = munis.map(m => m.name).join(', ');
         }
 
-        // Prepare data for Prisma update (handling relations is tricky with connect/disconnect)
-        // For simplicity, we use set (replace all)
         return this.prisma.salidas.update({
             where: { id },
             data: {
@@ -422,19 +355,15 @@ export class SalidasService {
                 fecha_inicio: updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : undefined,
                 fecha_final: updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : undefined,
                 jornada: updateSalidaDto.jornada,
-
-                // Transport Fields
                 transporte_medio: updateSalidaDto.transporte_medio,
                 transporte_responsables: updateSalidaDto.transporte_responsables,
                 instituciones_convocadas: updateSalidaDto.instituciones_convocadas,
                 municipios_convocados: municipiosConvocadosStr,
                 lugar_evento_id: updateSalidaDto.lugar_evento_id,
-
                 estado: updateSalidaDto.estado,
                 observaciones: updateSalidaDto.observaciones_aprobacion
                     ? `${salida.observaciones || ''}\n${updateSalidaDto.observaciones_aprobacion}`
                     : undefined,
-
                 municipios: updateSalidaDto.municipios_ids ? { set: updateSalidaDto.municipios_ids.map(id => ({ id })) } : undefined,
                 ips: updateSalidaDto.ips_ids ? { set: updateSalidaDto.ips_ids.map(id => ({ id })) } : undefined,
                 entidades: updateSalidaDto.entidades_ids ? { set: updateSalidaDto.entidades_ids.map(id => ({ id })) } : undefined,
@@ -443,12 +372,8 @@ export class SalidasService {
                 idsn: updateSalidaDto.idsn_ids ? { set: updateSalidaDto.idsn_ids.map(id => ({ id })) } : undefined,
             },
             include: {
-                municipios: true,
-                ips: true,
-                entidades: true,
-                eapb: true,
-                organizaciones: true,
-                idsn: true,
+                municipios: true, ips: true, entidades: true,
+                eapb: true, organizaciones: true, idsn: true,
             }
         });
     }
@@ -468,10 +393,6 @@ export class SalidasService {
         const salida = await this.findOne(id, user);
 
         if (salida.estado !== 'pendiente') {
-            // Usually approval is only for pending. 
-            // If superadmin wants to re-approve/update approval? 
-            // Let's keep it strict for now unless requested otherwise.
-            // User only mentioned rejecting approved ones.
             throw new BadRequestException('La salida no está pendiente');
         }
 
@@ -493,7 +414,6 @@ export class SalidasService {
         const salida = await this.findOne(id, user);
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
 
-        // Allow reject if pending OR (status is approved AND user is superadmin)
         const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
 
         if (!canReject) {
@@ -524,7 +444,7 @@ export class SalidasService {
             this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
         ]);
 
-        let lideres: { id: string, name: string, area_id?: string }[] | undefined = undefined;
+        let lideres: { id: string, name: string, area_id?: string }[] | undefined;
 
         if (user) {
             const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -552,10 +472,7 @@ export class SalidasService {
                 const liderRole = await this.prisma.user_types.findUnique({ where: { name: 'lider' } });
                 if (liderRole) {
                     const lideresRaw = await this.prisma.users.findMany({
-                        where: {
-                            user_type_id: liderRole.id,
-                            is_active: true
-                        },
+                        where: { user_type_id: liderRole.id, is_active: true },
                         select: { id: true, names: true, last_name: true, area_id: true }
                     });
                     lideres = lideresRaw.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}`, area_id: l.area_id || undefined }));
@@ -564,32 +481,17 @@ export class SalidasService {
         }
 
         return {
-            municipios,
-            ips,
-            entidades,
-            eapb,
-            organizaciones,
-            idsn,
-            areas,
+            municipios, ips, entidades, eapb, organizaciones, idsn, areas,
             ...(lideres ? { lideres } : {})
         };
     }
 
     async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
-        // Build the where clause for filters
         const where: any = {};
 
-        if (areaId) {
-            where.area_id = areaId;
-        }
-
-        if (estado) {
-            where.estado = estado;
-        }
-
-        if (jornada) {
-            where.jornada = jornada;
-        }
+        if (areaId) where.area_id = areaId;
+        if (estado) where.estado = estado;
+        if (jornada) where.jornada = jornada;
 
         if (startDate && endDate) {
             where.fecha_inicio = {
@@ -597,40 +499,25 @@ export class SalidasService {
                 lte: new Date(`${endDate}T23:59:59.999`)
             };
         } else if (startDate) {
-            where.fecha_inicio = {
-                gte: new Date(`${startDate}T00:00:00`)
-            };
+            where.fecha_inicio = { gte: new Date(`${startDate}T00:00:00`) };
         } else if (endDate) {
-            where.fecha_inicio = {
-                lte: new Date(`${endDate}T23:59:59.999`)
-            };
+            where.fecha_inicio = { lte: new Date(`${endDate}T23:59:59.999`) };
         }
 
-        // Group by state
         const byEstado = await this.prisma.salidas.groupBy({
             by: ['estado'],
             where,
-            _count: {
-                _all: true
-            }
+            _count: { _all: true }
         });
 
-        // Group by solicitante
         const bySolicitante = await this.prisma.salidas.groupBy({
             by: ['solicitante_id'],
             where,
-            _count: {
-                _all: true
-            },
-            orderBy: {
-                _count: {
-                    solicitante_id: 'desc'
-                }
-            },
+            _count: { _all: true },
+            orderBy: { _count: { solicitante_id: 'desc' } },
             take: 10
         });
 
-        // Fetch user names for solicitantes
         const usersIds = bySolicitante.map(s => s.solicitante_id);
         const usersInfo = await this.prisma.users.findMany({
             where: { id: { in: usersIds } },
@@ -639,19 +526,13 @@ export class SalidasService {
 
         const topSolicitantes = bySolicitante.map(s => {
             const u = usersInfo.find(u => u.id === s.solicitante_id);
-            return {
-                name: u ? `${u.names} ${u.last_name}` : 'Desconocido',
-                count: s._count._all
-            }
+            return { name: u ? `${u.names} ${u.last_name}` : 'Desconocido', count: s._count._all };
         });
 
-        // Group by area
         const byArea = await this.prisma.salidas.groupBy({
             by: ['area_id'],
             where,
-            _count: {
-                _all: true
-            }
+            _count: { _all: true }
         });
 
         const areaIds = byArea.map(a => a.area_id);
@@ -662,22 +543,14 @@ export class SalidasService {
 
         const salidasByArea = byArea.map(a => {
             const i = areaInfo.find(area => area.id === a.area_id);
-            return {
-                name: i ? i.name : 'Desconocido',
-                count: a._count._all
-            }
+            return { name: i ? i.name : 'Desconocido', count: a._count._all };
         });
 
-        // Get the actual items for the report, sorted by date desc
         const items = await this.prisma.salidas.findMany({
             where,
             include: {
-                municipios: true,
-                ips: true,
-                entidades: true,
-                eapb: true,
-                organizaciones: true,
-                idsn: true,
+                municipios: true, ips: true, entidades: true, eapb: true,
+                organizaciones: true, idsn: true,
                 solicitante: { select: { id: true, names: true, last_name: true, email: true } },
                 aprobador: { select: { id: true, names: true, last_name: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true } },
@@ -695,6 +568,867 @@ export class SalidasService {
         };
     }
 
+    // ─── Formatting helpers ──────────────────────────────────────────────────
+
+    private formatDate(date?: Date) {
+        if (!date) return 'N/A';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${day}/${month}/${year}`;
+    }
+
+    private formatDateTime(date?: Date) {
+        if (!date) return 'N/A';
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${this.formatDate(date)} ${hours}:${minutes}`;
+    }
+
+    private normalizeText(value?: string | null) {
+        if (!value) return 'N/A';
+        return String(value).trim() || 'N/A';
+    }
+
+    private isEmptyValue(value: string) {
+        return !value || value === 'N/A';
+    }
+
+    private toCsv(list?: { name: string }[]) {
+        if (!list || list.length === 0) return 'N/A';
+        return list.map(i => i.name).join(', ');
+    }
+
+    // ─── PDF Drawing Primitives ──────────────────────────────────────────────
+
+    /**
+     * Draws a full-width horizontal rule.
+     */
+    private drawHRule(
+        doc: PDFKit.PDFDocument,
+        color: string = COLORS.gray200,
+        thickness: number = 0.5,
+        marginTop: number = 4,
+        marginBottom: number = 4
+    ) {
+        doc.moveDown(marginTop / 12);
+        const x = doc.page.margins.left;
+        const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        doc.save()
+            .strokeColor(color)
+            .lineWidth(thickness)
+            .moveTo(x, doc.y)
+            .lineTo(x + width, doc.y)
+            .stroke()
+            .restore();
+        doc.moveDown(marginBottom / 12);
+    }
+
+    /**
+     * Draws a rounded pill badge with colored background.
+     */
+    private drawBadge(
+        doc: PDFKit.PDFDocument,
+        text: string,
+        x: number,
+        y: number,
+        bgColor: string,
+        textColor: string = COLORS.white
+    ) {
+        const padding = { x: 7, y: 3 };
+        const fontSize = 8;
+        doc.font('Helvetica-Bold').fontSize(fontSize);
+        const textWidth = doc.widthOfString(text);
+        const bw = textWidth + padding.x * 2;
+        const bh = fontSize + padding.y * 2;
+        doc.save()
+            .fillColor(bgColor)
+            .roundedRect(x, y, bw, bh, 4)
+            .fill()
+            .restore();
+        doc.fillColor(textColor).text(text, x + padding.x, y + padding.y, { lineBreak: false });
+        return bw; // return width so caller can offset next element
+    }
+
+    /**
+     * Draws a colored left-border card box.
+     * Returns the Y after the card.
+     */
+    private drawCard(
+        doc: PDFKit.PDFDocument,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        accentColor: string,
+        bgColor: string = COLORS.gray50
+    ) {
+        doc.save()
+            .fillColor(bgColor)
+            .roundedRect(x, y, width, height, 4)
+            .fill()
+            .fillColor(accentColor)
+            .rect(x, y, 4, height)
+            .fill()
+            .restore();
+    }
+
+    /**
+     * Draws a professional page header on the current page.
+     */
+    private drawPageHeader(doc: PDFKit.PDFDocument, title: string, subtitle?: string) {
+        const pageWidth = doc.page.width;
+        const marginLeft = doc.page.margins.left;
+        const contentWidth = pageWidth - marginLeft - doc.page.margins.right;
+
+        // Guardar posición actual para restaurarla después
+        const savedY = doc.y;
+        const savedX = doc.x;
+
+        doc.save()
+            .fillColor(COLORS.primary)
+            .rect(0, 0, pageWidth, 52)
+            .fill()
+            .restore();
+
+        doc.save()
+            .fillColor(COLORS.accent)
+            .rect(0, 49, pageWidth, 3)
+            .fill()
+            .restore();
+
+        doc.font('Helvetica-Bold')
+            .fontSize(15)
+            .fillColor(COLORS.white)
+            .text(title, marginLeft, 15, { width: contentWidth - 140, lineBreak: false });
+
+        if (subtitle) {
+            doc.font('Helvetica')
+                .fontSize(8.5)
+                .fillColor('#93C5FD')
+                .text(subtitle, marginLeft, 33, { width: contentWidth - 140, lineBreak: false });
+        }
+
+        doc.font('Helvetica')
+            .fontSize(8)
+            .fillColor('#93C5FD')
+            .text(this.formatDateTime(new Date()), pageWidth - doc.page.margins.right - 130, 19, { width: 130, align: 'right', lineBreak: false });
+
+        // Siempre dejar el cursor en y=65 tras el header
+        doc.y = 65;
+        doc.x = marginLeft;
+    }
+
+    /**
+     * Draws a footer on the current page.
+     */
+    private drawPageFooter(doc: PDFKit.PDFDocument, pageNumber: number, generatedBy: string) {
+        const pageWidth = doc.page.width;
+        const marginLeft = doc.page.margins.left;
+        const contentWidth = pageWidth - marginLeft - doc.page.margins.right;
+        const footerY = doc.page.height - 28;
+
+        // Guardar estado completo incluyendo posición
+        const savedY = doc.y;
+        const savedX = doc.x;
+
+        doc.save()
+            .fillColor(COLORS.gray100)
+            .rect(0, footerY - 4, pageWidth, 32)
+            .fill()
+            .strokeColor(COLORS.gray200)
+            .lineWidth(0.5)
+            .moveTo(0, footerY - 4)
+            .lineTo(pageWidth, footerY - 4)
+            .stroke()
+            .restore();
+
+        doc.font('Helvetica')
+            .fontSize(7.5)
+            .fillColor(COLORS.textMuted)
+            .text(`Generado por: ${generatedBy}`, marginLeft, footerY + 2, { width: contentWidth / 2, lineBreak: false });
+
+        doc.font('Helvetica')
+            .fontSize(7.5)
+            .fillColor(COLORS.textMuted)
+            .text(`Pagina ${pageNumber}`, marginLeft, footerY + 2, { width: contentWidth, align: 'right', lineBreak: false });
+
+        // Restaurar posición para que doc.text no mueva el cursor
+        doc.y = savedY;
+        doc.x = savedX;
+    }
+
+    /**
+     * Renders a section title with an accent left bar.
+     */
+    private drawSectionTitle(doc: PDFKit.PDFDocument, title: string, color: string = COLORS.primaryLight) {
+        const marginLeft = doc.page.margins.left;
+        const contentWidth = doc.page.width - marginLeft - doc.page.margins.right;
+
+        doc.moveDown(0.6);
+        const titleY = doc.y;
+        doc.save()
+            .fillColor(color)
+            .rect(marginLeft, titleY, 4, 18)
+            .fill()
+            .restore();
+
+        doc.font('Helvetica-Bold')
+            .fontSize(12)
+            .fillColor(COLORS.gray800)
+            .text(title, marginLeft + 12, titleY + 2, { width: contentWidth - 12 });
+
+        doc.moveDown(0.3);
+        doc.x = marginLeft;
+    }
+
+    /**
+     * Draws a KPI summary card (stat box).
+     */
+    private drawKpiCard(
+        doc: PDFKit.PDFDocument,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        value: string,
+        label: string,
+        color: string
+    ) {
+        // Card background
+        doc.save()
+            .fillColor(COLORS.white)
+            .roundedRect(x, y, w, h, 6)
+            .fill()
+            .strokeColor(COLORS.gray200)
+            .lineWidth(0.75)
+            .roundedRect(x, y, w, h, 6)
+            .stroke()
+            .restore();
+
+        // Top accent bar
+        doc.save()
+            .fillColor(color)
+            .roundedRect(x, y, w, 5, 3)
+            .fill()
+            .rect(x, y + 2, w, 3)
+            .fill()
+            .restore();
+
+        // Value
+        doc.font('Helvetica-Bold')
+            .fontSize(22)
+            .fillColor(color)
+            .text(value, x + 10, y + 16, { width: w - 20, align: 'center', lineBreak: false });
+
+        // Label
+        doc.font('Helvetica')
+            .fontSize(8)
+            .fillColor(COLORS.textMuted)
+            .text(label, x + 6, y + 44, { width: w - 12, align: 'center', lineBreak: false });
+    }
+
+    /**
+     * Improved table renderer with rounded header, hover rows and optional badge cells.
+     */
+    private drawTable(
+        doc: PDFKit.PDFDocument,
+        headers: string[],
+        rows: string[][],
+        options: {
+            columnWidths?: number[];
+            headerBackground?: string;
+            headerColor?: string;
+            rowAltBackground?: string;
+            borderColor?: string;
+            tableWidth?: number;
+            tableBackground?: string;
+            cellPadding?: number;
+            drawColumnLines?: boolean;
+            rowGap?: number;
+            badgeColumns?: number[];       // column indices to render as status badges
+        } = {}
+    ) {
+        const {
+            columnWidths,
+            headerBackground = COLORS.primary,
+            headerColor = COLORS.white,
+            rowAltBackground = COLORS.gray50,
+            borderColor = COLORS.gray200,
+            tableWidth,
+            tableBackground,
+            cellPadding = 5,
+            drawColumnLines = false,
+            rowGap = 6,
+            badgeColumns = [],
+        } = options;
+
+        const startX = doc.x;
+        const available = tableWidth || (doc.page.width - doc.page.margins.left - doc.page.margins.right);
+        const widths = (columnWidths && columnWidths.length === headers.length)
+            ? columnWidths
+            : headers.map(() => available / headers.length);
+        const totalW = widths.reduce((a, b) => a + b, 0);
+        const headerH = 20;
+        const bottomY = doc.page.height - doc.page.margins.bottom;
+
+        // Pre-compute row heights
+        doc.font('Helvetica').fontSize(8.5);
+        const rowHeights = rows.map(row =>
+            row.reduce((maxH, cell, i) => {
+                const h = doc.heightOfString(String(cell), { width: widths[i] - cellPadding * 2 });
+                return Math.max(maxH, h);
+            }, 0)
+        );
+
+        const drawHeader = (y: number) => {
+            // Rounded header background
+            doc.save()
+                .fillColor(headerBackground)
+                .roundedRect(startX, y, totalW, headerH, 4)
+                .fill()
+                .restore();
+
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor(headerColor);
+            let hx = startX;
+            headers.forEach((h, i) => {
+                doc.text(h, hx + cellPadding, y + (headerH - 8.5) / 2, {
+                    width: widths[i] - cellPadding * 2,
+                    lineBreak: false
+                });
+                hx += widths[i];
+            });
+        };
+
+        // Ensure room for at least the header
+        if (doc.y + headerH + rowGap > bottomY) {
+            doc.addPage();
+            doc.x = doc.page.margins.left;
+        }
+
+        if (tableBackground) {
+            const totalH = headerH + rowGap + rowHeights.reduce((acc, h) => acc + h + rowGap, 0);
+            doc.save()
+                .fillColor(tableBackground)
+                .roundedRect(startX, doc.y - 4, totalW, totalH + 8, 6)
+                .fill()
+                .restore();
+        }
+
+        drawHeader(doc.y);
+        let cursorY = doc.y + headerH + rowGap;
+        doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.text);
+
+        rows.forEach((row, rowIndex) => {
+            const rowH = rowHeights[rowIndex] || 12;
+
+            if (cursorY + rowH > bottomY) {
+                doc.addPage();
+                doc.x = doc.page.margins.left;
+                drawHeader(doc.y);
+                cursorY = doc.y + headerH + rowGap;
+            }
+
+            // Alternating row background
+            if (rowIndex % 2 === 1) {
+                doc.save()
+                    .fillColor(rowAltBackground)
+                    .rect(startX, cursorY - 2, totalW, rowH + 4)
+                    .fill()
+                    .restore();
+            }
+
+            let cx = startX;
+            row.forEach((cell, colIndex) => {
+                doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.text);
+
+                if (badgeColumns.includes(colIndex)) {
+                    const badgeColor = ESTADO_COLORS[cell?.toLowerCase()] || COLORS.gray400;
+                    this.drawBadge(doc, cell, cx + cellPadding, cursorY + 1, badgeColor);
+                } else {
+                    doc.text(String(cell), cx + cellPadding, cursorY, {
+                        width: widths[colIndex] - cellPadding * 2
+                    });
+                }
+                cx += widths[colIndex];
+            });
+
+            // Bottom border per row
+            doc.save()
+                .strokeColor(borderColor)
+                .lineWidth(0.4)
+                .moveTo(startX, cursorY + rowH + 2)
+                .lineTo(startX + totalW, cursorY + rowH + 2)
+                .stroke()
+                .restore();
+
+            cursorY += rowH + rowGap;
+        });
+
+        doc.y = cursorY;
+        doc.x = doc.page.margins.left;
+    }
+
+    /**
+     * Draws a donut/pie chart with legend.
+     */
+    private drawPieChart(
+        doc: PDFKit.PDFDocument,
+        title: string,
+        x: number,
+        y: number,
+        radius: number,
+        labels: string[],
+        values: number[],
+        colors: string[]
+    ) {
+        const savedY = doc.y;
+        const savedX = doc.x;
+
+        // Título
+        doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.gray800)
+            .text(title, x - radius - 5, y - radius - 26, { width: (radius + 5) * 2, lineBreak: false });
+
+        const total = values.reduce((a, b) => a + b, 0);
+        if (total === 0) {
+            doc.font('Helvetica').fontSize(9).fillColor(COLORS.textMuted)
+                .text('Sin datos', x - 30, y - 8, { lineBreak: false });
+            doc.y = savedY;
+            doc.x = savedX;
+            return;
+        }
+
+        // Dibujar slices
+        let angle = -Math.PI / 2;
+        values.forEach((value, index) => {
+            const slice = (value / total) * Math.PI * 2;
+            const docAny = doc as any;
+            docAny.save();
+            docAny.moveTo(x, y);
+            docAny.fillColor(colors[index % colors.length]);
+            docAny.arc(x, y, radius, angle, angle + slice).lineTo(x, y).fill();
+            docAny.restore();
+            angle += slice;
+        });
+
+        // Hueco del donut
+        doc.save()
+            .fillColor(COLORS.white)
+            .circle(x, y, radius * 0.42)
+            .fill()
+            .restore();
+
+        // Total en el centro
+        doc.font('Helvetica-Bold').fontSize(14).fillColor(COLORS.gray800)
+            .text(String(total), x - 18, y - 9, { width: 36, align: 'center', lineBreak: false });
+        doc.font('Helvetica').fontSize(7).fillColor(COLORS.textMuted)
+            .text('total', x - 18, y + 5, { width: 36, align: 'center', lineBreak: false });
+
+        // ── Leyenda DEBAJO del círculo ──────────────────────────────────────
+        const legendStartY = y + radius + 12;  // justo debajo del círculo
+        const legendStartX = x - radius;       // alineada al borde izquierdo del círculo
+        const legendW = radius * 2;            // mismo ancho que el círculo
+        const itemH = 14;
+
+        labels.forEach((label, index) => {
+            const ly = legendStartY + index * itemH;
+            const lx = legendStartX;
+
+            // Cuadrito de color
+            doc.save()
+                .fillColor(colors[index % colors.length])
+                .roundedRect(lx, ly, 9, 9, 2)
+                .fill()
+                .restore();
+
+            // Nombre + porcentaje
+            const pct = ((values[index] / total) * 100).toFixed(1);
+            const legendText = `${label}: ${values[index]} (${pct}%)`;
+            doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.text)
+                .text(legendText, lx + 13, ly, { width: legendW - 13, lineBreak: false });
+        });
+
+        // Restaurar cursor
+        doc.y = savedY;
+        doc.x = savedX;
+    }
+    /**
+     * Draws a horizontal bar chart (looks cleaner than vertical for names).
+     */
+    private drawHorizontalBarChart(
+        doc: PDFKit.PDFDocument,
+        title: string,
+        x: number,
+        y: number,
+        w: number,
+        labels: string[],
+        values: number[],
+        color: string
+    ) {
+        // ── Aislar cursor ──
+        const savedY = doc.y;
+        const savedX = doc.x;
+
+        doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.gray800)
+            .text(title, x, y - 24, { width: w, lineBreak: false });
+
+        const maxValue = Math.max(...values, 1);
+        const barH = 14;
+        const barGap = 6;
+        const labelW = 110;
+        const barAreaW = w - labelW - 40;
+
+        values.forEach((val, i) => {
+            const by = y + i * (barH + barGap);
+            const filledW = (val / maxValue) * barAreaW;
+
+            doc.save()
+                .fillColor(COLORS.gray100)
+                .roundedRect(x + labelW, by, barAreaW, barH, 3)
+                .fill()
+                .restore();
+
+            doc.save()
+                .fillColor(color)
+                .roundedRect(x + labelW, by, Math.max(filledW, 4), barH, 3)
+                .fill()
+                .restore();
+
+            const labelStr = labels[i].length > 16 ? `${labels[i].slice(0, 15)}…` : labels[i];
+            doc.font('Helvetica').fontSize(7.5).fillColor(COLORS.gray700)
+                .text(labelStr, x, by + 2, { width: labelW - 6, lineBreak: false });
+
+            doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLORS.white)
+                .text(String(val), x + labelW + Math.max(filledW - 20, 4), by + 2, { width: 20, align: 'right', lineBreak: false });
+        });
+
+        // ── Restaurar cursor ──
+        doc.y = savedY;
+        doc.x = savedX;
+    }
+
+    // ─── Main PDF Export ─────────────────────────────────────────────────────
+
+    async exportEstadisticasPdf(
+        user: users,
+        startDate?: string,
+        endDate?: string,
+        areaId?: string,
+        estado?: string,
+        jornada?: string
+    ) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada);
+
+        const area = areaId
+            ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } })
+            : null;
+
+        const filterParts: string[] = [];
+        if (startDate && endDate) filterParts.push(`${startDate} a ${endDate}`);
+        else if (startDate) filterParts.push(`Desde ${startDate}`);
+        else if (endDate) filterParts.push(`Hasta ${endDate}`);
+        else filterParts.push('Historico completo');
+        if (area?.name) filterParts.push(`Area: ${area.name}`);
+        if (estado) filterParts.push(`Estado: ${estado}`);
+        if (jornada) filterParts.push(`Jornada: ${jornada}`);
+
+        const doc = new PDFDocument({
+            size: 'A4',
+            layout: 'landscape',
+            margins: { top: 65, bottom: 30, left: 40, right: 40 },
+            // Importante: bufferPages permite que PDFKit no finalice páginas inmediatamente
+            bufferPages: true,
+        });
+
+        const chunks: Buffer[] = [];
+        doc.on('data', (chunk) => chunks.push(chunk as Buffer));
+
+        const pageW = doc.page.width;
+        const marginL = doc.page.margins.left;
+        const contentW = pageW - marginL - doc.page.margins.right;
+        const authorName = `${user.names} ${user.last_name}`;
+
+        // ── Contexto de página actual ──────────────────────────────────────────
+        // Guardamos título/subtítulo de la sección actual para usarlo en pageAdded
+        const pageCtx = {
+            title: 'Reporte de Salidas',
+            subtitle: filterParts.join('  ·  '),
+            writingFooters: false,  // <-- bandera nueva
+
+        };
+
+        // ── Auto header+footer en cada página nueva ────────────────────────────
+        doc.on('pageAdded', () => {
+            if (pageCtx.writingFooters) return;  // <-- bloquear durante el loop
+            this.drawPageHeader(doc, pageCtx.title, pageCtx.subtitle);
+            doc.x = marginL;
+        });
+
+        // Helper: agrega página con título de sección
+        const addPage = (title: string, subtitle?: string) => {
+            pageCtx.title = title;
+            pageCtx.subtitle = subtitle ?? filterParts.join('  ·  ');
+            doc.addPage();
+            // drawPageHeader ya fue llamado por el evento pageAdded
+        };
+
+        // Helper: verifica espacio disponible y agrega página si es necesario
+        const ensureSpace = (h: number, title?: string) => {
+            if (doc.y + h > doc.page.height - doc.page.margins.bottom - 40) {
+                addPage(title ?? pageCtx.title, pageCtx.subtitle);
+            }
+        };
+
+        // ── PÁGINA 1: Portada / Resumen ────────────────────────────────────────
+        // La primera página NO dispara pageAdded, dibujamos el header manualmente
+        pageCtx.title = 'Reporte de Salidas';
+        pageCtx.subtitle = filterParts.join('  ·  ');
+        this.drawPageHeader(doc, pageCtx.title, pageCtx.subtitle);
+        doc.x = marginL;
+
+        // Filter chip row
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLORS.textMuted)
+            .text('Filtros aplicados:', marginL, doc.y, { lineBreak: false });
+        let chipX = marginL + doc.widthOfString('Filtros aplicados:') + 8;
+        const chipColors = [COLORS.primaryLight, COLORS.success, COLORS.warning, COLORS.purple];
+        filterParts.forEach((f, i) => {
+            this.drawBadge(doc, f, chipX, doc.y - 1, chipColors[i % chipColors.length]);
+            chipX += doc.widthOfString(f) + 30;
+        });
+        doc.moveDown(1.5);
+        doc.x = marginL;
+
+        // KPI cards
+        const kpiData = [
+            { label: 'Total Salidas', value: String(data.total), color: COLORS.primaryLight },
+            { label: 'Aprobadas', value: String(data.estados.find(e => e.name === 'aprobada')?.count || 0), color: COLORS.success },
+            { label: 'Pendientes', value: String(data.estados.find(e => e.name === 'pendiente')?.count || 0), color: COLORS.warning },
+            { label: 'Rechazadas', value: String(data.estados.find(e => e.name === 'rechazada')?.count || 0), color: COLORS.danger },
+        ];
+
+        const kpiW = (contentW - 18) / 4;
+        const kpiH = 65;
+        const kpiTop = doc.y;
+        kpiData.forEach((k, i) => {
+            this.drawKpiCard(doc, marginL + i * (kpiW + 6), kpiTop, kpiW, kpiH, k.value, k.label, k.color);
+        });
+        doc.y = kpiTop + kpiH + 18;
+        doc.x = marginL;
+
+        // Tablas resumen lado a lado
+        this.drawSectionTitle(doc, 'Distribucion de Salidas');
+        const halfW = (contentW - 16) / 2;
+        const tableStartY = doc.y;
+
+        // Izquierda: por estado
+        const estadoRows = data.estados.map(e => [e.name, String(e.count)]);
+        let yAfterLeft = tableStartY;
+        if (estadoRows.length > 0) {
+            doc.x = marginL;
+            doc.y = tableStartY;
+            this.drawTable(doc, ['Estado', 'Cantidad'], estadoRows, {
+                columnWidths: [halfW - 60, 60],
+                tableWidth: halfW,
+                headerBackground: COLORS.primary,
+                rowAltBackground: COLORS.gray100,
+                borderColor: COLORS.gray200,
+                cellPadding: 7,
+                rowGap: 5,
+                badgeColumns: [0],
+            });
+            yAfterLeft = doc.y;
+        }
+
+        // Derecha: top solicitantes — forzar posición
+        const solRows = data.topSolicitantes.map(s => [s.name, String(s.count)]);
+        let yAfterRight = tableStartY;
+        if (solRows.length > 0) {
+            doc.x = marginL + halfW + 16;  // <-- forzar X manualmente ANTES
+            doc.y = tableStartY;           // <-- volver al mismo Y inicial
+            this.drawTable(doc, ['Solicitante', 'Salidas'], solRows, {
+                columnWidths: [halfW - 60, 60],
+                tableWidth: halfW,
+                headerBackground: COLORS.primary,
+                rowAltBackground: COLORS.gray100,
+                borderColor: COLORS.gray200,
+                cellPadding: 7,
+                rowGap: 5,
+            });
+            yAfterRight = doc.y;
+        }
+
+        doc.y = Math.max(yAfterLeft, yAfterRight) + 6;
+        doc.x = marginL;
+
+        // Tabla áreas ancho completo
+        ensureSpace(60);
+        const areaRows = data.areas.map(a => [a.name, String(a.count)]);
+        if (areaRows.length > 0) {
+            this.drawSectionTitle(doc, 'Salidas por Area');
+            this.drawTable(doc, ['Area', 'Cantidad'], areaRows, {
+                columnWidths: [contentW - 80, 80],
+                headerBackground: COLORS.primary,
+                rowAltBackground: COLORS.gray100,
+                borderColor: COLORS.gray200,
+                cellPadding: 7,
+                rowGap: 5,
+            });
+        }
+
+        // ── PÁGINA 2: Gráficos ─────────────────────────────────────────────────
+        addPage('Graficos Estadisticos');
+        doc.x = marginL;
+
+        const chartsY = doc.y + 8;
+        const pieRadius = 72;
+        const pieCenterX = marginL + pieRadius + 10;
+        const pieCenterY = chartsY + pieRadius + 30;
+
+        const estadoLabels = data.estados.map(e => e.name);
+        const estadoCounts = data.estados.map(e => e.count);
+        const areaLabels = data.areas.map(a => a.name);
+        const areaCounts = data.areas.map(a => a.count);
+        const topLabels = data.topSolicitantes.map(s => s.name);
+        const topCounts = data.topSolicitantes.map(s => s.count);
+        const estadoPalette = estadoLabels.map(l => ESTADO_COLORS[l] || CHART_PALETTE[0]);
+
+        this.drawPieChart(doc, 'Distribucion por Estado', pieCenterX, pieCenterY, pieRadius, estadoLabels, estadoCounts, estadoPalette);
+
+        const barChartX = marginL + pieRadius * 2 + 60;
+        const barChartW = contentW - (pieRadius * 2 + 70);
+        if (topLabels.length > 0) {
+            this.drawHorizontalBarChart(doc, 'Top Solicitantes', barChartX, chartsY + 30, barChartW, topLabels, topCounts, COLORS.success);
+        }
+
+        const legendItemH = 14;
+        const legendTotalH = estadoLabels.length * legendItemH;
+        const nextChartY = pieCenterY + pieRadius + 12 + legendTotalH + 24;
+
+
+        if (areaLabels.length > 0) {
+            this.drawHorizontalBarChart(doc, 'Salidas por Area', marginL, nextChartY, contentW, areaLabels, areaCounts, COLORS.primaryLight);
+        }
+
+        // ── PÁGINA 3+: Detalle ─────────────────────────────────────────────────
+        addPage('Detalle de Salidas', `${data.items.length} registros`);
+        doc.x = marginL;
+
+        if (data.items.length === 0) {
+            doc.font('Helvetica').fontSize(10).fillColor(COLORS.textMuted)
+                .text('Sin registros para los filtros seleccionados.', { width: contentW });
+        } else {
+            data.items.forEach((item, index) => {
+                ensureSpace(55, 'Detalle de Salidas');
+                doc.x = marginL;
+                doc.moveDown(0.5);
+
+                const headerY = doc.y;
+                doc.save()
+                    .fillColor(COLORS.gray800)
+                    .roundedRect(marginL, headerY, contentW, 22, 4)  // ← usa contentWidth aquí
+                    .fill()
+                    .restore();
+
+                doc.save()
+                    .fillColor(COLORS.accent)
+                    .roundedRect(marginL, headerY, 28, 22, 4)
+                    .fill()
+                    .rect(marginL + 14, headerY, 14, 22)
+                    .fill()
+                    .restore();
+                doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLORS.white)
+                    .text(String(index + 1), marginL + 4, headerY + 6, { width: 20, align: 'center', lineBreak: false });
+
+                doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.white)
+                    .text(item.codigo, marginL + 34, headerY + 6, { lineBreak: false });
+
+                const estadoColor = ESTADO_COLORS[item.estado] || COLORS.gray400;
+                const codigoW = doc.widthOfString(item.codigo);
+                this.drawBadge(doc, item.estado.toUpperCase(), marginL + 34 + codigoW + 12, headerY + 7, estadoColor);
+
+                doc.font('Helvetica').fontSize(8.5).fillColor('#93C5FD')
+                    .text(`${this.formatDate(item.fecha_inicio)} — ${this.formatDate(item.fecha_final)}`,
+                        marginL, headerY + 7, { width: contentW - 10, align: 'right', lineBreak: false });
+
+                doc.y = headerY + 26;
+                doc.x = marginL;
+
+                const detailRows: string[][] = [];
+                const push = (label: string, value: string) => {
+                    if (!this.isEmptyValue(value)) detailRows.push([label, value]);
+                };
+
+                push('Tipo / Subtipo', [this.normalizeText(item.tipo_salida), this.normalizeText(item.subtipo_salida)].filter(v => v !== 'N/A').join(' / '));
+                push('Tema', this.normalizeText(item.tema));
+                push('Descripcion', this.normalizeText(item.descripcion));
+                push('Jornada', this.normalizeText(item.jornada));
+                push('Area', this.normalizeText(item.areas?.name));
+                push('Solicitante', item.solicitante ? `${item.solicitante.names} ${item.solicitante.last_name}  <${item.solicitante.email}>` : 'N/A');
+                push('Aprobador', item.aprobador ? `${item.aprobador.names} ${item.aprobador.last_name}` : 'N/A');
+                push('Lugar / Destino', item.lugar_evento?.name || this.toCsv(item.municipios));
+                push('Municipios convocados', this.normalizeText(item.municipios_convocados));
+                push('IPS', this.toCsv(item.ips));
+                push('Entidades', this.toCsv(item.entidades));
+                push('EAPB', this.toCsv(item.eapb));
+                push('Organizaciones', this.toCsv(item.organizaciones));
+                push('IDSN', this.toCsv(item.idsn));
+                push('Instituciones convocadas', item.instituciones_convocadas ? String(item.instituciones_convocadas) : 'N/A');
+                push('Transporte (medio)', this.normalizeText(item.transporte_medio));
+                push('Transporte (responsables)', this.normalizeText(item.transporte_responsables));
+                push('Observaciones', this.normalizeText(item.observaciones));
+
+                if (detailRows.length === 0) {
+                    doc.font('Helvetica').fontSize(8.5).fillColor(COLORS.textMuted).text('Sin datos.');
+                } else {
+                    this.drawTable(doc, ['Campo', 'Detalle'], detailRows, {
+                        columnWidths: [160, contentW - 160],
+                        headerBackground: COLORS.gray700,
+                        rowAltBackground: COLORS.gray50,
+                        borderColor: COLORS.gray200,
+                        cellPadding: 6,
+                        drawColumnLines: false,
+                        rowGap: 4,
+                    });
+                }
+
+                doc.moveDown(0.3);
+                this.drawHRule(doc, COLORS.gray300, 0.5, 2, 2);
+            });
+        }
+
+        // ── Footer en todas las páginas (con bufferPages) ──────────────────────
+        doc.removeAllListeners('pageAdded');
+
+        const range = doc.bufferedPageRange();
+        for (let i = 0; i < range.count; i++) {
+            doc.switchToPage(range.start + i);
+
+            // Desactivar el margin bottom temporalmente para que doc.text()
+            // no detecte overflow y cree páginas nuevas
+            const origBottom = doc.page.margins.bottom;
+            doc.page.margins.bottom = 0;
+            doc.y = doc.page.margins.top; // reset cursor a zona segura
+
+            this.drawPageFooter(doc, i + 1, authorName);
+
+            // Restaurar el margin
+            doc.page.margins.bottom = origBottom;
+        }
+
+        const bufferPromise = new Promise<Buffer>((resolve) => {
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+        doc.end();
+
+        const buffer = await bufferPromise;
+        const fileDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const filename = `Reporte_Salidas_${fileDate}.pdf`;
+
+        return { buffer, filename };
+    }
+
+    // ─── Bulk Operations ─────────────────────────────────────────────────────
+
     async bulkApprove(dto: BulkApproveSalidaDto, user: users) {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) {
@@ -706,7 +1440,6 @@ export class SalidasService {
             include: { areas: true }
         });
 
-        // Validate: only pending salidas can be approved
         const results: { aprobadas: string[]; errores: { id: string; codigo: string; motivo: string }[] } = {
             aprobadas: [],
             errores: []
@@ -720,7 +1453,6 @@ export class SalidasService {
                 continue;
             }
 
-            // For admin_subdireccion, check subdirection ownership
             if (userType?.name === 'admin_subdireccion') {
                 const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) {
@@ -732,7 +1464,6 @@ export class SalidasService {
             validIds.push(salida.id);
         }
 
-        // Check for IDs not found
         const foundIds = salidas.map(s => s.id);
         const notFound = dto.ids.filter(id => !foundIds.includes(id));
         for (const id of notFound) {
@@ -774,7 +1505,6 @@ export class SalidasService {
         const validIds: string[] = [];
 
         for (const salida of salidas) {
-            // Allow reject if pending, or if approved and superadmin
             const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
 
             if (!canReject) {
@@ -782,7 +1512,6 @@ export class SalidasService {
                 continue;
             }
 
-            // For admin_subdireccion, check subdirection ownership
             if (userType?.name === 'admin_subdireccion') {
                 const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) {
@@ -794,7 +1523,6 @@ export class SalidasService {
             validIds.push(salida.id);
         }
 
-        // Check for IDs not found
         const foundIds = salidas.map(s => s.id);
         const notFound = dto.ids.filter(id => !foundIds.includes(id));
         for (const id of notFound) {
