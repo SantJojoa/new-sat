@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -25,13 +25,29 @@ export class UsersService {
             throw new ConflictException('User already exists');
         }
 
-        const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+        const normalizedSubdireccionId = createUserDto.subdireccion_id === '' ? undefined : createUserDto.subdireccion_id;
+        const normalizedAreaId = createUserDto.area_id === '' ? undefined : createUserDto.area_id;
 
+        const userType = await this.prisma.user_types.findUnique({
+            where: { id: createUserDto.user_type_id }
+        });
+
+        if (!userType) {
+            throw new BadRequestException('Tipo de usuario no encontrado');
+        }
+
+        if (userType.name === 'admin_subdireccion' && !normalizedSubdireccionId) {
+            throw new BadRequestException('Debe seleccionar una subdirección');
+        }
+
+        const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
         const user = await this.prisma.users.create({
             data: {
                 ...createUserDto,
-                password: hashedPassword
+                password: hashedPassword,
+                area_id: userType.name === 'admin_subdireccion' ? null : normalizedAreaId,
+                subdireccion_id: userType.name === 'admin_subdireccion' ? normalizedSubdireccionId : null,
             },
         });
 
@@ -48,6 +64,7 @@ export class UsersService {
         const users = await this.prisma.users.findMany({
             include: {
                 areas: true,
+                subdirecciones: true,
                 user_types: true
             },
         });
@@ -65,6 +82,7 @@ export class UsersService {
             },
             include: {
                 areas: true,
+                subdirecciones: true,
                 user_types: {
                     include: {
                         permissions: {
@@ -93,6 +111,7 @@ export class UsersService {
             },
             include: {
                 areas: true,
+                subdirecciones: true,
                 user_types: {
                     include: {
                         permissions: {
@@ -113,6 +132,7 @@ export class UsersService {
             },
             include: {
                 areas: true,
+                subdirecciones: true,
                 user_types: {
                     include: {
                         permissions: {
@@ -129,17 +149,42 @@ export class UsersService {
 
     async update(id: string, updateUserDto: UpdateUserDto) {
 
-        await this.findOne(id);
+        const existing = await this.findOne(id);
 
         if (updateUserDto.password) {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+        }
+
+        const normalizedUpdateSubId = updateUserDto.subdireccion_id === '' ? null : updateUserDto.subdireccion_id;
+        const normalizedUpdateAreaId = updateUserDto.area_id === '' ? null : updateUserDto.area_id;
+
+        const targetUserTypeId = updateUserDto.user_type_id || existing.user_type_id;
+        const userType = await this.prisma.user_types.findUnique({
+            where: { id: targetUserTypeId }
+        });
+
+        if (!userType) {
+            throw new BadRequestException('Tipo de usuario no encontrado');
+        }
+
+        if (userType.name === 'admin_subdireccion') {
+            const subId = normalizedUpdateSubId ?? existing.subdireccion_id;
+            if (!subId) {
+                throw new BadRequestException('Debe seleccionar una subdirección');
+            }
         }
 
         const user = await this.prisma.users.update({
             where: {
                 id
             },
-            data: updateUserDto,
+            data: {
+                ...updateUserDto,
+                area_id: userType.name === 'admin_subdireccion' ? null : normalizedUpdateAreaId,
+                subdireccion_id: userType.name === 'admin_subdireccion'
+                    ? (normalizedUpdateSubId ?? existing.subdireccion_id)
+                    : null,
+            },
         });
 
         const { password, ...result } = user;

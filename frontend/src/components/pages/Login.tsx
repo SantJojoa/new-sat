@@ -122,8 +122,8 @@ export default function Login() {
                         <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/40 to-transparent" />
                         <div className="absolute bottom-10 left-10 right-10 text-white">
                             <h1 className="text-3xl font-bold mb-2">
-                                SIVAC -
-                                <span className="text-white/95 font-light"> Sistema de Inspeccion, Vigilancia, Asistencia y Capacitacion</span>
+                                SIVAT -
+                                <span className="text-white/95 font-light"> Sistema de Inspeccion, Vigilancia, Tecnologia y Asistencia</span>
                             </h1>
                             <p className="text-white/90 font-light leading-relaxed">
                                 Sistema que integra inspeccion, vigilancia, capacitacion y acompanamiento para fortalecer la gestion y el trabajo intersectorial del Instituto Departamental de Salud de Narino.
@@ -139,7 +139,7 @@ export default function Login() {
                                 </span>
                                 <h3 className="text-2xl font-bold text-text-primary">Iniciar Sesion</h3>
                             </div>
-                            <p className="text-text-secondary text-sm">Ingrese sus credenciales para acceder a la plataforma SIVAC</p>
+                            <p className="text-text-secondary text-sm">Ingrese sus credenciales para acceder a la plataforma SIVAT</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">

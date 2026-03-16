@@ -118,10 +118,11 @@ async function main() {
             update: {
                 icon: 'add_box',
                 order: 2,
+                description: 'Solicitar Programación',
             },
             create: {
                 name: 'solicitar_salida',
-                description: 'Solicitar Salida',
+                description: 'Solicitar Programación',
                 icon: 'add_box',
                 path: '/solicitar-salida',
                 order: 2,
@@ -132,11 +133,11 @@ async function main() {
             update: {
                 order: 3,
                 icon: 'data_table',
-                description: 'Gestionar Salida',
+                description: 'Gestionar Programación',
             },
             create: {
                 name: 'gestionar_salida',
-                description: 'Gestionar Salida',
+                description: 'Gestionar Programación',
                 icon: 'data_table',
                 path: '/gestionar-salida',
                 order: 3,

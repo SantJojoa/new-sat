@@ -29,7 +29,7 @@ export default function Dashboard() {
     });
 
     const categories: Record<string, string[]> = {
-        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
+        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -72,7 +72,7 @@ export default function Dashboard() {
         return acc;
     }, {} as Record<string, DashboardModulePermission[]>);
 
-    const categoryOrder = ['Salidas', 'Gestion de Dependencias', 'Usuarios', 'Otras Funciones'];
+    const categoryOrder = ['Programaciones', 'Gestion de Dependencias', 'Usuarios', 'Otras Funciones'];
 
     return (
         <div className="bg-bg-light font-display min-h-screen">

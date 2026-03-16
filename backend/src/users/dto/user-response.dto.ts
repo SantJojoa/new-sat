@@ -10,6 +10,7 @@ export class UserResponseDto {
     created_at: Date;
     updated_at: Date;
     area_id?: string;
+    subdireccion_id?: string;
     charge?: string;
     user_type_id: string;
 
@@ -24,6 +25,7 @@ export class UserResponseDto {
         this.created_at = user.created_at;
         this.updated_at = user.updated_at;
         this.area_id = user.area_id;
+        this.subdireccion_id = user.subdireccion_id;
         this.charge = user.charge;
         this.user_type_id = user.user_type_id;
     }

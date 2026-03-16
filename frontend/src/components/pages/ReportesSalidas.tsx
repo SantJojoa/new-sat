@@ -118,7 +118,7 @@ export default function ReportesSalidas() {
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex flex-col gap-2">
                                     <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Reportes y Estadísticas</h1>
-                                    <p className="text-zinc-500">Analiza el rendimiento y distribución de las salidas en el sistema.</p>
+                                    <p className="text-zinc-500">Analiza el rendimiento y distribución de las programaciones en el sistema.</p>
                                 </div>
                                 <button
                                     onClick={async () => {
@@ -270,7 +270,7 @@ export default function ReportesSalidas() {
                                             <span className="material-symbols-outlined text-[32px]">dataset</span>
                                         </div>
                                         <div className="z-10">
-                                            <p className="text-indigo-100 font-medium text-sm mb-1">Total Salidas</p>
+                                            <p className="text-indigo-100 font-medium text-sm mb-1">Total Programaciones</p>
                                             <h3 className="text-4xl font-black text-white tracking-tight">{data?.total || 0}</h3>
                                         </div>
                                     </div>
@@ -367,7 +367,7 @@ export default function ReportesSalidas() {
                                     <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 lg:col-span-2">
                                         <div className="flex items-center gap-2 mb-6">
                                             <span className="material-symbols-outlined text-indigo-500 bg-indigo-50 p-1.5 rounded-lg text-sm">domain</span>
-                                            <h3 className="text-lg font-bold text-zinc-800">Salidas por Área</h3>
+                                            <h3 className="text-lg font-bold text-zinc-800">Programaciones por Área</h3>
                                         </div>
                                         <div className="h-[350px] w-full">
                                             {(!data?.areas || data.areas.length === 0) ? (

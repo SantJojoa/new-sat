@@ -101,8 +101,8 @@ export default function ModificarSalida() {
             <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
                 <div className="max-w-screen-2xl mx-auto w-full">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestión de Salidas</h1>
-                        <p className="text-zinc-500 mt-2">Revise y gestione las solicitudes de salida.</p>
+                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestión de Programaciones</h1>
+                        <p className="text-zinc-500 mt-2">Revise y gestione las solicitudes de programaciones.</p>
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
@@ -142,7 +142,7 @@ export default function ModificarSalida() {
                                     <tr>
                                         <th className="px-6 py-4 min-w-[120px]">Código</th>
                                         <th className="px-6 py-4 min-w-[200px]">Solicitante / Área</th>
-                                        <th className="px-6 py-4 min-w-[150px]">Detalles Salida</th>
+                                        <th className="px-6 py-4 min-w-[150px]">Detalles Programación</th>
                                         <th className="px-6 py-4 min-w-[200px]">Ubicaciones / Actores</th>
                                         <th className="px-6 py-4 min-w-[150px]">Estado</th>
                                         <th className="px-6 py-4 text-right">Acciones</th>

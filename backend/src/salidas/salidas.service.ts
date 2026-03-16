@@ -19,6 +19,16 @@ export class SalidasService {
         return new Date(`${dateStr}T12:00:00`);
     }
 
+    private async getUserSubdireccionId(user: users): Promise<string | null> {
+        if (user.subdireccion_id) return user.subdireccion_id;
+        if (!user.area_id) return null;
+        const userArea = await this.prisma.areas.findUnique({
+            where: { id: user.area_id },
+            select: { subdireccion_id: true }
+        });
+        return userArea?.subdireccion_id || null;
+    }
+
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
         municipios: string[] = [], ips: string[] = [],
@@ -149,7 +159,8 @@ export class SalidasService {
         let where: any = {};
         if (!viewAll) {
             if (userType.name === 'admin_subdireccion') {
-                const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! }, include: { subdirecciones: true } });
+                const subdireccionId = await this.getUserSubdireccionId(user);
+                const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
                 if (!userArea) throw new ForbiddenException('Área no encontrada');
                 where = { areas: { subdireccion_id: userArea.subdireccion_id } };
             } else if (userType.name !== 'superadmin') {
@@ -176,8 +187,8 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
 
         if (userType?.name === 'admin_subdireccion') {
-            const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
-            if (salida.areas.subdireccion_id !== userArea?.subdireccion_id)
+            const subdireccionId = await this.getUserSubdireccionId(user);
+            if (!subdireccionId || salida.areas.subdireccion_id !== subdireccionId)
                 throw new ForbiddenException('No tienes permiso');
         } else if (userType?.name !== 'superadmin' && salida.solicitante_id !== user.id) {
             throw new ForbiddenException('No tienes permiso');
@@ -291,9 +302,9 @@ export class SalidasService {
             if (liderRole && (userType?.name === 'admin_subdireccion' || userType?.name === 'superadmin')) {
                 let lideresWhere: any = { user_type_id: liderRole.id, is_active: true };
 
-                if (userType.name === 'admin_subdireccion' && user.area_id) {
-                    const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } });
-                    if (userArea?.subdireccion_id) lideresWhere.areas = { subdireccion_id: userArea.subdireccion_id };
+                if (userType.name === 'admin_subdireccion') {
+                    const subdireccionId = await this.getUserSubdireccionId(user);
+                    if (subdireccionId) lideresWhere.areas = { subdireccion_id: subdireccionId };
                 }
 
                 const lideresRaw = await this.prisma.users.findMany({
@@ -383,7 +394,8 @@ export class SalidasService {
         for (const salida of salidas) {
             if (salida.estado !== 'pendiente') { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` }); continue; }
             if (userType?.name === 'admin_subdireccion') {
-                const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
+                const subdireccionId = await this.getUserSubdireccionId(user);
+                const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' }); continue; }
             }
             validIds.push(salida.id);
@@ -416,7 +428,8 @@ export class SalidasService {
             const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
             if (!canReject) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` }); continue; }
             if (userType?.name === 'admin_subdireccion') {
-                const userArea = await this.prisma.areas.findUnique({ where: { id: user.area_id! } });
+                const subdireccionId = await this.getUserSubdireccionId(user);
+                const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' }); continue; }
             }
             validIds.push(salida.id);

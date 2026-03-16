@@ -467,17 +467,17 @@ export default function SolicitarSalida() {
                                     chevron_right
                                 </span>
                                 <span className="text-zinc-900 text-sm font-semibold">
-                                    {isEditing ? 'Editar Salida' : 'Solicitar Salida'}
+                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación'}
                                 </span>
                             </nav>
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <h2 className="text-3xl font-black text-zinc-900 tracking-tight">
-                                        {isEditing ? 'Editar Salida' : 'Solicitar Salida SIVAC IDSN'}
+                                        {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
                                     </h2>
                                     <p className="text-zinc-500 mt-1">
-                                        {isEditing ? 'Modifique la información de la salida.' : 'Formulario para la programación de visitas, salidas, acompañamientos, etc.'}
+                                        {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
                                     </p>
                                 </div>
                             </div>
@@ -490,7 +490,7 @@ export default function SolicitarSalida() {
                                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
                                     <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                                         <span className="material-symbols-outlined text-primary">description</span>
-                                        Información General de la Salida
+                                        Información General de la Programación
                                     </h3>
                                 </div>
 
@@ -571,7 +571,7 @@ export default function SolicitarSalida() {
 
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Tipo de Salida
+                                                Tipo de Programación
                                             </label>
                                             <select
                                                 name="tipoSalida"
@@ -586,7 +586,7 @@ export default function SolicitarSalida() {
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Subtipo de Salida
+                                                Subtipo de Programación
                                             </label>
                                             <button
                                                 type="button"
@@ -611,7 +611,7 @@ export default function SolicitarSalida() {
                                                 value={formData.tema}
                                                 onChange={handleInputChange}
                                                 className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.tema ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
-                                                placeholder="Ingrese el tema principal de la salida"
+                                                placeholder="Ingrese el tema principal de la programación"
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
@@ -677,14 +677,14 @@ export default function SolicitarSalida() {
                                                 rows={3}
                                                 className="w-full p-4 rounded-lg border border-zinc-200
                                              focus:ring-primary focus:border-primary transition-all resize-none"
-                                                placeholder="Detalles adicionales sobre la salida..."
+                                                placeholder="Detalles adicionales sobre la programación..."
                                             />
                                         </div>
                                     </div>
                                     <div className="pt-6 border-t border-zinc-100 mt-8 mb-6">
                                         <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-primary">group</span>
-                                            Participantes y Ubicaciones
+                                            Actores y Ubicaciones
                                         </h3>
                                         <p className="text-sm text-zinc-500 mt-1">
                                             Haga clic en cada sección para seleccionar uno o varios elementos
@@ -692,7 +692,7 @@ export default function SolicitarSalida() {
                                         {errors.participantes && (
                                             <div className="bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 text-sm flex items-center gap-2 mb-4">
                                                 <AlertCircle size={18} />
-                                                Debe seleccionar al menos un participante (Municipio, IPS, Entidad, EAPB, Organización o IDSN).
+                                                Debe seleccionar al menos un actor (Municipio, IPS, Entidad, EAPB, Organización o IDSN).
                                             </div>
                                         )}
                                     </div>
@@ -841,7 +841,7 @@ export default function SolicitarSalida() {
                                             Transporte
                                         </h3>
                                         <p className="text-sm text-zinc-500 mt-1">
-                                            Información sobre el transporte para la salida
+                                            Información sobre el transporte para la programación
                                         </p>
                                     </div>
 
@@ -994,7 +994,7 @@ export default function SolicitarSalida() {
                                             className="px-8 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">send</span>
-                                            {isLoading ? 'Enviando...' : 'Solicitar Salida'}
+                                            {isLoading ? 'Enviando...' : 'Solicitar Programación'}
                                         </button>
                                     </div>
                                 </form>
