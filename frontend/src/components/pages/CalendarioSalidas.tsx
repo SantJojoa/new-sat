@@ -106,9 +106,9 @@ export default function CalendarioSalidas() {
                     <div className="mb-6">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
                             <Calendar className="text-primary" size={32} />
-                            Calendario de Salidas
+                            Calendario de Programación
                         </h1>
-                        <p className="text-zinc-500 mt-2">Visualice las salidas programadas en el calendario.</p>
+                        <p className="text-zinc-500 mt-2">Visualice las programaciones en el calendario.</p>
                         <div className="mt-4 flex items-center gap-4 flex-wrap">
                             <button
                                 onClick={() => setViewAll((prev) => !prev)}
@@ -152,13 +152,13 @@ export default function CalendarioSalidas() {
                         {loading ? (
                             <div className="flex items-center justify-center py-20">
                                 <RefreshCcw size={24} className="animate-spin text-primary" />
-                                <span className="ml-3 text-zinc-500 font-medium">Cargando salidas...</span>
+                                <span className="ml-3 text-zinc-500 font-medium">Cargando programación...</span>
                             </div>
                         ) : events.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                                 <Calendar size={32} className="text-zinc-300 mb-3" />
-                                <p className="text-zinc-600 font-medium">No hay salidas para mostrar</p>
-                                <p className="text-zinc-400 text-sm mt-1">Pruebe cambiar el alcance o registrar una nueva salida.</p>
+                                <p className="text-zinc-600 font-medium">No hay programación para mostrar</p>
+                                <p className="text-zinc-400 text-sm mt-1">Pruebe cambiar el alcance o registrar una nueva programación.</p>
                             </div>
                         ) : (
                             <FullCalendar
@@ -200,7 +200,7 @@ export default function CalendarioSalidas() {
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-slideUp">
                             <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
                                 <div>
-                                    <h3 className="text-xl font-black text-zinc-900">Detalle de Salida</h3>
+                                    <h3 className="text-xl font-black text-zinc-900">Detalle de Programación</h3>
                                     <p className="text-zinc-500 text-sm">Codigo: <span className="font-mono font-bold text-primary">{selectedSalida.codigo}</span></p>
                                 </div>
                                 <button

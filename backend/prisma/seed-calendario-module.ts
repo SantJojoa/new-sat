@@ -7,13 +7,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function addCalendarioModule() {
-    console.log('📅 Agregando módulo Calendario de Salidas...');
+    console.log('📅 Agregando módulo Calendario de Programaciones...');
 
     // 1. Crear el módulo
     const calendarioModule = await prisma.modules.upsert({
         where: { name: 'calendario_salidas' },
         update: {
-            description: 'Calendario de Salidas',
+            description: 'Calendario de Programaciones',
             icon: 'calendar_month',
             path: '/calendario-salidas',
             order: 5,
@@ -21,7 +21,7 @@ async function addCalendarioModule() {
         },
         create: {
             name: 'calendario_salidas',
-            description: 'Calendario de Salidas',
+            description: 'Calendario de Programaciones',
             icon: 'calendar_month',
             path: '/calendario-salidas',
             order: 5,
@@ -57,7 +57,7 @@ async function addCalendarioModule() {
         console.log(`  ✅ Permiso can_view asignado a: ${ut.name}`);
     }
 
-    console.log('\n🎉 Módulo calendario_salidas agregado exitosamente!');
+    console.log('\n🎉 Módulo calendario_salidas (Calendario de Programaciones) agregado exitosamente!');
     console.log('   Ruta: /calendario-salidas');
     console.log('   Icono: calendar_month');
 }

@@ -24,6 +24,7 @@ model subdirecciones {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   areas       areas[]
+  users       users[]
 }
 
 model user_types {
@@ -46,12 +47,14 @@ model users {
   last_name    String
   num_id       String     @unique
   area_id      String?
+  subdireccion_id String?
   charge       String?
   email        String     @unique
   is_active    Boolean    @default(true)
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt
   areas        areas?     @relation(fields: [area_id], references: [id])
+  subdirecciones subdirecciones? @relation(fields: [subdireccion_id], references: [id])
   user_types   user_types @relation(fields: [user_type_id], references: [id])
 
   salidas_solicitadas salidas[] @relation("SolicitanteSalidas")

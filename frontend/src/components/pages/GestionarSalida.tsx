@@ -306,8 +306,8 @@ export default function GestionarSalida() {
             <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
                 <div className="max-w-7xl mx-auto w-full">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Salidas</h1>
-                        <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de salida.</p>
+                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Programaciones</h1>
+                        <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
                         <div className="mt-4">
                             <button
                                 onClick={() => setViewAll(!viewAll)}
@@ -651,17 +651,17 @@ export default function GestionarSalida() {
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
                             <div className={`p-6 border-b ${bulkModal.type === 'approve' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                                 <h3 className={`text-lg font-bold ${bulkModal.type === 'approve' ? 'text-green-900' : 'text-red-900'}`}>
-                                    {bulkModal.type === 'approve' ? 'Aprobar Salidas Seleccionadas' : 'Rechazar Salidas Seleccionadas'}
+                                    {bulkModal.type === 'approve' ? 'Aprobar Programaciones Seleccionadas' : 'Rechazar Programaciones Seleccionadas'}
                                 </h3>
                                 <p className={`text-sm mt-1 ${bulkModal.type === 'approve' ? 'text-green-700' : 'text-red-700'}`}>
-                                    {selectedIds.size} salida{selectedIds.size > 1 ? 's' : ''} seleccionada{selectedIds.size > 1 ? 's' : ''}
+                                    {selectedIds.size} programación{selectedIds.size > 1 ? 'es' : ''} seleccionada{selectedIds.size > 1 ? 's' : ''}
                                 </p>
                             </div>
                             <div className="p-6">
                                 <p className="text-zinc-600 mb-4 text-sm">
                                     {bulkModal.type === 'approve'
-                                        ? 'Puede añadir una observación que se aplicará a todas las salidas seleccionadas.'
-                                        : 'Indique el motivo del rechazo. Se aplicará a todas las salidas seleccionadas.'}
+                                        ? 'Puede añadir una observación que se aplicará a todas las programaciones seleccionadas.'
+                                        : 'Indique el motivo del rechazo. Se aplicará a todas las programaciones seleccionadas.'}
                                 </p>
                                 <textarea
                                     className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none text-sm"
@@ -738,7 +738,7 @@ export default function GestionarSalida() {
                                                 <span className="text-zinc-700">{detailsModal.salida.areas?.subdirecciones?.name || 'N/A'}</span>
                                             </div>
                                             <div>
-                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo Salida</span>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo Programación</span>
                                                 <span className="text-zinc-700">{detailsModal.salida.tipo_salida}</span>
                                             </div>
                                             <div>
@@ -798,7 +798,7 @@ export default function GestionarSalida() {
                                     {/* Locations & Participants */}
                                     <div className="col-span-1 md:col-span-2 space-y-6">
                                         <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
-                                            <MapPin size={18} className="text-primary" /> Ubicaciones y Participantes
+                                            <MapPin size={18} className="text-primary" /> Ubicaciones y Actores
                                         </h4>
                                         {/* Municipios Convocados */}
                                         <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">

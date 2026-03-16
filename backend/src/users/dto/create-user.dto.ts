@@ -31,6 +31,10 @@ export class CreateUserDto {
 
     @IsString()
     @IsOptional()
+    subdireccion_id?: string;
+
+    @IsString()
+    @IsOptional()
     charge?: string;
 
     @IsEmail()

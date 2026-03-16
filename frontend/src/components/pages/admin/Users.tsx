@@ -13,6 +13,11 @@ interface Area {
     name: string;
 }
 
+interface Subdireccion {
+    id: string;
+    name: string;
+}
+
 interface User {
     id: string;
     username: string;
@@ -23,15 +28,18 @@ interface User {
     charge?: string;
     user_type_id: string;
     area_id?: string;
+    subdireccion_id?: string;
     is_active: boolean;
     user_types?: UserType;
     areas?: Area;
+    subdirecciones?: Subdireccion;
 }
 
 export default function Users() {
     const [users, setUsers] = useState<User[]>([]);
     const [userTypes, setUserTypes] = useState<UserType[]>([]);
     const [areas, setAreas] = useState<Area[]>([]);
+    const [subdirecciones, setSubdirecciones] = useState<Subdireccion[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,20 +54,23 @@ export default function Users() {
         email: '',
         user_type_id: '',
         area_id: '',
+        subdireccion_id: '',
         charge: '',
     });
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersRes, typesRes, areasRes] = await Promise.all([
+            const [usersRes, typesRes, areasRes, subRes] = await Promise.all([
                 api.get('/users'),
                 api.get('/users/types'),
-                api.get('/areas')
+                api.get('/areas'),
+                api.get('/subdirecciones')
             ]);
             setUsers(usersRes.data);
             setUserTypes(typesRes.data);
             setAreas(areasRes.data);
+            setSubdirecciones(subRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -75,6 +86,18 @@ export default function Users() {
         e.preventDefault();
         try {
             const payload: Partial<typeof formData> = { ...formData };
+            const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
+            const selectedRoleName = selectedUserType?.name;
+
+            if (selectedRoleName === 'admin_subdireccion') {
+                delete payload.area_id;
+            } else {
+                delete payload.subdireccion_id;
+                if (selectedRoleName !== 'lider') {
+                    delete payload.area_id;
+                }
+            }
+
             if (editingId) {
                 // Remove password if empty during edit
                 if (!payload.password) delete payload.password;
@@ -125,6 +148,7 @@ export default function Users() {
                 email: user.email,
                 user_type_id: user.user_type_id,
                 area_id: user.area_id || '',
+                subdireccion_id: user.subdireccion_id || '',
                 charge: user.charge || '',
             });
             setEditingId(user.id);
@@ -138,6 +162,7 @@ export default function Users() {
                 email: '',
                 user_type_id: '',
                 area_id: '',
+                subdireccion_id: '',
                 charge: '',
             });
             setEditingId(null);
@@ -155,6 +180,11 @@ export default function Users() {
         user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
+    const selectedRoleName = selectedUserType?.name;
+    const showsArea = selectedRoleName === 'lider';
+    const showsSubdireccion = selectedRoleName === 'admin_subdireccion';
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -226,7 +256,9 @@ export default function Users() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-zinc-600">
-                                                    {user.areas?.name || 'N/A'}
+                                                    {user.user_types?.name === 'admin_subdireccion'
+                                                        ? (user.subdirecciones?.name || 'N/A')
+                                                        : (user.areas?.name || 'N/A')}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     {user.is_active ? (
@@ -299,6 +331,7 @@ export default function Users() {
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
+                                    {showsArea && (
                                     <div>
                                         <label className="block text-sm font-semibold text-zinc-700 mb-1">Apellidos</label>
                                         <input
@@ -309,6 +342,23 @@ export default function Users() {
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
+                                    )}
+                                    {showsSubdireccion && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-zinc-700 mb-1">SubdirecciÃ³n</label>
+                                            <select
+                                                required
+                                                value={formData.subdireccion_id}
+                                                onChange={(e) => setFormData({ ...formData, subdireccion_id: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                                            >
+                                                <option value="">Seleccione subdirecciÃ³n...</option>
+                                                {subdirecciones.map(sub => (
+                                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
                                     <div>
                                         <label className="block text-sm font-semibold text-zinc-700 mb-1">Identificación (Cédula)</label>
                                         <input
@@ -362,7 +412,30 @@ export default function Users() {
                                         <select
                                             required
                                             value={formData.user_type_id}
-                                            onChange={(e) => setFormData({ ...formData, user_type_id: e.target.value })}
+                                            onChange={(e) => {
+                                                const nextId = e.target.value;
+                                                const nextType = userTypes.find(type => type.id === nextId);
+                                                if (nextType?.name === 'admin_subdireccion') {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        user_type_id: nextId,
+                                                        area_id: '',
+                                                    }));
+                                                } else if (nextType?.name === 'lider') {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        user_type_id: nextId,
+                                                        subdireccion_id: '',
+                                                    }));
+                                                } else {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        user_type_id: nextId,
+                                                        area_id: '',
+                                                        subdireccion_id: '',
+                                                    }));
+                                                }
+                                            }}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
                                         >
                                             <option value="">Seleccione rol...</option>
@@ -374,6 +447,7 @@ export default function Users() {
                                     <div>
                                         <label className="block text-sm font-semibold text-zinc-700 mb-1">Área</label>
                                         <select
+                                            required
                                             value={formData.area_id}
                                             onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"

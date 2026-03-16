@@ -41,7 +41,7 @@ export default function SlideBar() {
     // Define categories
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
-        'Salidas': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
+        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -63,7 +63,7 @@ export default function SlideBar() {
     }, {} as Record<string, typeof allNavItems>);
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Salidas', 'Gestión de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Gestión de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">
@@ -74,8 +74,8 @@ export default function SlideBar() {
                         <span className="material-symbols-outlined">health_and_safety</span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <h1 className="text-zinc-900 text-base font-bold leading-none truncate">SIVAC - IDSN</h1>
-                        <p className="text-primary text-[10px] font-medium mt-1 truncate">Sistema de Inspección, Vigilancia...</p>
+                        <h1 className="text-zinc-900 text-base font-bold leading-none truncate">SIVAT - IDSN</h1>
+                        <p className="text-primary text-[10px] font-medium mt-1 truncate">Sistema de Inspección, Vigilancia, Tecnología...</p>
                     </div>
                 </div>
 
