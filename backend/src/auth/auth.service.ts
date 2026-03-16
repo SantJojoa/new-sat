@@ -54,8 +54,10 @@ export class AuthService {
                 email: user.email,
                 user_type_id: user.user_type_id,
                 area_id: user.area_id,
+                subdireccion_id: user.subdireccion_id,
                 user_type: user.user_types,
                 area: user.areas,
+                subdireccion: user.subdirecciones,
             }
         }
     }

@@ -39,8 +39,10 @@ export interface AuthUser {
     email: string;
     user_type_id: string;
     area_id?: string;
+    subdireccion_id?: string;
     user_type?: UserType;
     area?: AreaSummary;
+    subdireccion?: AreaSummary;
 }
 
 export interface RouteState {

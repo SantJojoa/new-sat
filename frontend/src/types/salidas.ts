@@ -18,7 +18,7 @@ export interface CatalogosResponse {
 }
 
 export interface RelatedName {
-    id?: string;
+    id: string;
     name: string;
 }
 

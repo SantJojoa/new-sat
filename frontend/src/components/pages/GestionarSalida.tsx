@@ -213,25 +213,23 @@ export default function GestionarSalida() {
     };
 
     const checkOwnership = (salida: SalidaRecord) => {
-        // If superadmin, always true
         if (user?.user_type?.name === 'superadmin') return true;
-        // If user has 'admin_area' or 'admin_subdireccion', they should only act on their area/subdirection
-        // Note: Frontend user object might not have full area details populated deep, but let's try.
-        // If not populated, we fallback to backend check (it will fail), but UIwise let's be strict if possible.
-        // Assuming user.area_id is available.
+
+        if (user?.user_type?.name === 'admin_subdireccion') {
+            const userSubdireccionId = user.subdireccion_id;
+            const salidaSubdireccionId = salida.areas?.subdirecciones?.id;
+            if (userSubdireccionId && salidaSubdireccionId) {
+                return userSubdireccionId === salidaSubdireccionId;
+            }
+            if (user.area_id && salida.areas?.id) {
+                return user.area_id === salida.areas.id;
+            }
+            return false;
+        }
+
         if (user?.area_id && salida.areas?.id) {
-            // Basic check: if area ID matches.
-            // Warning: admin_subdireccion can manage ANY area in their subdirection?
-            // Not strictly checked here without more user data.
-            // Simplest approach: If viewing ALL, disable actions for records that are NOT my area? 
-            // Or better: relying on backend is safer, but user asked for UI behavior.
-            // Let's rely on the fact that if I am an admin_area, my area_id should match salida.areas.id
             return user.area_id === salida.areas.id;
         }
-        // If we can't verify area, assume they can try (backend will block).
-        // But for 'View All' requested behavior: "Listar... y las de su area permita realizar acciones".
-        // This implies if it's NOT my area, return false.
-        // If user.area_id is present and mismatches, return false.
         if (user?.area_id && salida.areas?.id && user.area_id !== salida.areas.id) return false;
 
         return true;
