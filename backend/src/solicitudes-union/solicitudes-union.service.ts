@@ -5,7 +5,7 @@ import { users } from '@prisma/client';
 
 @Injectable()
 export class SolicitudesUnionService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     private async getUserSubdireccionId(user: users): Promise<string | null> {
         if (user.subdireccion_id) return user.subdireccion_id;
@@ -133,15 +133,26 @@ export class SolicitudesUnionService {
                 throw new ForbiddenException('Esta solicitud no pertenece a tu subdirección');
         }
 
-        return this.prisma.solicitudes_union.update({
-            where: { id },
-            data: { estado: 'aceptada', respuesta: dto.respuesta },
-            include: {
-                salida: { select: { id: true, codigo: true, tema: true } },
-                solicitante: { select: { id: true, names: true, last_name: true, email: true } },
-                area_solicitante: { select: { id: true, name: true } }
-            }
-        });
+        const [updated] = await this.prisma.$transaction([
+            this.prisma.solicitudes_union.update({
+                where: { id },
+                data: { estado: 'aceptada', respuesta: dto.respuesta },
+                include: {
+                    salida: { select: { id: true, codigo: true, tema: true } },
+                    solicitante: { select: { id: true, names: true, last_name: true, email: true } },
+                    area_solicitante: { select: { id: true, name: true } }
+                }
+            }),
+            this.prisma.salidas.update({
+                where: { id: solicitud.salida_id },
+                data: {
+                    areas_participantes: {
+                        connect: { id: solicitud.area_solicitante_id }
+                    }
+                }
+            }),
+        ]);
+        return updated;
     }
 
     async reject(id: string, dto: ResolveSolicitudUnionDto, user: users) {

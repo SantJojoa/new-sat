@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { EventClickArg } from '@fullcalendar/core';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { RefreshCcw, XCircle, CheckCircle, AlertCircle, MapPin, Calendar, Layers, Clock, User } from 'lucide-react';
+import { RefreshCcw, XCircle, CheckCircle, AlertCircle, MapPin, Calendar, Layers, Clock, User, Users } from 'lucide-react';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
 import type { SalidaRecord } from '../../types/salidas';
@@ -64,7 +64,7 @@ export default function CalendarioSalidas() {
 
         return {
             id: salida.id,
-            title: `${salida.codigo} · ${salida.areas?.name || ''} · ${salida.lugar_evento?.name || 'Sin lugar'}`,
+            title: `${salida.codigo} · ${salida.areas?.name || ''}${salida.areas_participantes && salida.areas_participantes.length > 0 ? ` +${salida.areas_participantes.length} unida${salida.areas_participantes.length > 1 ? 's' : ''}` : ''} · ${salida.lugar_evento?.name || 'Sin lugar'}`,
             start: salida.fecha_inicio,
             end: endDate.toISOString().split('T')[0],
             backgroundColor: colors.bg,
@@ -240,6 +240,27 @@ export default function CalendarioSalidas() {
                                         <p className="text-zinc-900 font-medium mt-1">{selectedSalida.areas?.name || 'N/A'}</p>
                                         <p className="text-zinc-500 text-xs">{selectedSalida.areas?.subdirecciones?.name || ''}</p>
                                     </div>
+
+                                    {selectedSalida.areas_participantes && selectedSalida.areas_participantes.length > 0 && (
+                                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 sm:col-span-2">
+                                            <span className="text-blue-600 text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-2">
+                                                <Users size={12} /> Áreas Unidas ({selectedSalida.areas_participantes.length})
+                                            </span>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedSalida.areas_participantes.map(ap => (
+                                                    <div key={ap.id} className="flex items-center gap-1.5 bg-white border border-blue-200 rounded-lg px-2.5 py-1.5">
+                                                        <Users size={11} className="text-blue-500 shrink-0" />
+                                                        <div>
+                                                            <span className="text-blue-800 font-medium text-xs">{ap.name}</span>
+                                                            {ap.subdirecciones?.name && (
+                                                                <span className="text-blue-400 text-[10px] block leading-tight">{ap.subdirecciones.name}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
                                         <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">

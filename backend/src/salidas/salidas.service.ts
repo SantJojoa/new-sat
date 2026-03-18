@@ -150,6 +150,7 @@ export class SalidasService {
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
             areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+            areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
             lugar_evento: true
         };
 
@@ -160,9 +161,13 @@ export class SalidasService {
         if (!viewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = await this.getUserSubdireccionId(user);
-                const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
-                if (!userArea) throw new ForbiddenException('Área no encontrada');
-                where = { areas: { subdireccion_id: userArea.subdireccion_id } };
+                if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
+                where = {
+                    OR: [
+                        { areas: { subdireccion_id: subdireccionId } },
+                        { areas_participantes: { some: { subdireccion_id: subdireccionId } } }
+                    ]
+                };
             } else if (userType.name !== 'superadmin') {
                 where = { solicitante_id: user.id };
             }
@@ -178,7 +183,8 @@ export class SalidasService {
                 municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
-                areas: { select: { id: true, name: true, subdireccion_id: true } }
+                areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+                areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } }
             }
         });
 
@@ -188,7 +194,9 @@ export class SalidasService {
 
         if (userType?.name === 'admin_subdireccion') {
             const subdireccionId = await this.getUserSubdireccionId(user);
-            if (!subdireccionId || salida.areas.subdireccion_id !== subdireccionId)
+            const isOwnerSubdir = subdireccionId && salida.areas.subdireccion_id === subdireccionId;
+            const isParticipantSubdir = subdireccionId && (salida as any).areas_participantes?.some((ap: any) => ap.subdireccion_id === subdireccionId);
+            if (!isOwnerSubdir && !isParticipantSubdir)
                 throw new ForbiddenException('No tienes permiso');
         } else if (userType?.name !== 'superadmin' && salida.solicitante_id !== user.id) {
             throw new ForbiddenException('No tienes permiso');
@@ -256,6 +264,7 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (salida.estado !== 'pendiente' && userType?.name !== 'superadmin')
             throw new BadRequestException('Solo pendientes se pueden eliminar');
+        await this.prisma.solicitudes_union.deleteMany({ where: { salida_id: id } });
         return this.prisma.salidas.delete({ where: { id } });
     }
 
@@ -346,7 +355,8 @@ export class SalidasService {
                     municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
                     solicitante: { select: { id: true, names: true, last_name: true, email: true } },
                     aprobador: { select: { id: true, names: true, last_name: true, email: true } },
-                    areas: { select: { id: true, name: true, subdireccion_id: true } },
+                    areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+                    areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
                     lugar_evento: true
                 },
                 orderBy: { fecha_inicio: 'desc' }

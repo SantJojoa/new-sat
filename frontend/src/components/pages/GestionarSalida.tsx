@@ -548,6 +548,15 @@ export default function GestionarSalida() {
                                                 <td className="px-6 py-4">
                                                     <div className="font-medium text-zinc-900">{salida.solicitante.names}</div>
                                                     <div className="text-zinc-500 text-xs">{salida.areas?.name}</div>
+                                                    {salida.areas_participantes && salida.areas_participantes.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {salida.areas_participantes.map(ap => (
+                                                                <span key={ap.id} className="inline-flex items-center gap-0.5 bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                                                    <Users size={9} /> {ap.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 text-zinc-600">
                                                     <div className="font-medium">{salida.tipo_salida}</div>
@@ -952,13 +961,31 @@ export default function GestionarSalida() {
                                                 <span className="text-zinc-900 font-medium">{detailsModal.salida.solicitante.names}</span>
                                             </div>
                                             <div>
-                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Área</span>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Área Principal</span>
                                                 <span className="text-zinc-700">{detailsModal.salida.areas?.name}</span>
                                             </div>
                                             <div>
                                                 <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subdirección</span>
                                                 <span className="text-zinc-700">{detailsModal.salida.areas?.subdirecciones?.name || 'N/A'}</span>
                                             </div>
+                                            {detailsModal.salida.areas_participantes && detailsModal.salida.areas_participantes.length > 0 && (
+                                                <div className="col-span-2">
+                                                    <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Áreas Participantes (Unidas)</span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {detailsModal.salida.areas_participantes.map(ap => (
+                                                            <div key={ap.id} className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                                                                <Users size={13} className="text-blue-600 shrink-0" />
+                                                                <div>
+                                                                    <span className="text-blue-800 font-medium text-xs">{ap.name}</span>
+                                                                    {ap.subdirecciones?.name && (
+                                                                        <span className="text-blue-500 text-[10px] block">{ap.subdirecciones.name}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div>
                                                 <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo Programación</span>
                                                 <span className="text-zinc-700">{detailsModal.salida.tipo_salida}</span>

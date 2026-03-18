@@ -52,6 +52,7 @@ export interface SalidaRecord {
     };
     area_id?: string;
     areas: SalidaArea;
+    areas_participantes?: SalidaArea[];
     municipios: CatalogoItem[];
     ips: CatalogoItem[];
     entidades: CatalogoItem[];

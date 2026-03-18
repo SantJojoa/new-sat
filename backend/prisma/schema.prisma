@@ -7,15 +7,16 @@ datasource db {
 }
 
 model areas {
-  id                String              @id @default(cuid())
-  name              String              @unique
-  subdireccion_id   String
-  created_at        DateTime            @default(now())
-  updated_at        DateTime            @updatedAt
-  subdirecciones    subdirecciones      @relation(fields: [subdireccion_id], references: [id])
-  users             users[]
-  salidas           salidas[]
-  solicitudes_union solicitudes_union[] @relation("SolicitudesUnionArea")
+  id                        String              @id @default(cuid())
+  name                      String              @unique
+  subdireccion_id           String
+  created_at                DateTime            @default(now())
+  updated_at                DateTime            @updatedAt
+  subdirecciones            subdirecciones      @relation(fields: [subdireccion_id], references: [id])
+  users                     users[]
+  salidas                   salidas[]
+  solicitudes_union         solicitudes_union[] @relation("SolicitudesUnionArea")
+  salidas_como_participante salidas[]           @relation("SalidasAreasParticipantes")
 }
 
 model subdirecciones {
@@ -61,7 +62,6 @@ model users {
   salidas_solicitadas           salidas[]           @relation("SolicitanteSalidas")
   salidas_aprobadas             salidas[]           @relation("AprobadorSalidas")
   solicitudes_union_solicitadas solicitudes_union[] @relation("SolicitudesUnionSolicitante")
-  solicitudesUnions             solicitudes_union[]
 }
 
 model modules {
@@ -204,10 +204,11 @@ model salidas {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  solicitante       users               @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
-  aprobador         users?              @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
-  areas             areas               @relation(fields: [area_id], references: [id])
-  solicitudes_union solicitudes_union[]
+  solicitante         users               @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
+  aprobador           users?              @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
+  areas               areas               @relation(fields: [area_id], references: [id])
+  solicitudes_union   solicitudes_union[]
+  areas_participantes areas[]             @relation("SalidasAreasParticipantes")
 }
 
 model solicitudes_union {
@@ -224,6 +225,4 @@ model solicitudes_union {
   salida           salidas @relation(fields: [salida_id], references: [id])
   solicitante      users   @relation("SolicitudesUnionSolicitante", fields: [solicitante_id], references: [id])
   area_solicitante areas   @relation("SolicitudesUnionArea", fields: [area_solicitante_id], references: [id])
-  users            users?  @relation(fields: [usersId], references: [id])
-  usersId          String?
 }
