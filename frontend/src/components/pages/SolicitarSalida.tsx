@@ -4,10 +4,11 @@ import { useEffect, useState } from "react"
 import { AxiosError } from "axios"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
-import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle } from "lucide-react"
+import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
 import type { CreateSalidaPayload } from "../../types/salidas"
+import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -59,6 +60,7 @@ export default function SolicitarSalida() {
 
     // Conflict modal state
     interface ConflictItem {
+        id: string;
         codigo: string;
         tipo_salida: string;
         tema: string;
@@ -75,6 +77,30 @@ export default function SolicitarSalida() {
         idsn: string[];
     }
     const [conflictModal, setConflictModal] = useState<ConflictItem[]>([]);
+
+    // Join request state
+    const [joinRequestModal, setJoinRequestModal] = useState<{ open: boolean; salida_id: string; codigo: string; area: string }>({ open: false, salida_id: '', codigo: '', area: '' });
+    const [joinRequestMensaje, setJoinRequestMensaje] = useState('');
+    const [joinRequestLoading, setJoinRequestLoading] = useState(false);
+    const [joinRequestSent, setJoinRequestSent] = useState<Set<string>>(new Set());
+
+    const handleJoinRequest = async () => {
+        setJoinRequestLoading(true);
+        try {
+            await solicitudesUnionService.create({ salida_id: joinRequestModal.salida_id, mensaje: joinRequestMensaje });
+            setJoinRequestSent(prev => new Set(prev).add(joinRequestModal.salida_id));
+            setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' });
+            setJoinRequestMensaje('');
+            setFeedbackModal({ type: 'success', title: '¡Solicitud Enviada!', message: 'Tu solicitud de unión fue enviada al administrador de la subdirección. Recibirás una respuesta pronto.' });
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload>;
+            const msg = apiError.response?.data?.message || 'Error al enviar la solicitud';
+            setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : 'Error al enviar la solicitud' });
+            setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' });
+        } finally {
+            setJoinRequestLoading(false);
+        }
+    };
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
@@ -401,7 +427,8 @@ export default function SolicitarSalida() {
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (conflictModal.length > 0) setConflictModal([]);
+                if (joinRequestModal.open) setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' });
+                else if (conflictModal.length > 0) setConflictModal([]);
                 else if (feedbackModal.type) {
                     setFeedbackModal({ type: null, title: '', message: '' });
                 } else if (confirmModal) {
@@ -411,7 +438,7 @@ export default function SolicitarSalida() {
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [conflictModal.length, feedbackModal.type, confirmModal]);
+    }, [conflictModal.length, feedbackModal.type, confirmModal, joinRequestModal.open]);
 
     const removeChip = (item: CatalogoItem, setterFunction: React.Dispatch<React.SetStateAction<CatalogoItem[]>>, currentArray: CatalogoItem[]) => {
         setterFunction(currentArray.filter(i => i.id !== item.id));
@@ -1201,6 +1228,7 @@ export default function SolicitarSalida() {
                                         <th className="px-6 py-3">Detalles</th>
                                         <th className="px-6 py-3">Fecha / Jornada</th>
                                         <th className="px-6 py-3 min-w-[200px]">Participantes</th>
+                                        <th className="px-6 py-3">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-200">
@@ -1256,6 +1284,21 @@ export default function SolicitarSalida() {
                                                     )}
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-4">
+                                                {joinRequestSent.has(c.id) ? (
+                                                    <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
+                                                        <CheckCircle size={12} /> Enviada
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setJoinRequestModal({ open: true, salida_id: c.id, codigo: c.codigo, area: c.area })}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                                                    >
+                                                        <Users size={13} /> Solicitar Unión
+                                                    </button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -1268,6 +1311,55 @@ export default function SolicitarSalida() {
                                 className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors text-sm shadow-sm"
                             >
                                 Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Join Request Modal */}
+            {joinRequestModal.open && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
+                        <div className="p-6 border-b border-blue-200 bg-blue-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <Users size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-blue-900">Solicitar Unión</h3>
+                                    <p className="text-blue-700 text-sm">Código: <span className="font-mono font-semibold">{joinRequestModal.codigo}</span> · {joinRequestModal.area}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-zinc-600">Se enviará una notificación al administrador de la subdirección para que acepte o rechace tu solicitud de unión a esta actividad.</p>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-zinc-700">Mensaje (opcional)</label>
+                                <textarea
+                                    value={joinRequestMensaje}
+                                    onChange={(e) => setJoinRequestMensaje(e.target.value)}
+                                    placeholder="Explica el motivo por el que deseas unirte a esta actividad..."
+                                    rows={3}
+                                    className="w-full rounded-lg border border-zinc-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm px-4 py-3 resize-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
+                            <button
+                                type="button"
+                                onClick={() => { setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); setJoinRequestMensaje(''); }}
+                                className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleJoinRequest}
+                                disabled={joinRequestLoading}
+                                className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
+                            >
+                                {joinRequestLoading ? 'Enviando...' : <><Users size={15} /> Enviar Solicitud</>}
                             </button>
                         </div>
                     </div>

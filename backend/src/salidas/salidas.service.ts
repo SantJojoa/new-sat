@@ -72,7 +72,7 @@ export class SalidasService {
             throw new ConflictException({
                 message: `Se encontraron ${conflicts.length} actividad(es) en conflicto`,
                 conflicts: conflicts.map(c => ({
-                    codigo: c.codigo, tipo_salida: c.tipo_salida, tema: c.tema,
+                    id: c.id, codigo: c.codigo, tipo_salida: c.tipo_salida, tema: c.tema,
                     fecha_inicio: c.fecha_inicio, fecha_final: c.fecha_final, jornada: c.jornada,
                     area: c.areas.name,
                     solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,

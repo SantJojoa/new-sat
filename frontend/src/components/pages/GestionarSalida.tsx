@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
-import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare } from 'lucide-react';
+import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare, Users, Bell } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import type { ApiErrorPayload } from '../../types/api';
 import type { BulkActionResult, SalidaRecord } from '../../types/salidas';
+import { solicitudesUnionService, type SolicitudUnion } from '../../services/solicitudesUnionService';
 
 export default function GestionarSalida() {
     const { user } = useAuth();
@@ -59,6 +60,51 @@ export default function GestionarSalida() {
         title: string;
         message: string;
     }>({ type: null, title: '', message: '' });
+
+    // Join requests state
+    const [joinRequests, setJoinRequests] = useState<SolicitudUnion[]>([]);
+    const [joinRequestsLoading, setJoinRequestsLoading] = useState(false);
+    const [joinResolveModal, setJoinResolveModal] = useState<{ type: 'accept' | 'reject' | null; solicitudId: string | null }>({ type: null, solicitudId: null });
+    const [joinResolveComment, setJoinResolveComment] = useState('');
+    const [joinResolveSubmitting, setJoinResolveSubmitting] = useState(false);
+    const [joinRequestsTab, setJoinRequestsTab] = useState(false);
+
+    const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
+
+    const fetchJoinRequests = useCallback(async () => {
+        if (!isAdmin) return;
+        setJoinRequestsLoading(true);
+        try {
+            const data = await solicitudesUnionService.getAll();
+            setJoinRequests(data);
+        } catch (error) {
+            console.error('Error fetching join requests:', error);
+        } finally {
+            setJoinRequestsLoading(false);
+        }
+    }, [isAdmin]);
+
+    const handleJoinResolve = async () => {
+        if (!joinResolveModal.solicitudId || !joinResolveModal.type) return;
+        setJoinResolveSubmitting(true);
+        try {
+            if (joinResolveModal.type === 'accept') {
+                await solicitudesUnionService.accept(joinResolveModal.solicitudId, joinResolveComment);
+                setFeedbackModal({ type: 'success', title: '¡Aceptada!', message: 'La solicitud de unión fue aceptada.' });
+            } else {
+                await solicitudesUnionService.reject(joinResolveModal.solicitudId, joinResolveComment);
+                setFeedbackModal({ type: 'success', title: 'Rechazada', message: 'La solicitud de unión fue rechazada.' });
+            }
+            setJoinResolveModal({ type: null, solicitudId: null });
+            setJoinResolveComment('');
+            fetchJoinRequests();
+        } catch (error) {
+            const apiError = error as AxiosError<ApiErrorPayload>;
+            setFeedbackModal({ type: 'error', title: 'Error', message: typeof apiError.response?.data?.message === 'string' ? apiError.response.data.message : 'Error al procesar' });
+        } finally {
+            setJoinResolveSubmitting(false);
+        }
+    };
 
     const hasApprovePermission = user?.user_type?.permissions?.some(
         p => p.modules.name === 'gestionar_salida' && p.can_approve
@@ -155,11 +201,16 @@ export default function GestionarSalida() {
         void fetchSalidas();
     }, [fetchSalidas]);
 
+    useEffect(() => {
+        void fetchJoinRequests();
+    }, [fetchJoinRequests]);
+
     // Close modals on Escape key
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 if (feedbackModal.type) setFeedbackModal({ type: null, title: '', message: '' });
+                else if (joinResolveModal.type) { setJoinResolveModal({ type: null, solicitudId: null }); setJoinResolveComment(''); }
                 else if (bulkModal.type) setBulkModal({ type: null });
                 else if (actionModal.type) { setActionModal({ type: null, salidaId: null }); setComment(''); }
                 else if (detailsModal.isOpen) setDetailsModal({ isOpen: false, salida: null });
@@ -167,7 +218,7 @@ export default function GestionarSalida() {
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [feedbackModal.type, bulkModal.type, actionModal.type, detailsModal.isOpen]);
+    }, [feedbackModal.type, bulkModal.type, actionModal.type, detailsModal.isOpen, joinResolveModal.type]);
 
     const handleResetFilters = () => {
         setSearchTerm('');
@@ -306,7 +357,7 @@ export default function GestionarSalida() {
                     <div className="mb-8">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
-                        <div className="mt-4">
+                        <div className="mt-4 flex items-center gap-3 flex-wrap">
                             <button
                                 onClick={() => setViewAll(!viewAll)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll
@@ -317,6 +368,23 @@ export default function GestionarSalida() {
                                 <RefreshCcw size={16} className={loading && viewAll ? "animate-spin" : ""} />
                                 {viewAll ? 'Viendo Todas las Áreas' : 'Ver Todas las Áreas'}
                             </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setJoinRequestsTab(!joinRequestsTab)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 relative ${joinRequestsTab
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                        : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'
+                                        }`}
+                                >
+                                    <Bell size={16} />
+                                    Solicitudes de Unión
+                                    {joinRequests.filter(r => r.estado === 'pendiente').length > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                                            {joinRequests.filter(r => r.estado === 'pendiente').length}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -560,6 +628,162 @@ export default function GestionarSalida() {
                         </div>
                     </div>
                 </div>
+
+                {/* Join Requests Panel */}
+                {isAdmin && joinRequestsTab && (
+                    <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mt-6">
+                        <div className="p-5 border-b border-zinc-200 bg-blue-50/60 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <Users size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-zinc-900">Solicitudes de Unión</h3>
+                                    <p className="text-zinc-500 text-sm">Solicitudes de otras áreas para unirse a programaciones de tu subdirección</p>
+                                </div>
+                            </div>
+                            <button onClick={fetchJoinRequests} className="text-zinc-500 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Actualizar">
+                                <RefreshCcw size={16} className={joinRequestsLoading ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-3">Solicitante / Área</th>
+                                        <th className="px-6 py-3">Programación</th>
+                                        <th className="px-6 py-3">Fecha / Jornada</th>
+                                        <th className="px-6 py-3 max-w-xs">Mensaje</th>
+                                        <th className="px-6 py-3">Estado</th>
+                                        <th className="px-6 py-3">Fecha Solicitud</th>
+                                        <th className="px-6 py-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-200">
+                                    {joinRequestsLoading ? (
+                                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-500">Cargando solicitudes...</td></tr>
+                                    ) : joinRequests.length === 0 ? (
+                                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400 italic">No hay solicitudes de unión</td></tr>
+                                    ) : joinRequests.map((req) => (
+                                        <tr key={req.id} className={`hover:bg-zinc-50 transition-colors text-sm ${req.estado === 'pendiente' ? 'bg-blue-50/30' : ''}`}>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-zinc-900">{req.solicitante.names} {req.solicitante.last_name}</div>
+                                                <div className="text-zinc-500 text-xs">{req.area_solicitante.name}</div>
+                                                <div className="text-zinc-400 text-xs">{req.solicitante.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-mono font-bold text-zinc-900 text-xs">{req.salida.codigo}</div>
+                                                <div className="text-zinc-600 text-xs font-medium truncate max-w-[180px]">{req.salida.tema}</div>
+                                                <div className="text-zinc-400 text-xs">{req.salida.tipo_salida}</div>
+                                                <div className="text-zinc-400 text-xs">{req.salida.areas.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-600 text-xs">
+                                                <div>{new Date(req.salida.fecha_inicio).toLocaleDateString('es-CO')}</div>
+                                                <div className="text-zinc-400">{new Date(req.salida.fecha_final).toLocaleDateString('es-CO')}</div>
+                                                <div className="text-zinc-500">{req.salida.jornada}</div>
+                                            </td>
+                                            <td className="px-6 py-4 max-w-xs">
+                                                <p className="text-zinc-600 text-xs italic line-clamp-3">{req.mensaje || <span className="text-zinc-400">Sin mensaje</span>}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {req.estado === 'pendiente' && (
+                                                    <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-yellow-200">
+                                                        <AlertCircle size={11} /> Pendiente
+                                                    </span>
+                                                )}
+                                                {req.estado === 'aceptada' && (
+                                                    <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-green-200">
+                                                        <CheckCircle size={11} /> Aceptada
+                                                    </span>
+                                                )}
+                                                {req.estado === 'rechazada' && (
+                                                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-red-200">
+                                                        <XCircle size={11} /> Rechazada
+                                                    </span>
+                                                )}
+                                                {req.respuesta && (
+                                                    <p className="text-zinc-500 text-xs mt-1 italic line-clamp-2">{req.respuesta}</p>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-500 text-xs">
+                                                {new Date(req.created_at).toLocaleDateString('es-CO')}
+                                                <div className="text-zinc-400">{new Date(req.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {req.estado === 'pendiente' ? (
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'accept', solicitudId: req.id }); }}
+                                                            className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition-colors border border-green-200 flex items-center gap-1"
+                                                        >
+                                                            <CheckCircle size={12} /> Aceptar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'reject', solicitudId: req.id }); }}
+                                                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200 flex items-center gap-1"
+                                                        >
+                                                            <XCircle size={12} /> Rechazar
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-zinc-400 text-xs italic">Procesada</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Join Resolve Modal */}
+                {joinResolveModal.type && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) { setJoinResolveModal({ type: null, solicitudId: null }); setJoinResolveComment(''); } }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
+                            <div className={`p-6 border-b ${joinResolveModal.type === 'accept' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${joinResolveModal.type === 'accept' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {joinResolveModal.type === 'accept' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                                    </div>
+                                    <div>
+                                        <h3 className={`text-lg font-bold ${joinResolveModal.type === 'accept' ? 'text-green-900' : 'text-red-900'}`}>
+                                            {joinResolveModal.type === 'accept' ? 'Aceptar Solicitud de Unión' : 'Rechazar Solicitud de Unión'}
+                                        </h3>
+                                        <p className={`text-sm ${joinResolveModal.type === 'accept' ? 'text-green-700' : 'text-red-700'}`}>
+                                            {joinResolveModal.type === 'accept' ? 'Puede añadir una observación opcional.' : 'Indique el motivo del rechazo.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <textarea
+                                    className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none text-sm"
+                                    rows={3}
+                                    placeholder={joinResolveModal.type === 'accept' ? 'Observación opcional...' : 'Motivo del rechazo (opcional)...'}
+                                    value={joinResolveComment}
+                                    onChange={(e) => setJoinResolveComment(e.target.value)}
+                                />
+                            </div>
+                            <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
+                                <button
+                                    onClick={() => { setJoinResolveModal({ type: null, solicitudId: null }); setJoinResolveComment(''); }}
+                                    className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
+                                    disabled={joinResolveSubmitting}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleJoinResolve}
+                                    disabled={joinResolveSubmitting}
+                                    className={`px-4 py-2 text-white font-medium rounded-lg transition-colors text-sm shadow-sm disabled:opacity-50 ${joinResolveModal.type === 'accept' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                                >
+                                    {joinResolveSubmitting ? 'Procesando...' : joinResolveModal.type === 'accept' ? 'Confirmar Aceptación' : 'Confirmar Rechazo'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Bulk Action Bar */}
                 {hasApprovePermission && selectedIds.size > 0 && (
