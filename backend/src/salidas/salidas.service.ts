@@ -5,12 +5,14 @@ import { UpdateSalidaDto } from './dto/update-salida.dto';
 import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { users } from '@prisma/client';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SalidasService {
     constructor(
         private prisma: PrismaService,
-        private pdfReport: SalidasPdfReport,  // ← inyectado
+        private pdfReport: SalidasPdfReport,
+        private notifications: NotificationsService,
     ) { }
 
     private parseDateLocal(dateStr: string | Date): Date {
@@ -118,7 +120,8 @@ export class SalidasService {
             municipiosConvocadosStr = munis.map(m => m.name).join(', ');
         }
 
-        return this.prisma.salidas.create({
+        const area = await this.prisma.areas.findUnique({ where: { id: targetAreaId }, select: { subdireccion_id: true } });
+        const salida = await this.prisma.salidas.create({
             data: {
                 codigo: newCodigo, tipo_salida: createSalidaDto.tipo_salida, subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema, descripcion: createSalidaDto.descripcion,
@@ -142,6 +145,19 @@ export class SalidasService {
                 areas: { select: { id: true, name: true } }
             }
         });
+
+        if (area?.subdireccion_id) {
+            const adminIds = await this.notifications.findAdminsBySubdireccion(area.subdireccion_id);
+            const solicitanteId = createSalidaDto.solicitante_id || user.id;
+            const targets = adminIds.filter(id => id !== solicitanteId);
+            if (targets.length > 0) {
+                await this.notifications.createForMany(targets, 'salida_pendiente',
+                    'Nueva Solicitud de Programación',
+                    `${salida.solicitante.names} solicitó la programación ${newCodigo}: "${createSalidaDto.tema.substring(0, 60)}"`,
+                    '/gestionar-salida');
+            }
+        }
+        return salida;
     }
 
     async findAll(user: users, viewAll: boolean = false) {
@@ -273,10 +289,15 @@ export class SalidasService {
         if (salida.estado !== 'pendiente') throw new BadRequestException('La salida no está pendiente');
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
-        return this.prisma.salidas.update({
+        const result = await this.prisma.salidas.update({
             where: { id },
             data: { estado: 'aprobada', fecha_aprobacion: new Date(), aprobador_id: user.id, observaciones: approveDto.observaciones }
         });
+        await this.notifications.createForUser(salida.solicitante_id, 'salida_aprobada',
+            '✅ Programación Aprobada',
+            `Tu programación ${salida.codigo} fue aprobada.${approveDto.observaciones ? ' Observación: ' + approveDto.observaciones : ''}`,
+            '/gestionar-salida');
+        return result;
     }
 
     async reject(id: string, user: users, rejectDto: RejectSalidaDto) {
@@ -285,10 +306,15 @@ export class SalidasService {
         const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
         if (!canReject) throw new BadRequestException('No se puede rechazar en el estado actual');
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
-        return this.prisma.salidas.update({
+        const result = await this.prisma.salidas.update({
             where: { id },
             data: { estado: 'rechazada', fecha_aprobacion: new Date(), aprobador_id: user.id, observaciones: rejectDto.motivo }
         });
+        await this.notifications.createForUser(salida.solicitante_id, 'salida_rechazada',
+            '❌ Programación Rechazada',
+            `Tu programación ${salida.codigo} fue rechazada.${rejectDto.motivo ? ' Motivo: ' + rejectDto.motivo : ''}`,
+            '/gestionar-salida');
+        return result;
     }
 
     async getCatalogos(user?: users) {

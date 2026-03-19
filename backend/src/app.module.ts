@@ -7,6 +7,7 @@ import { SalidasModule } from './salidas/salidas.module';
 import { SubdireccionesModule } from './subdirecciones/subdirecciones.module';
 import { AreasModule } from './areas/areas.module';
 import { SolicitudesUnionModule } from './solicitudes-union/solicitudes-union.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SolicitudesUnionModule } from './solicitudes-union/solicitudes-union.mo
     SubdireccionesModule,
     AreasModule,
     SolicitudesUnionModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [PrismaService],

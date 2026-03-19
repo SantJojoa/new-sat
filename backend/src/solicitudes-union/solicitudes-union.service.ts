@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSolicitudUnionDto, ResolveSolicitudUnionDto } from './dto/solicitudes-union.dto';
 import { users } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SolicitudesUnionService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notifications: NotificationsService,
+    ) { }
 
     private async getUserSubdireccionId(user: users): Promise<string | null> {
         if (user.subdireccion_id) return user.subdireccion_id;
@@ -38,7 +42,7 @@ export class SolicitudesUnionService {
         });
         if (existing) throw new BadRequestException('Ya tienes una solicitud de unión pendiente para esta salida');
 
-        return this.prisma.solicitudes_union.create({
+        const solicitud = await this.prisma.solicitudes_union.create({
             data: {
                 salida_id: dto.salida_id,
                 solicitante_id: user.id,
@@ -47,11 +51,23 @@ export class SolicitudesUnionService {
                 estado: 'pendiente'
             },
             include: {
-                salida: { select: { id: true, codigo: true, tema: true, fecha_inicio: true, fecha_final: true, areas: { select: { id: true, name: true } } } },
+                salida: { select: { id: true, codigo: true, tema: true, fecha_inicio: true, fecha_final: true, areas: { select: { id: true, name: true, subdireccion_id: true } } } },
                 solicitante: { select: { id: true, names: true, last_name: true, email: true } },
                 area_solicitante: { select: { id: true, name: true } }
             }
         });
+
+        if (solicitud.salida.areas.subdireccion_id) {
+            const adminIds = await this.notifications.findAdminsBySubdireccion(solicitud.salida.areas.subdireccion_id);
+            const targets = adminIds.filter(id => id !== user.id);
+            if (targets.length > 0) {
+                await this.notifications.createForMany(targets, 'union_pendiente',
+                    'Nueva Solicitud de Unión',
+                    `${solicitud.solicitante.names} ${solicitud.solicitante.last_name} (${solicitud.area_solicitante.name}) solicita unirse a la programación ${solicitud.salida.codigo}.`,
+                    '/gestionar-salida');
+            }
+        }
+        return solicitud;
     }
 
     async findAll(user: users) {
@@ -152,6 +168,11 @@ export class SolicitudesUnionService {
                 }
             }),
         ]);
+
+        await this.notifications.createForUser(solicitud.solicitante_id, 'union_aceptada',
+            '✅ Solicitud de Unión Aceptada',
+            `Tu solicitud para unirte a la programación ${solicitud.salida.codigo} fue aceptada.${dto.respuesta ? ' Respuesta: ' + dto.respuesta : ''}`,
+            '/gestionar-salida');
         return updated;
     }
 
@@ -173,7 +194,7 @@ export class SolicitudesUnionService {
                 throw new ForbiddenException('Esta solicitud no pertenece a tu subdirección');
         }
 
-        return this.prisma.solicitudes_union.update({
+        const rejected = await this.prisma.solicitudes_union.update({
             where: { id },
             data: { estado: 'rechazada', respuesta: dto.respuesta },
             include: {
@@ -182,5 +203,12 @@ export class SolicitudesUnionService {
                 area_solicitante: { select: { id: true, name: true } }
             }
         });
+
+        await this.notifications.createForUser(solicitud.solicitante_id, 'union_rechazada',
+            '❌ Solicitud de Unión Rechazada',
+            `Tu solicitud para unirte a la programación ${solicitud.salida.codigo} fue rechazada.${dto.respuesta ? ' Respuesta: ' + dto.respuesta : ''}`,
+            '/gestionar-salida');
+        return rejected;
     }
 }
+

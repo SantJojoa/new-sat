@@ -3,11 +3,12 @@ import { SolicitudesUnionService } from './solicitudes-union.service';
 import { SolicitudesUnionController } from './solicitudes-union.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-    imports: [AuthModule],
+    imports: [AuthModule, NotificationsModule],
     controllers: [SolicitudesUnionController],
     providers: [SolicitudesUnionService, PrismaService],
     exports: [SolicitudesUnionService],
 })
-export class SolicitudesUnionModule {}
+export class SolicitudesUnionModule { }
