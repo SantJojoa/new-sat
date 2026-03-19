@@ -1,9 +1,70 @@
+import { useEffect, useRef, useState, useCallback } from "react"
 import { useAuth } from "../../hooks/useAuth"
-import { useLocation, Link } from "react-router-dom"
+import { useLocation, Link, useNavigate } from "react-router-dom"
+import { Bell, CheckCheck, X } from "lucide-react"
+import { notificationsService, type AppNotification } from "../../services/notificationsService"
+
+const TYPE_STYLES: Record<string, { dot: string; icon: string }> = {
+    salida_pendiente: { dot: 'bg-yellow-400', icon: '📋' },
+    salida_aprobada: { dot: 'bg-green-500', icon: '✅' },
+    salida_rechazada: { dot: 'bg-red-500', icon: '❌' },
+    union_pendiente: { dot: 'bg-blue-400', icon: '👥' },
+    union_aceptada: { dot: 'bg-green-500', icon: '🤝' },
+    union_rechazada: { dot: 'bg-red-500', icon: '🚫' },
+};
 
 export default function SlideBar() {
     const { user, logout } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [bellOpen, setBellOpen] = useState(false);
+    const bellRef = useRef<HTMLDivElement>(null);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const data = await notificationsService.getAll();
+            setNotifications(data);
+        } catch { /* silent */ }
+    }, []);
+
+    useEffect(() => {
+        void fetchNotifications();
+        const interval = setInterval(() => { void fetchNotifications(); }, 30000);
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+                setBellOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleBellOpen = async () => {
+        setBellOpen(prev => !prev);
+        if (!bellOpen) await fetchNotifications();
+    };
+
+    const handleMarkAllRead = async () => {
+        await notificationsService.markAllAsRead();
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
+
+    const handleNotificationClick = async (n: AppNotification) => {
+        if (!n.read) {
+            await notificationsService.markAsRead(n.id);
+            setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+        }
+        setBellOpen(false);
+        if (n.link) navigate(n.link);
+    };
 
     // Generate nav items from permissions
     const allNavItems = user?.user_type?.permissions
@@ -116,8 +177,79 @@ export default function SlideBar() {
                     })}
                 </nav>
 
-                {/* Footer (User Info) */}
-                <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col gap-4 shrink-0">
+                {/* Footer (User Info + Bell) */}
+                <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col gap-3 shrink-0">
+                    {/* Bell notification button */}
+                    <div ref={bellRef} className="relative px-3">
+                        <button
+                            onClick={handleBellOpen}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${bellOpen ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100'}`}
+                        >
+                            <div className="relative shrink-0">
+                                <Bell size={20} />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-sm font-medium">Notificaciones</span>
+                            {unreadCount > 0 && (
+                                <span className="ml-auto bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount} nuevas</span>
+                            )}
+                        </button>
+
+                        {/* Dropdown panel */}
+                        {bellOpen && (
+                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-2xl border border-zinc-200 overflow-hidden z-50 max-h-96 flex flex-col">
+                                <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between shrink-0">
+                                    <span className="font-bold text-zinc-900 text-sm">Notificaciones</span>
+                                    <div className="flex items-center gap-1">
+                                        {unreadCount > 0 && (
+                                            <button onClick={handleMarkAllRead} className="text-xs text-primary hover:underline flex items-center gap-1 px-2 py-1 rounded hover:bg-primary/5 transition-colors">
+                                                <CheckCheck size={13} /> Marcar leídas
+                                            </button>
+                                        )}
+                                        <button onClick={() => setBellOpen(false)} className="p-1 rounded hover:bg-zinc-100 text-zinc-400 transition-colors">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-y-auto flex-1">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center text-zinc-400 text-sm">
+                                            <Bell size={24} className="mx-auto mb-2 opacity-30" />
+                                            Sin notificaciones
+                                        </div>
+                                    ) : (
+                                        notifications.map(n => {
+                                            const style = TYPE_STYLES[n.type] || { dot: 'bg-zinc-400', icon: '🔔' };
+                                            return (
+                                                <button
+                                                    key={n.id}
+                                                    onClick={() => handleNotificationClick(n)}
+                                                    className={`w-full text-left px-4 py-3 border-b border-zinc-50 hover:bg-zinc-50 transition-colors flex gap-3 items-start ${!n.read ? 'bg-blue-50/40' : ''}`}
+                                                >
+                                                    <span className="text-base shrink-0 mt-0.5">{style.icon}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className={`text-xs font-bold truncate ${!n.read ? 'text-zinc-900' : 'text-zinc-600'}`}>{n.title}</p>
+                                                            {!n.read && <span className={`shrink-0 size-2 rounded-full ${style.dot}`} />}
+                                                        </div>
+                                                        <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                                                        <p className="text-[10px] text-zinc-400 mt-1">
+                                                            {new Date(n.created_at).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex flex-col gap-1 px-3">
                         <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                             {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

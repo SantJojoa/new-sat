@@ -5,12 +5,14 @@ import { UpdateSalidaDto } from './dto/update-salida.dto';
 import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { users } from '@prisma/client';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SalidasService {
     constructor(
         private prisma: PrismaService,
-        private pdfReport: SalidasPdfReport,  // ← inyectado
+        private pdfReport: SalidasPdfReport,
+        private notifications: NotificationsService,
     ) { }
 
     private parseDateLocal(dateStr: string | Date): Date {
@@ -72,7 +74,7 @@ export class SalidasService {
             throw new ConflictException({
                 message: `Se encontraron ${conflicts.length} actividad(es) en conflicto`,
                 conflicts: conflicts.map(c => ({
-                    codigo: c.codigo, tipo_salida: c.tipo_salida, tema: c.tema,
+                    id: c.id, codigo: c.codigo, tipo_salida: c.tipo_salida, tema: c.tema,
                     fecha_inicio: c.fecha_inicio, fecha_final: c.fecha_final, jornada: c.jornada,
                     area: c.areas.name,
                     solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,
@@ -118,7 +120,8 @@ export class SalidasService {
             municipiosConvocadosStr = munis.map(m => m.name).join(', ');
         }
 
-        return this.prisma.salidas.create({
+        const area = await this.prisma.areas.findUnique({ where: { id: targetAreaId }, select: { subdireccion_id: true } });
+        const salida = await this.prisma.salidas.create({
             data: {
                 codigo: newCodigo, tipo_salida: createSalidaDto.tipo_salida, subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema, descripcion: createSalidaDto.descripcion,
@@ -142,6 +145,19 @@ export class SalidasService {
                 areas: { select: { id: true, name: true } }
             }
         });
+
+        if (area?.subdireccion_id) {
+            const adminIds = await this.notifications.findAdminsBySubdireccion(area.subdireccion_id);
+            const solicitanteId = createSalidaDto.solicitante_id || user.id;
+            const targets = adminIds.filter(id => id !== solicitanteId);
+            if (targets.length > 0) {
+                await this.notifications.createForMany(targets, 'salida_pendiente',
+                    'Nueva Solicitud de Programación',
+                    `${salida.solicitante.names} solicitó la programación ${newCodigo}: "${createSalidaDto.tema.substring(0, 60)}"`,
+                    '/gestionar-salida');
+            }
+        }
+        return salida;
     }
 
     async findAll(user: users, viewAll: boolean = false) {
@@ -150,6 +166,7 @@ export class SalidasService {
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
             areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+            areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
             lugar_evento: true
         };
 
@@ -160,9 +177,13 @@ export class SalidasService {
         if (!viewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = await this.getUserSubdireccionId(user);
-                const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
-                if (!userArea) throw new ForbiddenException('Área no encontrada');
-                where = { areas: { subdireccion_id: userArea.subdireccion_id } };
+                if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
+                where = {
+                    OR: [
+                        { areas: { subdireccion_id: subdireccionId } },
+                        { areas_participantes: { some: { subdireccion_id: subdireccionId } } }
+                    ]
+                };
             } else if (userType.name !== 'superadmin') {
                 where = { solicitante_id: user.id };
             }
@@ -178,7 +199,8 @@ export class SalidasService {
                 municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
-                areas: { select: { id: true, name: true, subdireccion_id: true } }
+                areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+                areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } }
             }
         });
 
@@ -188,7 +210,9 @@ export class SalidasService {
 
         if (userType?.name === 'admin_subdireccion') {
             const subdireccionId = await this.getUserSubdireccionId(user);
-            if (!subdireccionId || salida.areas.subdireccion_id !== subdireccionId)
+            const isOwnerSubdir = subdireccionId && salida.areas.subdireccion_id === subdireccionId;
+            const isParticipantSubdir = subdireccionId && (salida as any).areas_participantes?.some((ap: any) => ap.subdireccion_id === subdireccionId);
+            if (!isOwnerSubdir && !isParticipantSubdir)
                 throw new ForbiddenException('No tienes permiso');
         } else if (userType?.name !== 'superadmin' && salida.solicitante_id !== user.id) {
             throw new ForbiddenException('No tienes permiso');
@@ -256,6 +280,7 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (salida.estado !== 'pendiente' && userType?.name !== 'superadmin')
             throw new BadRequestException('Solo pendientes se pueden eliminar');
+        await this.prisma.solicitudes_union.deleteMany({ where: { salida_id: id } });
         return this.prisma.salidas.delete({ where: { id } });
     }
 
@@ -264,10 +289,15 @@ export class SalidasService {
         if (salida.estado !== 'pendiente') throw new BadRequestException('La salida no está pendiente');
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
-        return this.prisma.salidas.update({
+        const result = await this.prisma.salidas.update({
             where: { id },
             data: { estado: 'aprobada', fecha_aprobacion: new Date(), aprobador_id: user.id, observaciones: approveDto.observaciones }
         });
+        await this.notifications.createForUser(salida.solicitante_id, 'salida_aprobada',
+            '✅ Programación Aprobada',
+            `Tu programación ${salida.codigo} fue aprobada.${approveDto.observaciones ? ' Observación: ' + approveDto.observaciones : ''}`,
+            '/gestionar-salida');
+        return result;
     }
 
     async reject(id: string, user: users, rejectDto: RejectSalidaDto) {
@@ -276,10 +306,15 @@ export class SalidasService {
         const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
         if (!canReject) throw new BadRequestException('No se puede rechazar en el estado actual');
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
-        return this.prisma.salidas.update({
+        const result = await this.prisma.salidas.update({
             where: { id },
             data: { estado: 'rechazada', fecha_aprobacion: new Date(), aprobador_id: user.id, observaciones: rejectDto.motivo }
         });
+        await this.notifications.createForUser(salida.solicitante_id, 'salida_rechazada',
+            '❌ Programación Rechazada',
+            `Tu programación ${salida.codigo} fue rechazada.${rejectDto.motivo ? ' Motivo: ' + rejectDto.motivo : ''}`,
+            '/gestionar-salida');
+        return result;
     }
 
     async getCatalogos(user?: users) {
@@ -346,7 +381,8 @@ export class SalidasService {
                     municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
                     solicitante: { select: { id: true, names: true, last_name: true, email: true } },
                     aprobador: { select: { id: true, names: true, last_name: true, email: true } },
-                    areas: { select: { id: true, name: true, subdireccion_id: true } },
+                    areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+                    areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
                     lugar_evento: true
                 },
                 orderBy: { fecha_inicio: 'desc' }

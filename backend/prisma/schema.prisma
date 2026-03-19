@@ -7,14 +7,16 @@ datasource db {
 }
 
 model areas {
-  id              String         @id @default(cuid())
-  name            String         @unique
-  subdireccion_id String
-  created_at      DateTime       @default(now())
-  updated_at      DateTime       @updatedAt
-  subdirecciones  subdirecciones @relation(fields: [subdireccion_id], references: [id])
-  users           users[]
-  salidas         salidas[]
+  id                        String              @id @default(cuid())
+  name                      String              @unique
+  subdireccion_id           String
+  created_at                DateTime            @default(now())
+  updated_at                DateTime            @updatedAt
+  subdirecciones            subdirecciones      @relation(fields: [subdireccion_id], references: [id])
+  users                     users[]
+  salidas                   salidas[]
+  solicitudes_union         solicitudes_union[] @relation("SolicitudesUnionArea")
+  salidas_como_participante salidas[]           @relation("SalidasAreasParticipantes")
 }
 
 model subdirecciones {
@@ -39,26 +41,41 @@ model user_types {
 }
 
 model users {
-  id           String     @id @default(cuid())
-  username     String     @unique
-  password     String
-  user_type_id String
-  names        String
-  last_name    String
-  num_id       String     @unique
-  area_id      String?
+  id              String          @id @default(cuid())
+  username        String          @unique
+  password        String
+  user_type_id    String
+  names           String
+  last_name       String
+  num_id          String          @unique
+  area_id         String?
   subdireccion_id String?
-  charge       String?
-  email        String     @unique
-  is_active    Boolean    @default(true)
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  areas        areas?     @relation(fields: [area_id], references: [id])
-  subdirecciones subdirecciones? @relation(fields: [subdireccion_id], references: [id])
-  user_types   user_types @relation(fields: [user_type_id], references: [id])
+  charge          String?
+  email           String          @unique
+  is_active       Boolean         @default(true)
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  areas           areas?          @relation(fields: [area_id], references: [id])
+  subdirecciones  subdirecciones? @relation(fields: [subdireccion_id], references: [id])
+  user_types      user_types      @relation(fields: [user_type_id], references: [id])
 
-  salidas_solicitadas salidas[] @relation("SolicitanteSalidas")
-  salidas_aprobadas   salidas[] @relation("AprobadorSalidas")
+  salidas_solicitadas           salidas[]           @relation("SolicitanteSalidas")
+  salidas_aprobadas             salidas[]           @relation("AprobadorSalidas")
+  solicitudes_union_solicitadas solicitudes_union[] @relation("SolicitudesUnionSolicitante")
+  notifications                 notifications[]
+}
+
+model notifications {
+  id         String   @id @default(cuid())
+  user_id    String
+  type       String // 'salida_pendiente','salida_aprobada','salida_rechazada','union_pendiente','union_aceptada','union_rechazada'
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  link       String?
+  created_at DateTime @default(now())
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model modules {
@@ -201,7 +218,25 @@ model salidas {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  solicitante users  @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
-  aprobador   users? @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
-  areas       areas  @relation(fields: [area_id], references: [id])
+  solicitante         users               @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
+  aprobador           users?              @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
+  areas               areas               @relation(fields: [area_id], references: [id])
+  solicitudes_union   solicitudes_union[]
+  areas_participantes areas[]             @relation("SalidasAreasParticipantes")
+}
+
+model solicitudes_union {
+  id                  String   @id @default(cuid())
+  salida_id           String
+  solicitante_id      String
+  area_solicitante_id String
+  mensaje             String?
+  estado              String   @default("pendiente") // 'pendiente', 'aceptada', 'rechazada'
+  respuesta           String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  salida           salidas @relation(fields: [salida_id], references: [id])
+  solicitante      users   @relation("SolicitudesUnionSolicitante", fields: [solicitante_id], references: [id])
+  area_solicitante areas   @relation("SolicitudesUnionArea", fields: [area_solicitante_id], references: [id])
 }
