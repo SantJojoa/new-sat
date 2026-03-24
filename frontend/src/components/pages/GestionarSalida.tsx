@@ -355,7 +355,7 @@ export default function GestionarSalida() {
             <main className="flex-1 min-w-0 flex flex-col overflow-y-auto bg-zinc-50/50 p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto w-full min-w-0">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Programaciones</h1>
+                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><Layers className="text-primary" size={32} />Gestionar Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
                             <button

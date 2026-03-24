@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
-import { Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, AlertCircle, FileEdit } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import type { ApiErrorPayload } from '../../types/api';
 import type { SalidaRecord } from '../../types/salidas';
@@ -101,7 +101,7 @@ export default function ModificarSalida() {
             <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
                 <div className="max-w-screen-2xl mx-auto w-full">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestión de Programaciones</h1>
+                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><FileEdit className="text-primary" size={32} />Gestión de Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise y gestione las solicitudes de programaciones.</p>
                     </div>
 

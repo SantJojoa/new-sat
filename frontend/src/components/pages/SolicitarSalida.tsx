@@ -107,13 +107,14 @@ export default function SolicitarSalida() {
         { id: 'Inspección y Vigilancia SP', name: 'Inspección y Vigilancia SP' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
         { id: 'Capacitación', name: 'Capacitación' },
+        { id: 'Articulacion I.V', name: 'Articulacion I.V' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
 
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Capacitación');
+            return subtiposItems.filter(s => s.name === 'Capacitación' || s.name === 'Articulacion I.V');
         }
         return subtiposItems;
     };
@@ -121,7 +122,8 @@ export default function SolicitarSalida() {
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
-            const hasInvalidSubtypes = selectedSubtipos.some(s => s.name !== 'Capacitación');
+            const allowedVirtual = ['Capacitación', 'Articulacion I.V'];
+            const hasInvalidSubtypes = selectedSubtipos.some(s => !allowedVirtual.includes(s.name));
             if (hasInvalidSubtypes) {
                 setSelectedSubtipos([]);
             }
@@ -479,40 +481,18 @@ export default function SolicitarSalida() {
             <div className="flex h-screen overflow-hidden">
                 <SlideBar />
 
-                <main className="flex-1 flex flex-col overflow-y-auto">
-                    <header className="bg-white border-b border-zinc-200 px-8 py-4 sticky top-0 z-10">
-                        <div className="max-w-5xl mx-auto">
-                            <nav className="flex items-center gap-2 mb-4">
-                                <a href=""></a>
-                                <a
-                                    href="#"
-                                    className="text-zinc-500text-sm hover:text-primary transition-colors"
-                                >
-                                    Inicio
-                                </a>
-                                <span className="material-symbols-outlined text-zinc-400 text-sm">
-                                    chevron_right
-                                </span>
-                                <span className="text-zinc-900 text-sm font-semibold">
-                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación'}
-                                </span>
-                            </nav>
-
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">
-                                        {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
-                                    </h2>
-                                    <p className="text-zinc-500 mt-1">
-                                        {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
-                                    </p>
-                                </div>
+                <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50">
+                    <div className="p-4 md:p-8">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="mb-8">
+                                <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+                                    <ClipboardList className="text-primary" size={32} />
+                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
+                                </h1>
+                                <p className="text-zinc-500 mt-1">
+                                    {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
+                                </p>
                             </div>
-                        </div>
-                    </header>
-
-                    <div className="px-8 py-10">
-                        <div className="max-w-5xl mx-auto">
                             <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
                                     <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
