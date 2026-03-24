@@ -5,6 +5,7 @@ import { UpdateSalidaDto } from './dto/update-salida.dto';
 import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSalidaDto } from './dto/aprove-salida.dto';
 import { users } from '@prisma/client';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
+import { SalidasExcelReport } from './reports/salidas-excel.report';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class SalidasService {
     constructor(
         private prisma: PrismaService,
         private pdfReport: SalidasPdfReport,
+        private excelReport: SalidasExcelReport,
         private notifications: NotificationsService,
     ) { }
 
@@ -411,6 +413,16 @@ export class SalidasService {
         const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
 
         return this.pdfReport.generate(data, {
+            startDate, endDate, areaName: area?.name, estado, jornada,
+            authorName: `${user.names} ${user.last_name}`,
+        });
+    }
+
+    async exportEstadisticasExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada);
+        const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
+
+        return this.excelReport.generate(data, {
             startDate, endDate, areaName: area?.name, estado, jornada,
             authorName: `${user.names} ${user.last_name}`,
         });

@@ -38,6 +38,7 @@ export default function ReportesSalidas() {
     const [selectedEstado, setSelectedEstado] = useState<string>('');
     const [selectedJornada, setSelectedJornada] = useState<string>('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
 
     useEffect(() => {
         const loadCatalogos = async () => {
@@ -120,42 +121,80 @@ export default function ReportesSalidas() {
                                     <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Reportes y Estadísticas</h1>
                                     <p className="text-zinc-500">Analiza el rendimiento y distribución de las programaciones en el sistema.</p>
                                 </div>
-                                <button
-                                    onClick={async () => {
-                                        if (!data?.items || data.items.length === 0) return;
-                                        setIsGeneratingPdf(true);
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <button
+                                        onClick={async () => {
+                                            if (!data?.items || data.items.length === 0) return;
+                                            setIsGeneratingExcel(true);
 
-                                        try {
-                                            const result = await salidasService.downloadEstadisticasPdf(
-                                                startDate || undefined,
-                                                endDate || undefined,
-                                                selectedArea || undefined,
-                                                selectedEstado || undefined,
-                                                selectedJornada || undefined
-                                            );
+                                            try {
+                                                const result = await salidasService.downloadEstadisticasExcel(
+                                                    startDate || undefined,
+                                                    endDate || undefined,
+                                                    selectedArea || undefined,
+                                                    selectedEstado || undefined,
+                                                    selectedJornada || undefined
+                                                );
 
-                                            const url = window.URL.createObjectURL(result.blob);
-                                            const link = document.createElement('a');
-                                            link.href = url;
-                                            link.download = result.filename;
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            link.remove();
-                                            window.URL.revokeObjectURL(url);
-                                        } finally {
-                                            setIsGeneratingPdf(false);
-                                        }
-                                    }}
-                                    disabled={!data?.items || data.items.length === 0 || isGeneratingPdf}
-                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm whitespace-nowrap"
-                                >
-                                    {isGeneratingPdf ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-[20px]">file_download</span>
-                                    )}
-                                    {isGeneratingPdf ? 'Generando...' : 'Descargar PDF'}
-                                </button>
+                                                const url = window.URL.createObjectURL(result.blob);
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.download = result.filename;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                link.remove();
+                                                window.URL.revokeObjectURL(url);
+                                            } finally {
+                                                setIsGeneratingExcel(false);
+                                            }
+                                        }}
+                                        disabled={!data?.items || data.items.length === 0 || isGeneratingExcel}
+                                        className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm whitespace-nowrap"
+                                    >
+                                        {isGeneratingExcel ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[20px]">table_view</span>
+                                        )}
+                                        {isGeneratingExcel ? 'Generando...' : 'Exportar Excel'}
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!data?.items || data.items.length === 0) return;
+                                            setIsGeneratingPdf(true);
+
+                                            try {
+                                                const result = await salidasService.downloadEstadisticasPdf(
+                                                    startDate || undefined,
+                                                    endDate || undefined,
+                                                    selectedArea || undefined,
+                                                    selectedEstado || undefined,
+                                                    selectedJornada || undefined
+                                                );
+
+                                                const url = window.URL.createObjectURL(result.blob);
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.download = result.filename;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                link.remove();
+                                                window.URL.revokeObjectURL(url);
+                                            } finally {
+                                                setIsGeneratingPdf(false);
+                                            }
+                                        }}
+                                        disabled={!data?.items || data.items.length === 0 || isGeneratingPdf}
+                                        className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm whitespace-nowrap"
+                                    >
+                                        {isGeneratingPdf ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[20px]">file_download</span>
+                                        )}
+                                        {isGeneratingPdf ? 'Generando...' : 'Descargar PDF'}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Filters Section */}
