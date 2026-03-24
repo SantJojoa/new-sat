@@ -83,6 +83,35 @@ export class SalidasController {
         return new StreamableFile(buffer);
     }
 
+    @Get('estadisticas/excel')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadEstadisticasExcel(
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+        @Query('jornada') jornada?: string
+    ) {
+        const { buffer, filename } = await this.salidasService.exportEstadisticasExcel(
+            req.user,
+            startDate,
+            endDate,
+            areaId,
+            estado,
+            jornada
+        );
+
+        res.set({
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': `attachment; filename="${filename}"`
+        });
+
+        return new StreamableFile(buffer);
+    }
+
     @Get('catalogos')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')
