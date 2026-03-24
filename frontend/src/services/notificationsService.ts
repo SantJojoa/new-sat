@@ -25,6 +25,9 @@ const notificationsService = {
     markAllAsRead: async (): Promise<void> => {
         await apiClient.patch('/notifications/mark-all-read');
     },
+    deleteRead: async (id: string): Promise<void> => {
+        await apiClient.delete(`/notifications/${id}`);
+    },
 };
 
 export { notificationsService };

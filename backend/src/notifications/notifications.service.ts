@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class NotificationsService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async createForUser(userId: string, type: string, title: string, message: string, link?: string) {
         return this.prisma.notifications.create({
@@ -42,6 +42,12 @@ export class NotificationsService {
         return this.prisma.notifications.updateMany({
             where: { user_id: userId, read: false },
             data: { read: true }
+        });
+    }
+
+    async deleteRead(id: string, userId: string) {
+        return this.prisma.notifications.deleteMany({
+            where: { id, user_id: userId, read: true }
         });
     }
 
