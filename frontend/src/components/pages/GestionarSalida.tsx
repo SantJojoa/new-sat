@@ -350,10 +350,10 @@ export default function GestionarSalida() {
     });
 
     return (
-        <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
+        <div className="bg-bg-light font-display min-h-screen flex">
             <SlideBar />
-            <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
-                <div className="max-w-7xl mx-auto w-full">
+            <main className="flex-1 min-w-0 flex flex-col overflow-y-auto bg-zinc-50/50 p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full min-w-0">
                     <div className="mb-8">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
@@ -641,22 +641,22 @@ export default function GestionarSalida() {
                 {/* Join Requests Panel */}
                 {isAdmin && joinRequestsTab && (
                     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mt-6">
-                        <div className="p-5 border-b border-zinc-200 bg-blue-50/60 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                        <div className="p-4 sm:p-5 border-b border-zinc-200 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-start sm:items-center gap-3 min-w-0">
                                 <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
                                     <Users size={18} />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <h3 className="font-bold text-zinc-900">Solicitudes de Unión</h3>
-                                    <p className="text-zinc-500 text-sm">Solicitudes de otras áreas para unirse a programaciones de tu subdirección</p>
+                                    <p className="text-zinc-500 text-sm wrap-break-word">Solicitudes de otras áreas para unirse a programaciones de tu subdirección</p>
                                 </div>
                             </div>
-                            <button onClick={fetchJoinRequests} className="text-zinc-500 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Actualizar">
+                            <button onClick={fetchJoinRequests} className="self-start sm:self-auto text-zinc-500 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Actualizar">
                                 <RefreshCcw size={16} className={joinRequestsLoading ? 'animate-spin' : ''} />
                             </button>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
+                        <div className="w-full overflow-x-auto">
+                            <table className="w-full min-w-[900px] text-left">
                                 <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider">
                                     <tr>
                                         <th className="px-6 py-3">Solicitante / Área</th>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useAuth } from "../../hooks/useAuth"
 import { useLocation, Link, useNavigate } from "react-router-dom"
-import { Bell, CheckCheck, X } from "lucide-react"
+import { Bell, CheckCheck, Trash2, X } from "lucide-react"
 import { notificationsService, type AppNotification } from "../../services/notificationsService"
 
 const TYPE_STYLES: Record<string, { dot: string; icon: string }> = {
@@ -64,6 +64,11 @@ export default function SlideBar() {
         }
         setBellOpen(false);
         if (n.link) navigate(n.link);
+    };
+
+    const handleDeleteRead = async (id: string) => {
+        await notificationsService.deleteRead(id);
+        setNotifications(prev => prev.filter(n => n.id !== id));
     };
 
     // Generate nav items from permissions
@@ -225,23 +230,42 @@ export default function SlideBar() {
                                         notifications.map(n => {
                                             const style = TYPE_STYLES[n.type] || { dot: 'bg-zinc-400', icon: '🔔' };
                                             return (
-                                                <button
+                                                <div
                                                     key={n.id}
-                                                    onClick={() => handleNotificationClick(n)}
-                                                    className={`w-full text-left px-4 py-3 border-b border-zinc-50 hover:bg-zinc-50 transition-colors flex gap-3 items-start ${!n.read ? 'bg-blue-50/40' : ''}`}
+                                                    className={`w-full border-b border-zinc-50 ${!n.read ? 'bg-blue-50/40' : ''}`}
                                                 >
-                                                    <span className="text-base shrink-0 mt-0.5">{style.icon}</span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className={`text-xs font-bold truncate ${!n.read ? 'text-zinc-900' : 'text-zinc-600'}`}>{n.title}</p>
-                                                            {!n.read && <span className={`shrink-0 size-2 rounded-full ${style.dot}`} />}
-                                                        </div>
-                                                        <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
-                                                        <p className="text-[10px] text-zinc-400 mt-1">
-                                                            {new Date(n.created_at).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
+                                                    <div className="px-4 py-3 flex gap-3 items-start">
+                                                        <button
+                                                            onClick={() => handleNotificationClick(n)}
+                                                            className="flex-1 min-w-0 text-left hover:bg-zinc-50 transition-colors rounded-md p-1 -m-1"
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <span className="text-base shrink-0 mt-0.5">{style.icon}</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className={`text-xs font-bold truncate ${!n.read ? 'text-zinc-900' : 'text-zinc-600'}`}>{n.title}</p>
+                                                                        {!n.read && <span className={`shrink-0 size-2 rounded-full ${style.dot}`} />}
+                                                                    </div>
+                                                                    <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                                                                    <p className="text-[10px] text-zinc-400 mt-1">
+                                                                        {new Date(n.created_at).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+
+                                                        {n.read && (
+                                                            <button
+                                                                onClick={() => handleDeleteRead(n.id)}
+                                                                className="shrink-0 mt-0.5 p-1.5 rounded text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                                aria-label="Borrar notificación leída"
+                                                                title="Borrar notificación"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                </button>
+                                                </div>
                                             );
                                         })
                                     )}
