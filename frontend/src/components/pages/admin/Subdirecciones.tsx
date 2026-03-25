@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../../api/client';
 import SlideBar from '../../ui/SlideBar';
-import { Plus, Search, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, X, Building2 } from 'lucide-react';
 
 interface Subdireccion {
     id: string;
@@ -85,7 +85,7 @@ export default function Subdirecciones() {
                 <div className="max-w-6xl mx-auto w-full">
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Subdirecciones</h1>
+                            <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><Building2 className="text-primary" size={32} />Subdirecciones</h1>
                             <p className="text-zinc-500 mt-2">Gestiona las subdirecciones del sistema</p>
                         </div>
                         <button

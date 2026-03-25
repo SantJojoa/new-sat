@@ -107,13 +107,14 @@ export default function SolicitarSalida() {
         { id: 'Inspección y Vigilancia SP', name: 'Inspección y Vigilancia SP' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
         { id: 'Capacitación', name: 'Capacitación' },
+        { id: 'Articulacion I.V', name: 'Articulacion I.V' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
 
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Capacitación');
+            return subtiposItems.filter(s => s.name === 'Capacitación' || s.name === 'Articulacion I.V');
         }
         return subtiposItems;
     };
@@ -121,7 +122,8 @@ export default function SolicitarSalida() {
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
-            const hasInvalidSubtypes = selectedSubtipos.some(s => s.name !== 'Capacitación');
+            const allowedVirtual = ['Capacitación', 'Articulacion I.V'];
+            const hasInvalidSubtypes = selectedSubtipos.some(s => !allowedVirtual.includes(s.name));
             if (hasInvalidSubtypes) {
                 setSelectedSubtipos([]);
             }
@@ -479,40 +481,18 @@ export default function SolicitarSalida() {
             <div className="flex h-screen overflow-hidden">
                 <SlideBar />
 
-                <main className="flex-1 flex flex-col overflow-y-auto">
-                    <header className="bg-white border-b border-zinc-200 px-8 py-4 sticky top-0 z-10">
-                        <div className="max-w-5xl mx-auto">
-                            <nav className="flex items-center gap-2 mb-4">
-                                <a href=""></a>
-                                <a
-                                    href="#"
-                                    className="text-zinc-500text-sm hover:text-primary transition-colors"
-                                >
-                                    Inicio
-                                </a>
-                                <span className="material-symbols-outlined text-zinc-400 text-sm">
-                                    chevron_right
-                                </span>
-                                <span className="text-zinc-900 text-sm font-semibold">
-                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación'}
-                                </span>
-                            </nav>
-
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">
-                                        {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
-                                    </h2>
-                                    <p className="text-zinc-500 mt-1">
-                                        {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
-                                    </p>
-                                </div>
+                <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50">
+                    <div className="p-4 md:p-8">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="mb-8">
+                                <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+                                    <ClipboardList className="text-primary" size={32} />
+                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
+                                </h1>
+                                <p className="text-zinc-500 mt-1">
+                                    {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
+                                </p>
                             </div>
-                        </div>
-                    </header>
-
-                    <div className="px-8 py-10">
-                        <div className="max-w-5xl mx-auto">
                             <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
                                     <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
@@ -861,6 +841,76 @@ export default function SolicitarSalida() {
                                         </div>
                                     </div>
 
+                                    {/* Responsable(s) de Programación */}
+                                    <div className="pt-6 border-t border-zinc-100 mt-8 mb-6">
+                                        <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-primary">person</span>
+                                            Responsable(s) de Programación
+                                        </h3>
+                                        <p className="text-sm text-zinc-500 mt-1">
+                                            Personas responsables de la programación de esta salida
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={nuevoResponsable}
+                                                onChange={(e) => setNuevoResponsable(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        if (nuevoResponsable.trim()) {
+                                                            setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
+                                                            setNuevoResponsable('');
+                                                        }
+                                                    }
+                                                }}
+                                                className="flex-1 h-12 px-4 rounded-lg border border-zinc-200 focus:ring-primary focus:border-primary transition-all"
+                                                placeholder="Escriba el nombre del responsable y presione Enter o Añadir"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (nuevoResponsable.trim()) {
+                                                        setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
+                                                        setNuevoResponsable('');
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">add</span>
+                                                Añadir
+                                            </button>
+                                        </div>
+                                        <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center ${errors.transporteResponsables ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
+                                            {transporteResponsables.length === 0 ? (
+                                                <p className={`text-sm italic ${errors.transporteResponsables ? 'text-red-500' : 'text-zinc-400'}`}>
+                                                    No hay responsables añadidos
+                                                </p>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {transporteResponsables.map((responsable, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
+                                                        >
+                                                            {responsable}
+                                                            <button
+                                                                onClick={() => setTransporteResponsables(transporteResponsables.filter((_, i) => i !== index))}
+                                                                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                                                type="button"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* Sección de Transporte */}
                                     <div className="pt-6 border-t border-zinc-100 mt-8 mb-6">
                                         <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
@@ -906,70 +956,6 @@ export default function SolicitarSalida() {
                                                 className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.institucionesConvocadas ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 placeholder="Ej: 5"
                                             />
-                                        </div>
-
-                                        {/* Responsable(s) */}
-                                        <div className="flex flex-col gap-2 md:col-span-2">
-                                            <label className="text-sm font-semibold text-zinc-700">
-                                                Responsable(s)
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={nuevoResponsable}
-                                                    onChange={(e) => setNuevoResponsable(e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                            if (nuevoResponsable.trim()) {
-                                                                setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
-                                                                setNuevoResponsable('');
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="flex-1 h-12 px-4 rounded-lg border border-zinc-200
-                                             focus:ring-primary focus:border-primary transition-all"
-                                                    placeholder="Escriba el nombre del responsable y presione Enter o Añadir"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (nuevoResponsable.trim()) {
-                                                            setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
-                                                            setNuevoResponsable('');
-                                                        }
-                                                    }}
-                                                    className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">add</span>
-                                                    Añadir
-                                                </button>
-                                            </div>
-                                            <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center ${errors.transporteResponsables ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
-                                                {transporteResponsables.length === 0 ? (
-                                                    <p className={`text-sm italic ${errors.transporteResponsables ? 'text-red-500' : 'text-zinc-400'}`}>
-                                                        No hay responsables añadidos
-                                                    </p>
-                                                ) : (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {transporteResponsables.map((responsable, index) => (
-                                                            <span
-                                                                key={index}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
-                                                            >
-                                                                {responsable}
-                                                                <button
-                                                                    onClick={() => setTransporteResponsables(transporteResponsables.filter((_, i) => i !== index))}
-                                                                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                                                    type="button"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
-                                                                </button>
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
                                         </div>
 
                                         {/* Lugar de Evento */}
@@ -1028,8 +1014,8 @@ export default function SolicitarSalida() {
                             </div>
                         </div>
                     </div>
-                </main>
-            </div>
+                </main >
+            </div >
             <MultiSelectModal
                 isOpen={activeModal === 'municipios'}
                 onClose={() => setActiveModal(null)}
@@ -1121,291 +1107,299 @@ export default function SolicitarSalida() {
             />
 
             {/* Confirmation Modal */}
-            {confirmModal && pendingPayload && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConfirmModal(false); }}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-slideUp overflow-hidden max-h-[85vh] flex flex-col">
-                        <div className="p-6 border-b border-zinc-200 bg-blue-50">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                    <ClipboardList size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-blue-900">{isEditing ? 'Confirmar Actualización' : 'Confirmar Solicitud'}</h3>
-                                    <p className="text-blue-700 text-sm">Revise la información antes de continuar</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-6 overflow-y-auto space-y-4 text-sm">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo</span>
-                                    <p className="text-zinc-900 font-medium">{formData.tipoSalida}</p>
-                                </div>
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Jornada</span>
-                                    <p className="text-zinc-900 font-medium">{formData.jornada}</p>
-                                </div>
-                                <div className="col-span-2">
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tema</span>
-                                    <p className="text-zinc-900 font-medium">{formData.tema}</p>
-                                </div>
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Inicio</span>
-                                    <p className="text-zinc-900">{formData.fechaInicio}</p>
-                                </div>
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Final</span>
-                                    <p className="text-zinc-900">{formData.fechaFinal}</p>
-                                </div>
-                            </div>
-                            {selectedSubtipos.length > 0 && (
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtipos</span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {selectedSubtipos.map(s => (
-                                            <span key={s.id} className="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded text-xs">{s.name}</span>
-                                        ))}
+            {
+                confirmModal && pendingPayload && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConfirmModal(false); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-slideUp overflow-hidden max-h-[85vh] flex flex-col">
+                            <div className="p-6 border-b border-zinc-200 bg-blue-50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                        <ClipboardList size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-blue-900">{isEditing ? 'Confirmar Actualización' : 'Confirmar Solicitud'}</h3>
+                                        <p className="text-blue-700 text-sm">Revise la información antes de continuar</p>
                                     </div>
                                 </div>
-                            )}
-                            {selectedMunicipios.length > 0 && (
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Municipios ({selectedMunicipios.length})</span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {selectedMunicipios.map(m => (
-                                            <span key={m.id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">{m.name}</span>
-                                        ))}
+                            </div>
+                            <div className="p-6 overflow-y-auto space-y-4 text-sm">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo</span>
+                                        <p className="text-zinc-900 font-medium">{formData.tipoSalida}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Jornada</span>
+                                        <p className="text-zinc-900 font-medium">{formData.jornada}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tema</span>
+                                        <p className="text-zinc-900 font-medium">{formData.tema}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Inicio</span>
+                                        <p className="text-zinc-900">{formData.fechaInicio}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Final</span>
+                                        <p className="text-zinc-900">{formData.fechaFinal}</p>
                                     </div>
                                 </div>
-                            )}
-                            {selectedLugarEvento && (
-                                <div>
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Lugar del Evento</span>
-                                    <p className="text-zinc-900">{selectedLugarEvento.name}</p>
-                                </div>
-                            )}
-                        </div>
-                        <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
-                            <button
-                                onClick={() => setConfirmModal(false)}
-                                className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
-                            >
-                                Volver a Editar
-                            </button>
-                            <button
-                                onClick={handleConfirmSubmit}
-                                disabled={isLoading}
-                                className="px-5 py-2 bg-primary text-white font-medium rounded-lg hover:opacity-90 transition-colors text-sm shadow-sm disabled:opacity-50"
-                            >
-                                {isLoading ? 'Enviando...' : (isEditing ? 'Confirmar Actualización' : 'Confirmar y Enviar')}
-                            </button>
+                                {selectedSubtipos.length > 0 && (
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtipos</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {selectedSubtipos.map(s => (
+                                                <span key={s.id} className="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded text-xs">{s.name}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {selectedMunicipios.length > 0 && (
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Municipios ({selectedMunicipios.length})</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {selectedMunicipios.map(m => (
+                                                <span key={m.id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">{m.name}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {selectedLugarEvento && (
+                                    <div>
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Lugar del Evento</span>
+                                        <p className="text-zinc-900">{selectedLugarEvento.name}</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
+                                <button
+                                    onClick={() => setConfirmModal(false)}
+                                    className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
+                                >
+                                    Volver a Editar
+                                </button>
+                                <button
+                                    onClick={handleConfirmSubmit}
+                                    disabled={isLoading}
+                                    className="px-5 py-2 bg-primary text-white font-medium rounded-lg hover:opacity-90 transition-colors text-sm shadow-sm disabled:opacity-50"
+                                >
+                                    {isLoading ? 'Enviando...' : (isEditing ? 'Confirmar Actualización' : 'Confirmar y Enviar')}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Conflict Modal */}
-            {conflictModal.length > 0 && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConflictModal([]); }}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
-                        <div className="p-6 border-b border-amber-200 bg-amber-50">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-                                    <AlertTriangle size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-amber-900">Conflictos Detectados</h3>
-                                    <p className="text-amber-700 text-sm">Se encontraron {conflictModal.length} actividad(es) que se cruzan con la solicitud</p>
+            {
+                conflictModal.length > 0 && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setConflictModal([]); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
+                            <div className="p-6 border-b border-amber-200 bg-amber-50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                        <AlertTriangle size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-amber-900">Conflictos Detectados</h3>
+                                        <p className="text-amber-700 text-sm">Se encontraron {conflictModal.length} actividad(es) que se cruzan con la solicitud</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="overflow-auto flex-1">
-                            <table className="w-full text-left">
-                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider sticky top-0">
-                                    <tr>
-                                        <th className="px-6 py-3">Código</th>
-                                        <th className="px-6 py-3">Solicitante / Área</th>
-                                        <th className="px-6 py-3">Detalles</th>
-                                        <th className="px-6 py-3">Fecha / Jornada</th>
-                                        <th className="px-6 py-3 min-w-[200px]">Participantes</th>
-                                        <th className="px-6 py-3">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-zinc-200">
-                                    {conflictModal.map((c, idx) => (
-                                        <tr key={idx} className="hover:bg-amber-50/50 transition-colors text-sm">
-                                            <td className="px-6 py-4 font-mono font-bold text-zinc-900">{c.codigo}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-zinc-900">{c.solicitante}</div>
-                                                <div className="text-zinc-500 text-xs">{c.area}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-zinc-600">
-                                                <div className="font-medium">{c.tipo_salida}</div>
-                                                <div className="text-xs text-zinc-500 truncate max-w-[200px]">{c.tema}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-zinc-600">
-                                                <div>{new Date(c.fecha_inicio).toLocaleDateString('es-CO')}</div>
-                                                <div className="text-xs text-zinc-500">{new Date(c.fecha_final).toLocaleDateString('es-CO')} • {c.jornada}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-2">
-                                                    {c.municipios?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.municipios.map((m, i) => <span key={`m-${i}`} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] border border-blue-200">{m}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {c.ips?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.ips.map((item, i) => <span key={`i-${i}`} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] border border-indigo-200">{item}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {c.eapb?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.eapb.map((item, i) => <span key={`e-${i}`} className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] border border-purple-200">{item}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {c.entidades?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.entidades.map((item, i) => <span key={`en-${i}`} className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] border border-teal-200">{item}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {c.organizaciones?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.organizaciones.map((item, i) => <span key={`o-${i}`} className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded text-[10px] border border-orange-200">{item}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {c.idsn?.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {c.idsn.map((item, i) => <span key={`id-${i}`} className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-[10px] border border-rose-200">{item}</span>)}
-                                                        </div>
-                                                    )}
-                                                    {(!c.municipios?.length && !c.ips?.length && !c.eapb?.length && !c.entidades?.length && !c.organizaciones?.length && !c.idsn?.length) && (
-                                                        <span className="text-zinc-400 italic text-xs">Ninguno</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {joinRequestSent.has(c.id) ? (
-                                                    <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
-                                                        <CheckCircle size={12} /> Enviada
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setJoinRequestModal({ open: true, salida_id: c.id, codigo: c.codigo, area: c.area })}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
-                                                    >
-                                                        <Users size={13} /> Solicitar Unión
-                                                    </button>
-                                                )}
-                                            </td>
+                            <div className="overflow-auto flex-1">
+                                <table className="w-full text-left">
+                                    <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider sticky top-0">
+                                        <tr>
+                                            <th className="px-6 py-3">Código</th>
+                                            <th className="px-6 py-3">Solicitante / Área</th>
+                                            <th className="px-6 py-3">Detalles</th>
+                                            <th className="px-6 py-3">Fecha / Jornada</th>
+                                            <th className="px-6 py-3 min-w-[200px]">Participantes</th>
+                                            <th className="px-6 py-3">Acción</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="p-4 border-t border-zinc-200 flex justify-between items-center bg-zinc-50">
-                            <p className="text-zinc-500 text-xs">Modifique las fechas, jornada o entidades para evitar conflictos.</p>
-                            <button
-                                onClick={() => setConflictModal([])}
-                                className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors text-sm shadow-sm"
-                            >
-                                Entendido
-                            </button>
+                                    </thead>
+                                    <tbody className="divide-y divide-zinc-200">
+                                        {conflictModal.map((c, idx) => (
+                                            <tr key={idx} className="hover:bg-amber-50/50 transition-colors text-sm">
+                                                <td className="px-6 py-4 font-mono font-bold text-zinc-900">{c.codigo}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-zinc-900">{c.solicitante}</div>
+                                                    <div className="text-zinc-500 text-xs">{c.area}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-zinc-600">
+                                                    <div className="font-medium">{c.tipo_salida}</div>
+                                                    <div className="text-xs text-zinc-500 truncate max-w-[200px]">{c.tema}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-zinc-600">
+                                                    <div>{new Date(c.fecha_inicio).toLocaleDateString('es-CO')}</div>
+                                                    <div className="text-xs text-zinc-500">{new Date(c.fecha_final).toLocaleDateString('es-CO')} • {c.jornada}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-2">
+                                                        {c.municipios?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.municipios.map((m, i) => <span key={`m-${i}`} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] border border-blue-200">{m}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {c.ips?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.ips.map((item, i) => <span key={`i-${i}`} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] border border-indigo-200">{item}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {c.eapb?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.eapb.map((item, i) => <span key={`e-${i}`} className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] border border-purple-200">{item}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {c.entidades?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.entidades.map((item, i) => <span key={`en-${i}`} className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] border border-teal-200">{item}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {c.organizaciones?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.organizaciones.map((item, i) => <span key={`o-${i}`} className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded text-[10px] border border-orange-200">{item}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {c.idsn?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {c.idsn.map((item, i) => <span key={`id-${i}`} className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-[10px] border border-rose-200">{item}</span>)}
+                                                            </div>
+                                                        )}
+                                                        {(!c.municipios?.length && !c.ips?.length && !c.eapb?.length && !c.entidades?.length && !c.organizaciones?.length && !c.idsn?.length) && (
+                                                            <span className="text-zinc-400 italic text-xs">Ninguno</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {joinRequestSent.has(c.id) ? (
+                                                        <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
+                                                            <CheckCircle size={12} /> Enviada
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setJoinRequestModal({ open: true, salida_id: c.id, codigo: c.codigo, area: c.area })}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                                                        >
+                                                            <Users size={13} /> Solicitar Unión
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="p-4 border-t border-zinc-200 flex justify-between items-center bg-zinc-50">
+                                <p className="text-zinc-500 text-xs">Modifique las fechas, jornada o entidades para evitar conflictos.</p>
+                                <button
+                                    onClick={() => setConflictModal([])}
+                                    className="px-6 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors text-sm shadow-sm"
+                                >
+                                    Entendido
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Join Request Modal */}
-            {joinRequestModal.open && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); }}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
-                        <div className="p-6 border-b border-blue-200 bg-blue-50">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                    <Users size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-blue-900">Solicitar Unión</h3>
-                                    <p className="text-blue-700 text-sm">Código: <span className="font-mono font-semibold">{joinRequestModal.codigo}</span> · {joinRequestModal.area}</p>
+            {
+                joinRequestModal.open && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideUp overflow-hidden">
+                            <div className="p-6 border-b border-blue-200 bg-blue-50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                        <Users size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-blue-900">Solicitar Unión</h3>
+                                        <p className="text-blue-700 text-sm">Código: <span className="font-mono font-semibold">{joinRequestModal.codigo}</span> · {joinRequestModal.area}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <p className="text-sm text-zinc-600">Se enviará una notificación al administrador de la subdirección para que acepte o rechace tu solicitud de unión a esta actividad.</p>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-semibold text-zinc-700">Mensaje (opcional)</label>
-                                <textarea
-                                    value={joinRequestMensaje}
-                                    onChange={(e) => setJoinRequestMensaje(e.target.value)}
-                                    placeholder="Explica el motivo por el que deseas unirte a esta actividad..."
-                                    rows={3}
-                                    className="w-full rounded-lg border border-zinc-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm px-4 py-3 resize-none"
-                                />
+                            <div className="p-6 space-y-4">
+                                <p className="text-sm text-zinc-600">Se enviará una notificación al administrador de la subdirección para que acepte o rechace tu solicitud de unión a esta actividad.</p>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-zinc-700">Mensaje (opcional)</label>
+                                    <textarea
+                                        value={joinRequestMensaje}
+                                        onChange={(e) => setJoinRequestMensaje(e.target.value)}
+                                        placeholder="Explica el motivo por el que deseas unirte a esta actividad..."
+                                        rows={3}
+                                        className="w-full rounded-lg border border-zinc-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm px-4 py-3 resize-none"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
-                            <button
-                                type="button"
-                                onClick={() => { setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); setJoinRequestMensaje(''); }}
-                                className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleJoinRequest}
-                                disabled={joinRequestLoading}
-                                className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
-                            >
-                                {joinRequestLoading ? 'Enviando...' : <><Users size={15} /> Enviar Solicitud</>}
-                            </button>
+                            <div className="p-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50">
+                                <button
+                                    type="button"
+                                    onClick={() => { setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' }); setJoinRequestMensaje(''); }}
+                                    className="px-4 py-2 text-zinc-700 font-medium hover:bg-zinc-200 rounded-lg transition-colors text-sm"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleJoinRequest}
+                                    disabled={joinRequestLoading}
+                                    className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
+                                >
+                                    {joinRequestLoading ? 'Enviando...' : <><Users size={15} /> Enviar Solicitud</>}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Feedback Modal (Success / Error) */}
-            {feedbackModal.type && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModal({ type: null, title: '', message: '' }); }}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
-                        <div className={`p-6 flex flex-col items-center text-center ${feedbackModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'
-                            }`}>
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            {
+                feedbackModal.type && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setFeedbackModal({ type: null, title: '', message: '' }); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
+                            <div className={`p-6 flex flex-col items-center text-center ${feedbackModal.type === 'success' ? 'bg-green-50' : 'bg-red-50'
                                 }`}>
-                                {feedbackModal.type === 'success'
-                                    ? <CheckCircle size={28} />
-                                    : <AlertCircle size={28} />}
-                            </div>
-                            <h3 className={`text-lg font-bold mb-2 ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'
-                                }`}>{feedbackModal.title}</h3>
-                            <p className={`text-sm whitespace-pre-line ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
-                                }`}>{feedbackModal.message}</p>
-                            {feedbackModal.codigo && (
-                                <div className="mt-4 bg-white border-2 border-green-300 rounded-lg px-5 py-3">
-                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold block mb-1">Código Asignado</span>
-                                    <span className="text-2xl font-black text-green-700 font-mono">{feedbackModal.codigo}</span>
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                    }`}>
+                                    {feedbackModal.type === 'success'
+                                        ? <CheckCircle size={28} />
+                                        : <AlertCircle size={28} />}
                                 </div>
-                            )}
-                        </div>
-                        <div className="p-4 flex justify-center bg-white border-t border-zinc-100">
-                            <button
-                                onClick={() => {
-                                    setFeedbackModal({ type: null, title: '', message: '' });
-                                    if (feedbackModal.type === 'success' && isEditing) {
-                                        navigate('/gestionar-salida');
-                                    }
-                                }}
-                                className={`px-6 py-2 text-white font-medium rounded-lg transition-colors text-sm shadow-sm ${feedbackModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                                    }`}
-                            >
-                                Aceptar
-                            </button>
+                                <h3 className={`text-lg font-bold mb-2 ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'
+                                    }`}>{feedbackModal.title}</h3>
+                                <p className={`text-sm whitespace-pre-line ${feedbackModal.type === 'success' ? 'text-green-700' : 'text-red-700'
+                                    }`}>{feedbackModal.message}</p>
+                                {feedbackModal.codigo && (
+                                    <div className="mt-4 bg-white border-2 border-green-300 rounded-lg px-5 py-3">
+                                        <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold block mb-1">Código Asignado</span>
+                                        <span className="text-2xl font-black text-green-700 font-mono">{feedbackModal.codigo}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 flex justify-center bg-white border-t border-zinc-100">
+                                <button
+                                    onClick={() => {
+                                        setFeedbackModal({ type: null, title: '', message: '' });
+                                        if (feedbackModal.type === 'success' && isEditing) {
+                                            navigate('/gestionar-salida');
+                                        }
+                                    }}
+                                    className={`px-6 py-2 text-white font-medium rounded-lg transition-colors text-sm shadow-sm ${feedbackModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                                        }`}
+                                >
+                                    Aceptar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
-import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare, Users, Bell } from 'lucide-react';
+import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare, Users, Bell, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import type { ApiErrorPayload } from '../../types/api';
@@ -350,12 +350,12 @@ export default function GestionarSalida() {
     });
 
     return (
-        <div className="bg-bg-light font-display min-h-screen flex">
+        <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
             <main className="flex-1 min-w-0 flex flex-col overflow-y-auto bg-zinc-50/50 p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto w-full min-w-0">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gestionar Programaciones</h1>
+                        <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><Layers className="text-primary" size={32} />Gestionar Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
                             <button
@@ -370,11 +370,8 @@ export default function GestionarSalida() {
                             </button>
                             {isAdmin && (
                                 <button
-                                    onClick={() => setJoinRequestsTab(!joinRequestsTab)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 relative ${joinRequestsTab
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                        : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'
-                                        }`}
+                                    onClick={() => { setJoinRequestsTab(true); void fetchJoinRequests(); }}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 relative bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50"
                                 >
                                     <Bell size={16} />
                                     Solicitudes de Unión
@@ -638,110 +635,119 @@ export default function GestionarSalida() {
                     </div>
                 </div>
 
-                {/* Join Requests Panel */}
+                {/* Join Requests Modal */}
                 {isAdmin && joinRequestsTab && (
-                    <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mt-6">
-                        <div className="p-4 sm:p-5 border-b border-zinc-200 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div className="flex items-start sm:items-center gap-3 min-w-0">
-                                <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                    <Users size={18} />
+                    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setJoinRequestsTab(false); }}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
+                            <div className="p-4 sm:p-5 border-b border-zinc-200 bg-blue-50/60 flex items-center justify-between gap-3 shrink-0">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                        <Users size={18} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-zinc-900">Solicitudes de Unión</h3>
+                                        <p className="text-zinc-500 text-sm">Solicitudes de otras áreas para unirse a programaciones de tu subdirección</p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <h3 className="font-bold text-zinc-900">Solicitudes de Unión</h3>
-                                    <p className="text-zinc-500 text-sm wrap-break-word">Solicitudes de otras áreas para unirse a programaciones de tu subdirección</p>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button onClick={() => void fetchJoinRequests()} className="text-zinc-500 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Actualizar">
+                                        <RefreshCcw size={16} className={joinRequestsLoading ? 'animate-spin' : ''} />
+                                    </button>
+                                    <button onClick={() => setJoinRequestsTab(false)} className="text-zinc-400 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Cerrar">
+                                        <X size={18} />
+                                    </button>
                                 </div>
                             </div>
-                            <button onClick={fetchJoinRequests} className="self-start sm:self-auto text-zinc-500 hover:text-zinc-700 p-2 rounded-lg hover:bg-zinc-100 transition-colors" title="Actualizar">
-                                <RefreshCcw size={16} className={joinRequestsLoading ? 'animate-spin' : ''} />
-                            </button>
-                        </div>
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full min-w-[900px] text-left">
-                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-6 py-3">Solicitante / Área</th>
-                                        <th className="px-6 py-3">Programación</th>
-                                        <th className="px-6 py-3">Fecha / Jornada</th>
-                                        <th className="px-6 py-3 max-w-xs">Mensaje</th>
-                                        <th className="px-6 py-3">Estado</th>
-                                        <th className="px-6 py-3">Fecha Solicitud</th>
-                                        <th className="px-6 py-3 text-right">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-zinc-200">
-                                    {joinRequestsLoading ? (
-                                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-500">Cargando solicitudes...</td></tr>
-                                    ) : joinRequests.length === 0 ? (
-                                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400 italic">No hay solicitudes de unión</td></tr>
-                                    ) : joinRequests.map((req) => (
-                                        <tr key={req.id} className={`hover:bg-zinc-50 transition-colors text-sm ${req.estado === 'pendiente' ? 'bg-blue-50/30' : ''}`}>
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-zinc-900">{req.solicitante.names} {req.solicitante.last_name}</div>
-                                                <div className="text-zinc-500 text-xs">{req.area_solicitante.name}</div>
-                                                <div className="text-zinc-400 text-xs">{req.solicitante.email}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-mono font-bold text-zinc-900 text-xs">{req.salida.codigo}</div>
-                                                <div className="text-zinc-600 text-xs font-medium truncate max-w-[180px]">{req.salida.tema}</div>
-                                                <div className="text-zinc-400 text-xs">{req.salida.tipo_salida}</div>
-                                                <div className="text-zinc-400 text-xs">{req.salida.areas.name}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-zinc-600 text-xs">
-                                                <div>{new Date(req.salida.fecha_inicio).toLocaleDateString('es-CO')}</div>
-                                                <div className="text-zinc-400">{new Date(req.salida.fecha_final).toLocaleDateString('es-CO')}</div>
-                                                <div className="text-zinc-500">{req.salida.jornada}</div>
-                                            </td>
-                                            <td className="px-6 py-4 max-w-xs">
-                                                <p className="text-zinc-600 text-xs italic line-clamp-3">{req.mensaje || <span className="text-zinc-400">Sin mensaje</span>}</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {req.estado === 'pendiente' && (
-                                                    <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-yellow-200">
-                                                        <AlertCircle size={11} /> Pendiente
-                                                    </span>
-                                                )}
-                                                {req.estado === 'aceptada' && (
-                                                    <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-green-200">
-                                                        <CheckCircle size={11} /> Aceptada
-                                                    </span>
-                                                )}
-                                                {req.estado === 'rechazada' && (
-                                                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-red-200">
-                                                        <XCircle size={11} /> Rechazada
-                                                    </span>
-                                                )}
-                                                {req.respuesta && (
-                                                    <p className="text-zinc-500 text-xs mt-1 italic line-clamp-2">{req.respuesta}</p>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-zinc-500 text-xs">
-                                                {new Date(req.created_at).toLocaleDateString('es-CO')}
-                                                <div className="text-zinc-400">{new Date(req.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {req.estado === 'pendiente' ? (
-                                                    <div className="flex justify-end gap-2">
-                                                        <button
-                                                            onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'accept', solicitudId: req.id }); }}
-                                                            className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition-colors border border-green-200 flex items-center gap-1"
-                                                        >
-                                                            <CheckCircle size={12} /> Aceptar
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'reject', solicitudId: req.id }); }}
-                                                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200 flex items-center gap-1"
-                                                        >
-                                                            <XCircle size={12} /> Rechazar
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-zinc-400 text-xs italic">Procesada</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className="flex-1 overflow-auto">
+                                <div className="w-full overflow-x-auto">
+                                    <table className="w-full min-w-[900px] text-left">
+                                        <thead className="bg-zinc-50 text-zinc-500 font-semibold text-xs uppercase tracking-wider">
+                                            <tr>
+                                                <th className="px-6 py-3">Solicitante / Área</th>
+                                                <th className="px-6 py-3">Programación</th>
+                                                <th className="px-6 py-3">Fecha / Jornada</th>
+                                                <th className="px-6 py-3 max-w-xs">Mensaje</th>
+                                                <th className="px-6 py-3">Estado</th>
+                                                <th className="px-6 py-3">Fecha Solicitud</th>
+                                                <th className="px-6 py-3 text-right">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-zinc-200">
+                                            {joinRequestsLoading ? (
+                                                <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-500">Cargando solicitudes...</td></tr>
+                                            ) : joinRequests.length === 0 ? (
+                                                <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400 italic">No hay solicitudes de unión</td></tr>
+                                            ) : joinRequests.map((req) => (
+                                                <tr key={req.id} className={`hover:bg-zinc-50 transition-colors text-sm ${req.estado === 'pendiente' ? 'bg-blue-50/30' : ''}`}>
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-medium text-zinc-900">{req.solicitante.names} {req.solicitante.last_name}</div>
+                                                        <div className="text-zinc-500 text-xs">{req.area_solicitante.name}</div>
+                                                        <div className="text-zinc-400 text-xs">{req.solicitante.email}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-mono font-bold text-zinc-900 text-xs">{req.salida.codigo}</div>
+                                                        <div className="text-zinc-600 text-xs font-medium truncate max-w-[180px]">{req.salida.tema}</div>
+                                                        <div className="text-zinc-400 text-xs">{req.salida.tipo_salida}</div>
+                                                        <div className="text-zinc-400 text-xs">{req.salida.areas.name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-zinc-600 text-xs">
+                                                        <div>{new Date(req.salida.fecha_inicio).toLocaleDateString('es-CO')}</div>
+                                                        <div className="text-zinc-400">{new Date(req.salida.fecha_final).toLocaleDateString('es-CO')}</div>
+                                                        <div className="text-zinc-500">{req.salida.jornada}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 max-w-xs">
+                                                        <p className="text-zinc-600 text-xs italic line-clamp-3">{req.mensaje || <span className="text-zinc-400">Sin mensaje</span>}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {req.estado === 'pendiente' && (
+                                                            <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-yellow-200">
+                                                                <AlertCircle size={11} /> Pendiente
+                                                            </span>
+                                                        )}
+                                                        {req.estado === 'aceptada' && (
+                                                            <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-green-200">
+                                                                <CheckCircle size={11} /> Aceptada
+                                                            </span>
+                                                        )}
+                                                        {req.estado === 'rechazada' && (
+                                                            <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-medium border border-red-200">
+                                                                <XCircle size={11} /> Rechazada
+                                                            </span>
+                                                        )}
+                                                        {req.respuesta && (
+                                                            <p className="text-zinc-500 text-xs mt-1 italic line-clamp-2">{req.respuesta}</p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-zinc-500 text-xs">
+                                                        {new Date(req.created_at).toLocaleDateString('es-CO')}
+                                                        <div className="text-zinc-400">{new Date(req.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {req.estado === 'pendiente' ? (
+                                                            <div className="flex justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'accept', solicitudId: req.id }); }}
+                                                                    className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition-colors border border-green-200 flex items-center gap-1"
+                                                                >
+                                                                    <CheckCircle size={12} /> Aceptar
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { setJoinResolveComment(''); setJoinResolveModal({ type: 'reject', solicitudId: req.id }); }}
+                                                                    className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200 flex items-center gap-1"
+                                                                >
+                                                                    <XCircle size={12} /> Rechazar
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-zinc-400 text-xs italic">Procesada</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

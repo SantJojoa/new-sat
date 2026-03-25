@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BarChart2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import {
@@ -118,7 +119,7 @@ export default function ReportesSalidas() {
                             {/* Header Section */}
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex flex-col gap-2">
-                                    <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Reportes y Estadísticas</h1>
+                                    <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><BarChart2 className="text-primary" size={32} />Reportes y Estadísticas</h1>
                                     <p className="text-zinc-500">Analiza el rendimiento y distribución de las programaciones en el sistema.</p>
                                 </div>
                                 <div className="flex items-center gap-3 flex-wrap">

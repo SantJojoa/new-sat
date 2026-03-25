@@ -89,9 +89,7 @@ export default function Users() {
             const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
             const selectedRoleName = selectedUserType?.name;
 
-            if (selectedRoleName === 'admin_subdireccion') {
-                delete payload.area_id;
-            } else {
+            if (selectedRoleName !== 'admin_subdireccion') {
                 delete payload.subdireccion_id;
                 if (selectedRoleName !== 'lider') {
                     delete payload.area_id;
@@ -183,7 +181,6 @@ export default function Users() {
 
     const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
     const selectedRoleName = selectedUserType?.name;
-    const showsArea = selectedRoleName === 'lider';
     const showsSubdireccion = selectedRoleName === 'admin_subdireccion';
 
     return (
@@ -193,7 +190,7 @@ export default function Users() {
                 <div className="max-w-7xl mx-auto w-full">
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Usuarios</h1>
+                            <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><UserCog className="text-primary" size={32} />Usuarios</h1>
                             <p className="text-zinc-500 mt-2">Gestiona los usuarios, roles y permisos</p>
                         </div>
                         <button
@@ -331,7 +328,6 @@ export default function Users() {
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
-                                    {showsArea && (
                                     <div>
                                         <label className="block text-sm font-semibold text-zinc-700 mb-1">Apellidos</label>
                                         <input
@@ -342,7 +338,6 @@ export default function Users() {
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
-                                    )}
                                     {showsSubdireccion && (
                                         <div>
                                             <label className="block text-sm font-semibold text-zinc-700 mb-1">SubdirecciÃ³n</label>
