@@ -46,7 +46,7 @@ export class UsersService {
             data: {
                 ...createUserDto,
                 password: hashedPassword,
-                area_id: userType.name === 'admin_subdireccion' ? null : normalizedAreaId,
+                area_id: normalizedAreaId,
                 subdireccion_id: userType.name === 'admin_subdireccion' ? normalizedSubdireccionId : null,
             },
         });
@@ -180,7 +180,7 @@ export class UsersService {
             },
             data: {
                 ...updateUserDto,
-                area_id: userType.name === 'admin_subdireccion' ? null : normalizedUpdateAreaId,
+                area_id: normalizedUpdateAreaId,
                 subdireccion_id: userType.name === 'admin_subdireccion'
                     ? (normalizedUpdateSubId ?? existing.subdireccion_id)
                     : null,
