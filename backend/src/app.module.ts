@@ -8,6 +8,8 @@ import { SubdireccionesModule } from './subdirecciones/subdirecciones.module';
 import { AreasModule } from './areas/areas.module';
 import { SolicitudesUnionModule } from './solicitudes-union/solicitudes-union.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ArticulacionesModule } from './articulaciones/articulaciones.module';
+import { IvcModule } from './ivc/ivc.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     AreasModule,
     SolicitudesUnionModule,
     NotificationsModule,
+    ArticulacionesModule,
+    IvcModule,
   ],
   controllers: [],
   providers: [PrismaService],

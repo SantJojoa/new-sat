@@ -143,6 +143,56 @@ async function main() {
                 order: 3,
             },
         }),
+        prisma.modules.upsert({
+            where: { name: 'solicitar_articulacion' },
+            update: {
+                icon: 'hub',
+                order: 7,
+                description: 'Articulación',
+            },
+            create: {
+                name: 'solicitar_articulacion',
+                description: 'Articulación',
+                icon: 'hub',
+                path: '/solicitar-articulacion',
+                order: 7,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'solicitar_ivc' },
+            update: {
+                icon: 'verified_user',
+                order: 8,
+                description: 'IVC',
+            },
+            create: {
+                name: 'solicitar_ivc',
+                description: 'IVC',
+                icon: 'verified_user',
+                path: '/solicitar-ivc',
+                order: 8,
+            },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'gestionar_articulacion' },
+            update: { icon: 'table_view', order: 9, description: 'Gestionar Articulaciones' },
+            create: { name: 'gestionar_articulacion', description: 'Gestionar Articulaciones', icon: 'table_view', path: '/gestionar-articulacion', order: 9 },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'calendario_articulaciones' },
+            update: { icon: 'event', order: 10, description: 'Calendario Articulaciones' },
+            create: { name: 'calendario_articulaciones', description: 'Calendario Articulaciones', icon: 'event', path: '/calendario-articulaciones', order: 10 },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'gestionar_ivc' },
+            update: { icon: 'table_view', order: 11, description: 'Gestionar IVC' },
+            create: { name: 'gestionar_ivc', description: 'Gestionar IVC', icon: 'table_view', path: '/gestionar-ivc', order: 11 },
+        }),
+        prisma.modules.upsert({
+            where: { name: 'calendario_ivc' },
+            update: { icon: 'event', order: 12, description: 'Calendario IVC' },
+            create: { name: 'calendario_ivc', description: 'Calendario IVC', icon: 'event', path: '/calendario-ivc', order: 12 },
+        }),
     ]);
 
     // Eliminar el modulo 'salidas' antiguo si existe y 'modificar_salida'
@@ -276,7 +326,7 @@ async function main() {
                     can_approve: false,
                 },
             });
-        } else if (module.name === 'solicitar_salida' || module.name === 'gestionar_salida') {
+        } else if (['solicitar_salida', 'gestionar_salida', 'solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'].includes(module.name)) {
             await prisma.permissions.upsert({
                 where: {
                     user_type_id_module_id: {
@@ -289,9 +339,9 @@ async function main() {
                     user_type_id: userTypes[2].id,
                     module_id: module.id,
                     can_view: true,
-                    can_create: true, // SI
-                    can_edit: true, // SI
-                    can_delete: module.name === 'solicitar_salida', // Puede eliminar sus solicitudes
+                    can_create: true,
+                    can_edit: true,
+                    can_delete: module.name !== 'gestionar_salida',
                     can_approve: false,
                 },
             });
