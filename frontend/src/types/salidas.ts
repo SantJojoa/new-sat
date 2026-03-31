@@ -11,10 +11,29 @@ export interface CatalogosResponse {
     ips: CatalogoItem[];
     entidades: CatalogoItem[];
     eapb: CatalogoItem[];
+    eapbActores: CatalogoItem[];
     organizaciones: CatalogoItem[];
     idsn: CatalogoItem[];
     areas: CatalogoItem[];
     lideres?: CatalogoItem[];
+}
+
+export interface EapbActorItem {
+    eapb_id: string;
+    actor_id?: string;
+}
+
+export interface EapbSelection {
+    eapb: CatalogoItem;
+    actor: CatalogoItem | null;
+}
+
+export interface SalidaEapbRecord {
+    id: string;
+    eapb_id: string;
+    actor_id: string | null;
+    eapb: CatalogoItem;
+    actor: CatalogoItem | null;
 }
 
 export interface RelatedName {
@@ -56,7 +75,7 @@ export interface SalidaRecord {
     municipios: CatalogoItem[];
     ips: CatalogoItem[];
     entidades: CatalogoItem[];
-    eapb: CatalogoItem[];
+    salida_eapb: SalidaEapbRecord[];
     organizaciones: CatalogoItem[];
     idsn: CatalogoItem[];
     aprobador?: {
@@ -79,7 +98,7 @@ export interface CreateSalidaPayload {
     municipios_ids?: string[];
     ips_ids?: string[];
     entidades_ids?: string[];
-    eapb_ids?: string[];
+    eapb_actores?: EapbActorItem[];
     organizaciones_ids?: string[];
     idsn_ids?: string[];
     transporte_medio?: string;

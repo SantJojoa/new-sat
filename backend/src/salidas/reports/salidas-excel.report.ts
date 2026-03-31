@@ -244,7 +244,7 @@ export class SalidasExcelReport {
                 this.toCsv(item.municipios),
                 this.toCsv(item.ips),
                 this.toCsv(item.entidades),
-                this.toCsv(item.eapb),
+                (item as any).salida_eapb?.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ') || '',
                 this.toCsv(item.organizaciones),
                 this.toCsv(item.idsn),
                 item.lugar_evento?.name || this.toCsv(item.municipios),

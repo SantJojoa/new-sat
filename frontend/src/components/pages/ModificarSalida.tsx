@@ -180,8 +180,8 @@ export default function ModificarSalida() {
                                                     {salida.ips?.length > 0 && (
                                                         <div><span className="font-semibold text-primary">IPS:</span> {formatList(salida.ips)}</div>
                                                     )}
-                                                    {salida.eapb?.length > 0 && (
-                                                        <div><span className="font-semibold text-primary">EAPB:</span> {formatList(salida.eapb)}</div>
+                                                    {salida.salida_eapb?.length > 0 && (
+                                                        <div><span className="font-semibold text-primary">EAPB:</span> {salida.salida_eapb.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ')}</div>
                                                     )}
                                                     {salida.organizaciones?.length > 0 && (
                                                         <div><span className="font-semibold text-primary">Organizaciones:</span> {formatList(salida.organizaciones)}</div>

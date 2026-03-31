@@ -1,4 +1,15 @@
-import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class EapbActorItemDto {
+    @IsString()
+    @IsNotEmpty()
+    eapb_id: string;
+
+    @IsString()
+    @IsOptional()
+    actor_id?: string;
+}
 
 export class CreateSalidaDto {
     @IsString()
@@ -50,9 +61,10 @@ export class CreateSalidaDto {
     entidades_ids?: string[];
 
     @IsArray()
-    @IsString({ each: true })
+    @ValidateNested({ each: true })
+    @Type(() => EapbActorItemDto)
     @IsOptional()
-    eapb_ids?: string[];
+    eapb_actores?: EapbActorItemDto[];
 
     @IsArray()
     @IsString({ each: true })

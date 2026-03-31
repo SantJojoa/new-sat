@@ -158,7 +158,29 @@ model eapb {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  salidas salidas[] @relation("SalidasEapb")
+  salida_eapb salida_eapb[]
+}
+
+model eapb_actores {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salida_eapb salida_eapb[]
+}
+
+model salida_eapb {
+  id        String  @id @default(cuid())
+  salida_id String
+  eapb_id   String
+  actor_id  String?
+
+  salida salidas       @relation(fields: [salida_id], references: [id], onDelete: Cascade)
+  eapb   eapb          @relation(fields: [eapb_id], references: [id])
+  actor  eapb_actores? @relation(fields: [actor_id], references: [id])
+
+  @@unique([salida_id, eapb_id])
 }
 
 model organizaciones {
@@ -217,7 +239,7 @@ model salidas {
   municipios     municipios[]     @relation("SalidasMunicipios")
   ips            ips[]            @relation("SalidasIps")
   entidades      entidades[]      @relation("SalidasEntidades")
-  eapb           eapb[]           @relation("SalidasEapb")
+  salida_eapb    salida_eapb[]
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
   idsn           idsn[]           @relation("SalidasIdsn")
 

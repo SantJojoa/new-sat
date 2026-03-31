@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
-import type { CreateSalidaPayload } from "../../types/salidas"
+import type { CreateSalidaPayload, EapbSelection } from "../../types/salidas"
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 
 export default function SolicitarSalida() {
@@ -39,7 +39,7 @@ export default function SolicitarSalida() {
     const [selectedMunicipios, setSelectedMunicipios] = useState<CatalogoItem[]>([]);
     const [selectedIPS, setSelectedIPS] = useState<CatalogoItem[]>([]);
     const [selectedEntidades, setSelectedEntidades] = useState<CatalogoItem[]>([]);
-    const [selectedEAPB, setSelectedEAPB] = useState<CatalogoItem[]>([]);
+    const [selectedEAPB, setSelectedEAPB] = useState<EapbSelection[]>([]);
     const [selectedOrganizaciones, setSelectedOrganizaciones] = useState<CatalogoItem[]>([]);
     const [selectedIDSN, setSelectedIDSN] = useState<CatalogoItem[]>([]);
 
@@ -135,6 +135,8 @@ export default function SolicitarSalida() {
     const [ipsData, setIpsData] = useState<CatalogoItem[]>([]);
     const [entidadesData, setEntidadesData] = useState<CatalogoItem[]>([]);
     const [eapbData, setEapbData] = useState<CatalogoItem[]>([]);
+    const [eapbActoresData, setEapbActoresData] = useState<CatalogoItem[]>([]);
+    const [activeEapbActorModal, setActiveEapbActorModal] = useState(false);
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
     const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
     const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
@@ -148,6 +150,7 @@ export default function SolicitarSalida() {
                 setIpsData(data.ips);
                 setEntidadesData(data.entidades);
                 setEapbData(data.eapb);
+                setEapbActoresData(data.eapbActores || []);
                 setOrganizacionesData(data.organizaciones);
                 setIdsnData(data.idsn);
                 setAreasData(data.areas);
@@ -194,7 +197,10 @@ export default function SolicitarSalida() {
                 setSelectedMunicipios(salida.municipios.map((m) => ({ id: m.id, name: m.name })));
                 setSelectedIPS(salida.ips.map((i) => ({ id: i.id, name: i.name })));
                 setSelectedEntidades(salida.entidades.map((e) => ({ id: e.id, name: e.name })));
-                setSelectedEAPB(salida.eapb.map((e) => ({ id: e.id, name: e.name })));
+                setSelectedEAPB(salida.salida_eapb.map(se => ({
+                    eapb: { id: se.eapb.id, name: se.eapb.name },
+                    actor: se.actor ? { id: se.actor.id, name: se.actor.name } : null
+                })));
                 setSelectedOrganizaciones(salida.organizaciones.map((o) => ({ id: o.id, name: o.name })));
                 setSelectedIDSN(salida.idsn.map((i) => ({ id: i.id, name: i.name })));
 
@@ -350,7 +356,7 @@ export default function SolicitarSalida() {
             municipios_ids: selectedMunicipios.map(i => i.id),
             ips_ids: selectedIPS.map(i => i.id),
             entidades_ids: selectedEntidades.map(i => i.id),
-            eapb_ids: selectedEAPB.map(i => i.id),
+            eapb_actores: selectedEAPB.map(i => ({ eapb_id: i.eapb.id, actor_id: i.actor?.id })),
             organizaciones_ids: selectedOrganizaciones.map(i => i.id),
             idsn_ids: selectedIDSN.map(i => i.id),
             // Transport fields
@@ -444,6 +450,24 @@ export default function SolicitarSalida() {
 
     const removeChip = (item: CatalogoItem, setterFunction: React.Dispatch<React.SetStateAction<CatalogoItem[]>>, currentArray: CatalogoItem[]) => {
         setterFunction(currentArray.filter(i => i.id !== item.id));
+    };
+
+    const removeEapbChip = (eapbId: string) => {
+        setSelectedEAPB(prev => prev.filter(s => s.eapb.id !== eapbId));
+    };
+
+    const handleEapbModalSave = (selectedItems: CatalogoItem[]) => {
+        setSelectedEAPB(prev => {
+            const prevMap = new Map(prev.map(s => [s.eapb.id, s]));
+            return selectedItems.map(item => ({
+                eapb: item,
+                actor: prevMap.get(item.id)?.actor ?? null,
+            }));
+        });
+        setActiveModal(null);
+        if (selectedItems.length > 0) {
+            setActiveEapbActorModal(true);
+        }
     };
 
     const ChipList = ({ items, onRemove, emptyText }: { items: CatalogoItem[], onRemove: (item: CatalogoItem) => void, emptyText: string }) => {
@@ -788,11 +812,23 @@ export default function SolicitarSalida() {
                                                 </button>
                                             </div>
                                             <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
-                                                <ChipList
-                                                    items={selectedEAPB}
-                                                    onRemove={(item) => removeChip(item, setSelectedEAPB, selectedEAPB)}
-                                                    emptyText="No hay EAPB seleccionadas"
-                                                />
+                                                {selectedEAPB.length === 0 ? (
+                                                    <p className="text-sm text-zinc-400 italic">No hay EAPB seleccionadas</p>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {selectedEAPB.map(sel => (
+                                                            <span key={sel.eapb.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                                                                <span>{sel.eapb.name}</span>
+                                                                {sel.actor && (
+                                                                    <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full font-semibold">{sel.actor.name}</span>
+                                                                )}
+                                                                <button onClick={() => removeEapbChip(sel.eapb.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
+                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-3">
@@ -1054,8 +1090,8 @@ export default function SolicitarSalida() {
                 onClose={() => setActiveModal(null)}
                 title="Seleccionar EAPB"
                 items={eapbData}
-                selectedItems={selectedEAPB}
-                onSave={setSelectedEAPB}
+                selectedItems={selectedEAPB.map(s => s.eapb)}
+                onSave={handleEapbModalSave}
                 searchPlaceholder="Buscar EAPB..."
                 icon="health_and_safety"
             />
@@ -1105,6 +1141,81 @@ export default function SolicitarSalida() {
                 icon="place"
                 singleSelect={true}
             />
+
+            {/* Actor de EAPB Modal */}
+            {activeEapbActorModal && selectedEAPB.length > 0 && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+                    onClick={(e) => { if (e.target === e.currentTarget) setActiveEapbActorModal(false); }}
+                >
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-zinc-200 animate-slideUp">
+                        <div className="p-6 border-b border-zinc-200">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-primary/10 size-10 rounded-lg flex items-center justify-center text-primary">
+                                        <span className="material-symbols-outlined">person_check</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-zinc-900">Actor a Visitar por EAPB</h3>
+                                        <p className="text-sm text-zinc-500 mt-0.5">Seleccione el actor a visitar en cada EAPB</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setActiveEapbActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {selectedEAPB.map(sel => (
+                                <div key={sel.eapb.id} className="border border-zinc-200 rounded-lg p-4">
+                                    <p className="text-sm font-bold text-zinc-800 mb-3">{sel.eapb.name}</p>
+                                    <div className="flex flex-col gap-2">
+                                        {eapbActoresData.map(actor => (
+                                            <label
+                                                key={actor.id}
+                                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${sel.actor?.id === actor.id
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name={`actor-${sel.eapb.id}`}
+                                                    checked={sel.actor?.id === actor.id}
+                                                    onChange={() => setSelectedEAPB(prev =>
+                                                        prev.map(s => s.eapb.id === sel.eapb.id ? { ...s, actor } : s)
+                                                    )}
+                                                    className="text-primary focus:ring-primary"
+                                                />
+                                                <span className={`text-sm ${sel.actor?.id === actor.id ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
+                                                    {actor.name}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-6 border-t border-zinc-200 flex gap-3">
+                            <button
+                                onClick={() => setActiveEapbActorModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-100 transition-colors"
+                                type="button"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => setActiveEapbActorModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
+                                type="button"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">check</span>
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Confirmation Modal */}
             {
