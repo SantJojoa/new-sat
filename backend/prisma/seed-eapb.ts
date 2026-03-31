@@ -7,30 +7,46 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const eapbData = [
-    'Comfamiliar de Nariño',
-    'Nueva EPS',
     'Asmet Salud',
-    'Emssanar',
-    'Sanitas',
-    'AIC',
+    'Comfamiliar de Nariño',
+    'Emmsanar',
+    'Nueva EPS',
+    'Sanias',
+];
+
+const actoresData = [
+    'Gerente o Delegado',
+    'Gestor Municipal',
+    'Coordinador de Vigilancia SP',
 ];
 
 async function main() {
-    console.log('Iniciando migración de datos EAPB...');
+    console.log('Iniciando seed de datos EAPB...');
 
     try {
         for (const name of eapbData) {
             const exists = await prisma.eapb.findFirst({ where: { name } });
             if (!exists) {
                 await prisma.eapb.create({ data: { name } });
-                console.log(`  ✅ Creado: ${name}`);
+                console.log(`  ✅ EAPB creada: ${name}`);
             } else {
-                console.log(`  ⏭️  Ya existe: ${name}`);
+                console.log(`  ⏭️  EAPB ya existe: ${name}`);
             }
         }
-        console.log('\n🎉 Migración EAPB completada con éxito.');
+
+        for (const name of actoresData) {
+            const exists = await prisma.eapb_actores.findFirst({ where: { name } });
+            if (!exists) {
+                await prisma.eapb_actores.create({ data: { name } });
+                console.log(`  ✅ Actor creado: ${name}`);
+            } else {
+                console.log(`  ⏭️  Actor ya existe: ${name}`);
+            }
+        }
+
+        console.log('\n🎉 Seed EAPB completado con éxito.');
     } catch (error) {
-        console.error('Error durante la migración:', error);
+        console.error('Error durante el seed:', error);
     } finally {
         await prisma.$disconnect();
     }

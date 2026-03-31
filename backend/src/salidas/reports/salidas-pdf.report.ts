@@ -660,7 +660,7 @@ export class SalidasPdfReport {
                 push('Municipios convocados', this.normalizeText(item.municipios_convocados));
                 push('IPS', this.toCsv(item.ips));
                 push('Entidades', this.toCsv(item.entidades));
-                push('EAPB', this.toCsv(item.eapb));
+                push('EAPB', (item as any).salida_eapb?.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ') || 'N/A');
                 push('Organizaciones', this.toCsv(item.organizaciones));
                 push('IDSN', this.toCsv(item.idsn));
                 push('Instituciones convocadas', item.instituciones_convocadas ? String(item.instituciones_convocadas) : 'N/A');

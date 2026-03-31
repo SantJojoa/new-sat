@@ -17,6 +17,8 @@ model areas {
   salidas                   salidas[]
   solicitudes_union         solicitudes_union[] @relation("SolicitudesUnionArea")
   salidas_como_participante salidas[]           @relation("SalidasAreasParticipantes")
+  articulaciones            articulaciones[]    @relation("AreasArticulaciones")
+  ivc                       ivc[]               @relation("AreasIvc")
 }
 
 model subdirecciones {
@@ -63,6 +65,8 @@ model users {
   salidas_aprobadas             salidas[]           @relation("AprobadorSalidas")
   solicitudes_union_solicitadas solicitudes_union[] @relation("SolicitudesUnionSolicitante")
   notifications                 notifications[]
+  articulaciones_solicitadas    articulaciones[]    @relation("SolicitanteArticulaciones")
+  ivc_solicitadas               ivc[]               @relation("SolicitanteIvc")
 }
 
 model notifications {
@@ -120,9 +124,11 @@ model municipios {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  ips            ips[]
-  salidas        salidas[] @relation("SalidasMunicipios")
-  salidas_evento salidas[] @relation("SalidaLugarEvento")
+  ips                   ips[]
+  salidas               salidas[]        @relation("SalidasMunicipios")
+  salidas_evento        salidas[]        @relation("SalidaLugarEvento")
+  articulaciones_evento articulaciones[] @relation("ArticulacionLugarEvento")
+  ivc_evento            ivc[]            @relation("IvcLugarEvento")
 }
 
 model ips {
@@ -152,7 +158,29 @@ model eapb {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  salidas salidas[] @relation("SalidasEapb")
+  salida_eapb salida_eapb[]
+}
+
+model eapb_actores {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salida_eapb salida_eapb[]
+}
+
+model salida_eapb {
+  id        String  @id @default(cuid())
+  salida_id String
+  eapb_id   String
+  actor_id  String?
+
+  salida salidas       @relation(fields: [salida_id], references: [id], onDelete: Cascade)
+  eapb   eapb          @relation(fields: [eapb_id], references: [id])
+  actor  eapb_actores? @relation(fields: [actor_id], references: [id])
+
+  @@unique([salida_id, eapb_id])
 }
 
 model organizaciones {
@@ -211,7 +239,7 @@ model salidas {
   municipios     municipios[]     @relation("SalidasMunicipios")
   ips            ips[]            @relation("SalidasIps")
   entidades      entidades[]      @relation("SalidasEntidades")
-  eapb           eapb[]           @relation("SalidasEapb")
+  salida_eapb    salida_eapb[]
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
   idsn           idsn[]           @relation("SalidasIdsn")
 
@@ -223,6 +251,72 @@ model salidas {
   areas               areas               @relation(fields: [area_id], references: [id])
   solicitudes_union   solicitudes_union[]
   areas_participantes areas[]             @relation("SalidasAreasParticipantes")
+}
+
+model articulaciones {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  tipo_programacion String // 'Articulación Intersectorial'
+  tema              String
+  fecha_inicio      DateTime
+  fecha_final       DateTime
+  jornada           String // 'Manana', 'Tarde', 'Completa'
+
+  instituciones_convocadas String? // nombres separados por coma
+
+  transporte_medio             String?
+  transporte_num_instituciones Int?
+  lugar_evento_id              String?
+  lugar_evento                 municipios? @relation("ArticulacionLugarEvento", fields: [lugar_evento_id], references: [id])
+
+  responsable_articulacion String?
+
+  estado          String   @default("pendiente")
+  observaciones   String?
+  fecha_solicitud DateTime @default(now())
+
+  solicitante_id String
+  area_id        String
+
+  solicitante users @relation("SolicitanteArticulaciones", fields: [solicitante_id], references: [id])
+  areas       areas @relation("AreasArticulaciones", fields: [area_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model ivc {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  tipo_programacion String // 'IVC'
+  tema              String
+  fecha_inicio      DateTime
+  fecha_final       DateTime
+  jornada           String // 'Manana', 'Tarde', 'Completa'
+
+  instituciones_convocadas String?
+
+  transporte_medio             String?
+  transporte_num_instituciones Int?
+  lugar_evento_id              String?
+  lugar_evento                 municipios? @relation("IvcLugarEvento", fields: [lugar_evento_id], references: [id])
+
+  responsable_articulacion String?
+
+  estado          String   @default("pendiente")
+  observaciones   String?
+  fecha_solicitud DateTime @default(now())
+
+  solicitante_id String
+  area_id        String
+
+  solicitante users @relation("SolicitanteIvc", fields: [solicitante_id], references: [id])
+  areas       areas @relation("AreasIvc", fields: [area_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model solicitudes_union {

@@ -123,7 +123,7 @@ export default function Login() {
                         <div className="absolute bottom-10 left-10 right-10 text-white">
                             <h1 className="text-3xl font-bold mb-2">
                                 SIVAT -
-                                <span className="text-white/95 font-light"> Sistema de Inspeccion, Vigilancia, Tecnologia y Asistencia</span>
+                                <span className="text-white/95 font-light"> Sistema de Inspeccion, Vigilancia, Tecnología y Asistencia Tecnica</span>
                             </h1>
                             <p className="text-white/90 font-light leading-relaxed">
                                 Sistema que integra inspeccion, vigilancia, capacitacion y acompanamiento para fortalecer la gestion y el trabajo intersectorial del Instituto Departamental de Salud de Narino.

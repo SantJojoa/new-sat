@@ -1094,11 +1094,14 @@ export default function GestionarSalida() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">EAPB ({detailsModal.salida.eapb.length})</span>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">EAPB ({detailsModal.salida.salida_eapb?.length ?? 0})</span>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {detailsModal.salida.eapb.length > 0 ? (
-                                                        detailsModal.salida.eapb.map((e, idx) => (
-                                                            <span key={idx} className="bg-orange-50 text-orange-600 px-2 py-1 rounded text-xs border border-orange-100">{e.name}</span>
+                                                    {(detailsModal.salida.salida_eapb?.length ?? 0) > 0 ? (
+                                                        detailsModal.salida.salida_eapb.map((se: any, idx: number) => (
+                                                            <span key={idx} className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-1 rounded text-xs border border-orange-100">
+                                                                {se.eapb?.name}
+                                                                {se.actor && <span className="bg-orange-200 text-orange-700 px-1 rounded font-semibold">{se.actor.name}</span>}
+                                                            </span>
                                                         ))
                                                     ) : <span className="text-zinc-400 italic">Ninguna</span>}
                                                 </div>

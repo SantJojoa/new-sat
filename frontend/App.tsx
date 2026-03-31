@@ -11,6 +11,12 @@ import Users from './src/components/pages/admin/Users'
 import GestionarSalida from './src/components/pages/GestionarSalida'
 import CalendarioSalidas from './src/components/pages/CalendarioSalidas'
 import ReportesSalidas from './src/components/pages/ReportesSalidas'
+import SolicitarArticulacion from './src/components/pages/SolicitarArticulacion'
+import SolicitarIvc from './src/components/pages/SolicitarIvc'
+import GestionarArticulacion from './src/components/pages/GestionarArticulacion'
+import CalendarioArticulaciones from './src/components/pages/CalendarioArticulaciones'
+import GestionarIvc from './src/components/pages/GestionarIvc'
+import CalendarioIvc from './src/components/pages/CalendarioIvc'
 
 function App() {
     return (
@@ -62,6 +68,42 @@ function App() {
                         <Route path="reportes-salidas" element={
                             <ProtectedRoute>
                                 <ReportesSalidas />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="solicitar-articulacion" element={
+                            <ProtectedRoute>
+                                <SolicitarArticulacion />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="solicitar-ivc" element={
+                            <ProtectedRoute>
+                                <SolicitarIvc />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="gestionar-articulacion" element={
+                            <ProtectedRoute>
+                                <GestionarArticulacion />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="calendario-articulaciones" element={
+                            <ProtectedRoute>
+                                <CalendarioArticulaciones />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="gestionar-ivc" element={
+                            <ProtectedRoute>
+                                <GestionarIvc />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="calendario-ivc" element={
+                            <ProtectedRoute>
+                                <CalendarioIvc />
                             </ProtectedRoute>
                         } />
 

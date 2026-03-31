@@ -108,6 +108,8 @@ export default function SlideBar() {
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
+        'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones'],
+        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -129,7 +131,7 @@ export default function SlideBar() {
     }, {} as Record<string, typeof allNavItems>);
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Gestión de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Gestión de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">

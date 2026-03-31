@@ -54,7 +54,7 @@ export class SalidasService {
                         { municipios: { some: { id: { in: municipios } } } },
                         { ips: { some: { id: { in: ips } } } },
                         { entidades: { some: { id: { in: entidades } } } },
-                        { eapb: { some: { id: { in: eapb } } } },
+                        { salida_eapb: { some: { eapb_id: { in: eapb } } } },
                         { organizaciones: { some: { id: { in: organizaciones } } } },
                         { idsn: { some: { id: { in: idsn } } } },
                     ]
@@ -68,7 +68,9 @@ export class SalidasService {
             where: whereClause,
             include: {
                 solicitante: true, areas: true, municipios: true,
-                ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true
+                ips: true, entidades: true,
+                salida_eapb: { include: { eapb: true, actor: true } },
+                organizaciones: true, idsn: true
             }
         });
 
@@ -81,7 +83,8 @@ export class SalidasService {
                     area: c.areas.name,
                     solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,
                     municipios: c.municipios.map(m => m.name), ips: c.ips.map(m => m.name),
-                    entidades: c.entidades.map(m => m.name), eapb: c.eapb.map(m => m.name),
+                    entidades: c.entidades.map(m => m.name),
+                    eapb: c.salida_eapb.map(m => m.eapb.name),
                     organizaciones: c.organizaciones.map(m => m.name), idsn: c.idsn.map(m => m.name),
                 }))
             });
@@ -113,7 +116,9 @@ export class SalidasService {
         await this.checkConflicts(
             this.parseDateLocal(createSalidaDto.fecha_inicio), this.parseDateLocal(createSalidaDto.fecha_final),
             createSalidaDto.jornada, createSalidaDto.municipios_ids, createSalidaDto.ips_ids,
-            createSalidaDto.entidades_ids, createSalidaDto.eapb_ids, createSalidaDto.organizaciones_ids, createSalidaDto.idsn_ids
+            createSalidaDto.entidades_ids,
+            createSalidaDto.eapb_actores?.map(e => e.eapb_id),
+            createSalidaDto.organizaciones_ids, createSalidaDto.idsn_ids
         );
 
         let municipiosConvocadosStr: string | undefined;
@@ -137,12 +142,14 @@ export class SalidasService {
                 municipios: { connect: createSalidaDto.municipios_ids?.map(id => ({ id })) || [] },
                 ips: { connect: createSalidaDto.ips_ids?.map(id => ({ id })) || [] },
                 entidades: { connect: createSalidaDto.entidades_ids?.map(id => ({ id })) || [] },
-                eapb: { connect: createSalidaDto.eapb_ids?.map(id => ({ id })) || [] },
+                salida_eapb: { create: createSalidaDto.eapb_actores?.map(item => ({ eapb_id: item.eapb_id, actor_id: item.actor_id || null })) || [] },
                 organizaciones: { connect: createSalidaDto.organizaciones_ids?.map(id => ({ id })) || [] },
                 idsn: { connect: createSalidaDto.idsn_ids?.map(id => ({ id })) || [] }
             },
             include: {
-                municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
+                municipios: true, ips: true, entidades: true,
+                salida_eapb: { include: { eapb: true, actor: true } },
+                organizaciones: true, idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true } }
             }
@@ -164,7 +171,9 @@ export class SalidasService {
 
     async findAll(user: users, viewAll: boolean = false) {
         const include = {
-            municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
+            municipios: true, ips: true, entidades: true,
+            salida_eapb: { include: { eapb: true, actor: true } },
+            organizaciones: true, idsn: true,
             solicitante: { select: { id: true, names: true, email: true } },
             aprobador: { select: { id: true, names: true, email: true } },
             areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
@@ -198,7 +207,9 @@ export class SalidasService {
         const salida = await this.prisma.salidas.findUnique({
             where: { id },
             include: {
-                municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
+                municipios: true, ips: true, entidades: true,
+                salida_eapb: { include: { eapb: true, actor: true } },
+                organizaciones: true, idsn: true,
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
@@ -239,7 +250,7 @@ export class SalidasService {
                 updateSalidaDto.municipios_ids || salida.municipios.map(m => m.id),
                 updateSalidaDto.ips_ids || salida.ips.map(m => m.id),
                 updateSalidaDto.entidades_ids || salida.entidades.map(m => m.id),
-                updateSalidaDto.eapb_ids || salida.eapb.map(m => m.id),
+                updateSalidaDto.eapb_actores?.map(e => e.eapb_id) || salida.salida_eapb.map(m => m.eapb_id),
                 updateSalidaDto.organizaciones_ids || salida.organizaciones.map(m => m.id),
                 updateSalidaDto.idsn_ids || salida.idsn.map(m => m.id),
                 id
@@ -269,11 +280,14 @@ export class SalidasService {
                 municipios: updateSalidaDto.municipios_ids ? { set: updateSalidaDto.municipios_ids.map(id => ({ id })) } : undefined,
                 ips: updateSalidaDto.ips_ids ? { set: updateSalidaDto.ips_ids.map(id => ({ id })) } : undefined,
                 entidades: updateSalidaDto.entidades_ids ? { set: updateSalidaDto.entidades_ids.map(id => ({ id })) } : undefined,
-                eapb: updateSalidaDto.eapb_ids ? { set: updateSalidaDto.eapb_ids.map(id => ({ id })) } : undefined,
+                salida_eapb: updateSalidaDto.eapb_actores !== undefined ? {
+                    deleteMany: {},
+                    create: updateSalidaDto.eapb_actores.map(item => ({ eapb_id: item.eapb_id, actor_id: item.actor_id || null }))
+                } : undefined,
                 organizaciones: updateSalidaDto.organizaciones_ids ? { set: updateSalidaDto.organizaciones_ids.map(id => ({ id })) } : undefined,
                 idsn: updateSalidaDto.idsn_ids ? { set: updateSalidaDto.idsn_ids.map(id => ({ id })) } : undefined,
             },
-            include: { municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true }
+            include: { municipios: true, ips: true, entidades: true, salida_eapb: { include: { eapb: true, actor: true } }, organizaciones: true, idsn: true }
         });
     }
 
@@ -320,11 +334,12 @@ export class SalidasService {
     }
 
     async getCatalogos(user?: users) {
-        const [municipios, ips, entidades, eapb, organizaciones, idsn, areas] = await Promise.all([
+        const [municipios, ips, entidades, eapb, eapbActores, organizaciones, idsn, areas] = await Promise.all([
             this.prisma.municipios.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.ips.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.entidades.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.eapb.findMany({ orderBy: { name: 'asc' } }),
+            this.prisma.eapb_actores.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.organizaciones.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.idsn.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
@@ -351,7 +366,7 @@ export class SalidasService {
             }
         }
 
-        return { municipios, ips, entidades, eapb, organizaciones, idsn, areas, ...(lideres ? { lideres } : {}) };
+        return { municipios, ips, entidades, eapb, eapbActores, organizaciones, idsn, areas, ...(lideres ? { lideres } : {}) };
     }
 
     async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
@@ -380,7 +395,9 @@ export class SalidasService {
             this.prisma.salidas.findMany({
                 where,
                 include: {
-                    municipios: true, ips: true, entidades: true, eapb: true, organizaciones: true, idsn: true,
+                    municipios: true, ips: true, entidades: true,
+                    salida_eapb: { include: { eapb: true, actor: true } },
+                    organizaciones: true, idsn: true,
                     solicitante: { select: { id: true, names: true, last_name: true, email: true } },
                     aprobador: { select: { id: true, names: true, last_name: true, email: true } },
                     areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
