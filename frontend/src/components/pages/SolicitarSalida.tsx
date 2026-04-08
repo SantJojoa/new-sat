@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
-import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem } from "../../types/salidas"
+import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem, IpsActorItem, EapbActorItem } from "../../types/salidas"
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 
 export default function SolicitarSalida() {
@@ -137,8 +137,12 @@ export default function SolicitarSalida() {
     const [eapbData, setEapbData] = useState<CatalogoItem[]>([]);
     const [eapbActoresData, setEapbActoresData] = useState<CatalogoItem[]>([]);
     const [activeEapbActorModal, setActiveEapbActorModal] = useState(false);
+    const [eapbActorSearch, setEapbActorSearch] = useState('');
+    const [selectedEapbActors, setSelectedEapbActors] = useState<CatalogoItem[]>([]);
     const [ipsActoresData, setIpsActoresData] = useState<CatalogoItem[]>([]);
     const [activeIpsActorModal, setActiveIpsActorModal] = useState(false);
+    const [ipsActorSearch, setIpsActorSearch] = useState('');
+    const [selectedIpsActors, setSelectedIpsActors] = useState<CatalogoItem[]>([]);
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
     const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
     const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
@@ -198,15 +202,29 @@ export default function SolicitarSalida() {
 
                 // Map relations
                 setSelectedMunicipios(salida.municipios.map((m) => ({ id: m.id, name: m.name })));
-                setSelectedIPS(salida.salida_ips.map((si: any) => ({
+                const ipsMap = new Map<string, any>();
+                const actorMap = new Map<string, any>();
+                salida.salida_ips.forEach((si: any) => {
+                    if (!ipsMap.has(si.ips.id)) ipsMap.set(si.ips.id, si);
+                    if (si.actor && !actorMap.has(si.actor.id)) actorMap.set(si.actor.id, si.actor);
+                });
+                setSelectedIPS([...ipsMap.values()].map((si: any) => ({
                     ips: { id: si.ips.id, type: si.ips.type },
-                    actor: si.actor ? { id: si.actor.id, name: si.actor.name } : null
+                    actor: null
                 })));
+                setSelectedIpsActors([...actorMap.values()].map((a: any) => ({ id: a.id, name: a.name })));
                 setSelectedEntidades(salida.entidades.map((e) => ({ id: e.id, name: e.name })));
-                setSelectedEAPB(salida.salida_eapb.map(se => ({
+                const eapbMap = new Map<string, any>();
+                const eapbActorMap = new Map<string, any>();
+                salida.salida_eapb.forEach((se: any) => {
+                    if (!eapbMap.has(se.eapb.id)) eapbMap.set(se.eapb.id, se);
+                    if (se.actor && !eapbActorMap.has(se.actor.id)) eapbActorMap.set(se.actor.id, se.actor);
+                });
+                setSelectedEAPB([...eapbMap.values()].map((se: any) => ({
                     eapb: { id: se.eapb.id, name: se.eapb.name },
-                    actor: se.actor ? { id: se.actor.id, name: se.actor.name } : null
+                    actor: null
                 })));
+                setSelectedEapbActors([...eapbActorMap.values()].map((a: any) => ({ id: a.id, name: a.name })));
                 setSelectedOrganizaciones(salida.organizaciones.map((o) => ({ id: o.id, name: o.name })));
                 setSelectedIDSN(salida.idsn.map((i) => ({ id: i.id, name: i.name })));
 
@@ -360,9 +378,17 @@ export default function SolicitarSalida() {
             jornada: mapJornada(formData.jornada),
             descripcion: formData.descripcion,
             municipios_ids: selectedMunicipios.map(i => i.id),
-            ips_actores: selectedIPS.map(i => ({ ips_id: i.ips.id, actor_id: i.actor?.id })),
+            ips_actores: selectedIPS.flatMap<IpsActorItem>(i =>
+                selectedIpsActors.length > 0
+                    ? selectedIpsActors.map(actor => ({ ips_id: i.ips.id, actor_id: actor.id }))
+                    : [{ ips_id: i.ips.id }]
+            ),
             entidades_ids: selectedEntidades.map(i => i.id),
-            eapb_actores: selectedEAPB.map(i => ({ eapb_id: i.eapb.id, actor_id: i.actor?.id })),
+            eapb_actores: selectedEAPB.flatMap<EapbActorItem>(i =>
+                selectedEapbActors.length > 0
+                    ? selectedEapbActors.map(actor => ({ eapb_id: i.eapb.id, actor_id: actor.id }))
+                    : [{ eapb_id: i.eapb.id }]
+            ),
             organizaciones_ids: selectedOrganizaciones.map(i => i.id),
             idsn_ids: selectedIDSN.map(i => i.id),
             // Transport fields
@@ -412,6 +438,10 @@ export default function SolicitarSalida() {
                 });
                 setSelectedMunicipios([]);
                 setSelectedIPS([]);
+                setSelectedIpsActors([]);
+                setIpsActorSearch('');
+                setSelectedEapbActors([]);
+                setEapbActorSearch('');
                 setSelectedEntidades([]);
                 setSelectedEAPB([]);
                 setSelectedOrganizaciones([]);
@@ -795,17 +825,29 @@ export default function SolicitarSalida() {
                                                     <p className="text-sm text-zinc-400 italic">No hay IPS seleccionadas</p>
                                                 ) : (
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedIPS.map(sel => (
-                                                            <span key={sel.ips.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-                                                                <span>{sel.ips.type}</span>
-                                                                {sel.actor && (
-                                                                    <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full font-semibold">{sel.actor.name}</span>
-                                                                )}
-                                                                <button onClick={() => removeIpsChip(sel.ips.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
-                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
-                                                                </button>
-                                                            </span>
-                                                        ))}
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedIPS.map(sel => (
+                                                                <span key={sel.ips.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                                                                    <span>{sel.ips.type}</span>
+                                                                    <button onClick={() => removeIpsChip(sel.ips.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
+                                                                        <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                    </button>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                        {selectedIpsActors.length > 0 && (
+                                                            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                                                                <span className="text-xs text-zinc-500 font-semibold">Actores:</span>
+                                                                {selectedIpsActors.map(actor => (
+                                                                    <span key={actor.id} className="inline-flex items-center gap-1 bg-primary/20 text-primary text-xs px-2 py-0.5 rounded-full font-medium">
+                                                                        {actor.name}
+                                                                        <button onClick={() => setSelectedIpsActors(prev => prev.filter(a => a.id !== actor.id))} className="hover:bg-primary/30 rounded-full p-0.5 transition-colors" type="button">
+                                                                            <span className="material-symbols-outlined text-[13px]">close</span>
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -852,17 +894,29 @@ export default function SolicitarSalida() {
                                                     <p className="text-sm text-zinc-400 italic">No hay EAPB seleccionadas</p>
                                                 ) : (
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedEAPB.map(sel => (
-                                                            <span key={sel.eapb.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-                                                                <span>{sel.eapb.name}</span>
-                                                                {sel.actor && (
-                                                                    <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full font-semibold">{sel.actor.name}</span>
-                                                                )}
-                                                                <button onClick={() => removeEapbChip(sel.eapb.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
-                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
-                                                                </button>
-                                                            </span>
-                                                        ))}
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedEAPB.map(sel => (
+                                                                <span key={sel.eapb.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                                                                    <span>{sel.eapb.name}</span>
+                                                                    <button onClick={() => removeEapbChip(sel.eapb.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
+                                                                        <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                    </button>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                        {selectedEapbActors.length > 0 && (
+                                                            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                                                                <span className="text-xs text-zinc-500 font-semibold">Actores:</span>
+                                                                {selectedEapbActors.map(actor => (
+                                                                    <span key={actor.id} className="inline-flex items-center gap-1 bg-primary/20 text-primary text-xs px-2 py-0.5 rounded-full font-medium">
+                                                                        {actor.name}
+                                                                        <button onClick={() => setSelectedEapbActors(prev => prev.filter(a => a.id !== actor.id))} className="hover:bg-primary/30 rounded-full p-0.5 transition-colors" type="button">
+                                                                            <span className="material-symbols-outlined text-[13px]">close</span>
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -1192,45 +1246,54 @@ export default function SolicitarSalida() {
                                         <span className="material-symbols-outlined">person_check</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-zinc-900">Actor a Visitar por IPS</h3>
-                                        <p className="text-sm text-zinc-500 mt-0.5">Seleccione el actor a visitar en cada IPS</p>
+                                        <h3 className="text-xl font-bold text-zinc-900">Actores a Visitar por IPS</h3>
+                                        <p className="text-sm text-zinc-500 mt-0.5">Los actores seleccionados se aplicarán a las {selectedIPS.length} IPS elegidas</p>
                                     </div>
                                 </div>
                                 <button onClick={() => setActiveIpsActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
+                            <div className="mt-4 relative">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar actor..."
+                                    value={ipsActorSearch}
+                                    onChange={(e) => setIpsActorSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                                />
+                            </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                            {selectedIPS.map(sel => (
-                                <div key={sel.ips.id} className="border border-zinc-200 rounded-lg p-4">
-                                    <p className="text-sm font-bold text-zinc-800 mb-3">{sel.ips.type}</p>
-                                    <div className="flex flex-col gap-2">
-                                        {ipsActoresData.map(actor => (
-                                            <label
-                                                key={actor.id}
-                                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${sel.actor?.id === actor.id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
-                                                    }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`ips-actor-${sel.ips.id}`}
-                                                    checked={sel.actor?.id === actor.id}
-                                                    onChange={() => setSelectedIPS(prev =>
-                                                        prev.map(s => s.ips.id === sel.ips.id ? { ...s, actor } : s)
-                                                    )}
-                                                    className="text-primary focus:ring-primary"
-                                                />
-                                                <span className={`text-sm ${sel.actor?.id === actor.id ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
-                                                    {actor.name}
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+                            {ipsActoresData
+                                .filter(a => a.name.toLowerCase().includes(ipsActorSearch.toLowerCase()))
+                                .map(actor => {
+                                    const isSelected = selectedIpsActors.some(a => a.id === actor.id);
+                                    return (
+                                        <label
+                                            key={actor.id}
+                                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => setSelectedIpsActors(prev =>
+                                                    isSelected ? prev.filter(a => a.id !== actor.id) : [...prev, actor]
+                                                )}
+                                                className="text-primary focus:ring-primary rounded"
+                                            />
+                                            <span className={`text-sm ${isSelected ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
+                                                {actor.name}
+                                            </span>
+                                        </label>
+                                    );
+                                })
+                            }
+                            {ipsActoresData.filter(a => a.name.toLowerCase().includes(ipsActorSearch.toLowerCase())).length === 0 && (
+                                <p className="text-sm text-zinc-400 italic text-center py-4">No se encontraron actores</p>
+                            )}
                         </div>
                         <div className="p-6 border-t border-zinc-200 flex gap-3">
                             <button
@@ -1241,12 +1304,12 @@ export default function SolicitarSalida() {
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => setActiveIpsActorModal(false)}
+                                onClick={() => { setIpsActorSearch(''); setActiveIpsActorModal(false); }}
                                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
                                 type="button"
                             >
                                 <span className="material-symbols-outlined text-[20px]">check</span>
-                                Confirmar
+                                Confirmar ({selectedIpsActors.length} seleccionados)
                             </button>
                         </div>
                     </div>
@@ -1267,45 +1330,54 @@ export default function SolicitarSalida() {
                                         <span className="material-symbols-outlined">person_check</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-zinc-900">Actor a Visitar por EAPB</h3>
-                                        <p className="text-sm text-zinc-500 mt-0.5">Seleccione el actor a visitar en cada EAPB</p>
+                                        <h3 className="text-xl font-bold text-zinc-900">Actores a Visitar por EAPB</h3>
+                                        <p className="text-sm text-zinc-500 mt-0.5">Los actores seleccionados se aplicarán a las {selectedEAPB.length} EAPB elegidas</p>
                                     </div>
                                 </div>
                                 <button onClick={() => setActiveEapbActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
+                            <div className="mt-4 relative">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar actor..."
+                                    value={eapbActorSearch}
+                                    onChange={(e) => setEapbActorSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                                />
+                            </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                            {selectedEAPB.map(sel => (
-                                <div key={sel.eapb.id} className="border border-zinc-200 rounded-lg p-4">
-                                    <p className="text-sm font-bold text-zinc-800 mb-3">{sel.eapb.name}</p>
-                                    <div className="flex flex-col gap-2">
-                                        {eapbActoresData.map(actor => (
-                                            <label
-                                                key={actor.id}
-                                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${sel.actor?.id === actor.id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
-                                                    }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`actor-${sel.eapb.id}`}
-                                                    checked={sel.actor?.id === actor.id}
-                                                    onChange={() => setSelectedEAPB(prev =>
-                                                        prev.map(s => s.eapb.id === sel.eapb.id ? { ...s, actor } : s)
-                                                    )}
-                                                    className="text-primary focus:ring-primary"
-                                                />
-                                                <span className={`text-sm ${sel.actor?.id === actor.id ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
-                                                    {actor.name}
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+                            {eapbActoresData
+                                .filter(a => a.name.toLowerCase().includes(eapbActorSearch.toLowerCase()))
+                                .map(actor => {
+                                    const isSelected = selectedEapbActors.some(a => a.id === actor.id);
+                                    return (
+                                        <label
+                                            key={actor.id}
+                                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => setSelectedEapbActors(prev =>
+                                                    isSelected ? prev.filter(a => a.id !== actor.id) : [...prev, actor]
+                                                )}
+                                                className="text-primary focus:ring-primary rounded"
+                                            />
+                                            <span className={`text-sm ${isSelected ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
+                                                {actor.name}
+                                            </span>
+                                        </label>
+                                    );
+                                })
+                            }
+                            {eapbActoresData.filter(a => a.name.toLowerCase().includes(eapbActorSearch.toLowerCase())).length === 0 && (
+                                <p className="text-sm text-zinc-400 italic text-center py-4">No se encontraron actores</p>
+                            )}
                         </div>
                         <div className="p-6 border-t border-zinc-200 flex gap-3">
                             <button
@@ -1316,12 +1388,12 @@ export default function SolicitarSalida() {
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => setActiveEapbActorModal(false)}
+                                onClick={() => { setEapbActorSearch(''); setActiveEapbActorModal(false); }}
                                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
                                 type="button"
                             >
                                 <span className="material-symbols-outlined text-[20px]">check</span>
-                                Confirmar
+                                Confirmar ({selectedEapbActors.length} seleccionados)
                             </button>
                         </div>
                     </div>

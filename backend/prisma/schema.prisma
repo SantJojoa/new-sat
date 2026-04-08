@@ -158,7 +158,7 @@ model salida_ips {
   ips    ips          @relation(fields: [ips_id], references: [id])
   actor  ips_actores? @relation(fields: [actor_id], references: [id])
 
-  @@unique([salida_id, ips_id])
+  @@unique([salida_id, ips_id, actor_id])
 }
 
 model entidades {
@@ -198,7 +198,7 @@ model salida_eapb {
   eapb   eapb          @relation(fields: [eapb_id], references: [id])
   actor  eapb_actores? @relation(fields: [actor_id], references: [id])
 
-  @@unique([salida_id, eapb_id])
+  @@unique([salida_id, eapb_id, actor_id])
 }
 
 model organizaciones {
