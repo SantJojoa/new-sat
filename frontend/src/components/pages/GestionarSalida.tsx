@@ -1074,11 +1074,14 @@ export default function GestionarSalida() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IPS ({detailsModal.salida.ips.length})</span>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IPS ({(detailsModal.salida as any).salida_ips?.length ?? 0})</span>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {detailsModal.salida.ips.length > 0 ? (
-                                                        detailsModal.salida.ips.map((i, idx) => (
-                                                            <span key={idx} className="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs border border-blue-100">{i.name}</span>
+                                                    {((detailsModal.salida as any).salida_ips?.length ?? 0) > 0 ? (
+                                                        (detailsModal.salida as any).salida_ips.map((si: any, idx: number) => (
+                                                            <span key={idx} className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs border border-blue-100">
+                                                                {si.ips?.type}
+                                                                {si.actor && <span className="bg-blue-200 text-blue-700 px-1 rounded font-semibold">{si.actor.name}</span>}
+                                                            </span>
                                                         ))
                                                     ) : <span className="text-zinc-400 italic">Ninguna</span>}
                                                 </div>

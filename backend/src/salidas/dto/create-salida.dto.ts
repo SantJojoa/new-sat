@@ -11,6 +11,16 @@ export class EapbActorItemDto {
     actor_id?: string;
 }
 
+export class IpsActorItemDto {
+    @IsString()
+    @IsNotEmpty()
+    ips_id: string;
+
+    @IsString()
+    @IsOptional()
+    actor_id?: string;
+}
+
 export class CreateSalidaDto {
     @IsString()
     @IsOptional()
@@ -51,9 +61,10 @@ export class CreateSalidaDto {
     municipios_ids?: string[];
 
     @IsArray()
-    @IsString({ each: true })
+    @ValidateNested({ each: true })
+    @Type(() => IpsActorItemDto)
     @IsOptional()
-    ips_ids?: string[];
+    ips_actores?: IpsActorItemDto[];
 
     @IsArray()
     @IsString({ each: true })

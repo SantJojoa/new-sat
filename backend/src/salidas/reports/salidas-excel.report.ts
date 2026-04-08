@@ -242,7 +242,7 @@ export class SalidasExcelReport {
                 item.solicitante?.email || 'N/A',
                 item.aprobador ? `${item.aprobador.names} ${item.aprobador.last_name}` : 'N/A',
                 this.toCsv(item.municipios),
-                this.toCsv(item.ips),
+                (item as any).salida_ips?.map((si: any) => si.ips?.type + (si.actor ? ` (${si.actor.name})` : '')).join(', ') || '',
                 this.toCsv(item.entidades),
                 (item as any).salida_eapb?.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ') || '',
                 this.toCsv(item.organizaciones),

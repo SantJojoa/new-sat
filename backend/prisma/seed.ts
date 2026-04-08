@@ -1,10 +1,13 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1080691332sJ*@localhost:5432/new_sat_bd?schema=public' });
-const adapter = new PrismaPg(pool);
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set');
+}
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -570,5 +573,4 @@ main()
     })
     .finally(async () => {
         await prisma.$disconnect();
-        await pool.end(); // También cierra el pool
     });

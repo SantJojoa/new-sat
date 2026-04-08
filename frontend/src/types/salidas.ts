@@ -6,9 +6,15 @@ export interface CatalogoItem {
     area_id?: string;
 }
 
+export interface IpsCatalogoItem {
+    id: string;
+    type: string;
+}
+
 export interface CatalogosResponse {
     municipios: CatalogoItem[];
-    ips: CatalogoItem[];
+    ips: IpsCatalogoItem[];
+    ipsActores: CatalogoItem[];
     entidades: CatalogoItem[];
     eapb: CatalogoItem[];
     eapbActores: CatalogoItem[];
@@ -33,6 +39,24 @@ export interface SalidaEapbRecord {
     eapb_id: string;
     actor_id: string | null;
     eapb: CatalogoItem;
+    actor: CatalogoItem | null;
+}
+
+export interface IpsActorItem {
+    ips_id: string;
+    actor_id?: string;
+}
+
+export interface IpsSelection {
+    ips: IpsCatalogoItem;
+    actor: CatalogoItem | null;
+}
+
+export interface SalidaIpsRecord {
+    id: string;
+    ips_id: string;
+    actor_id: string | null;
+    ips: IpsCatalogoItem;
     actor: CatalogoItem | null;
 }
 
@@ -73,7 +97,7 @@ export interface SalidaRecord {
     areas: SalidaArea;
     areas_participantes?: SalidaArea[];
     municipios: CatalogoItem[];
-    ips: CatalogoItem[];
+    salida_ips: SalidaIpsRecord[];
     entidades: CatalogoItem[];
     salida_eapb: SalidaEapbRecord[];
     organizaciones: CatalogoItem[];
@@ -96,7 +120,7 @@ export interface CreateSalidaPayload {
     fecha_final: string;
     jornada: string;
     municipios_ids?: string[];
-    ips_ids?: string[];
+    ips_actores?: IpsActorItem[];
     entidades_ids?: string[];
     eapb_actores?: EapbActorItem[];
     organizaciones_ids?: string[];

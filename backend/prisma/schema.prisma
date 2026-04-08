@@ -124,7 +124,6 @@ model municipios {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  ips                   ips[]
   salidas               salidas[]        @relation("SalidasMunicipios")
   salidas_evento        salidas[]        @relation("SalidaLugarEvento")
   articulaciones_evento articulaciones[] @relation("ArticulacionLugarEvento")
@@ -132,15 +131,34 @@ model municipios {
 }
 
 model ips {
-  id           String   @id @default(cuid())
-  name         String
-  nit          String?
-  municipio_id String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  type       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  municipio municipios? @relation(fields: [municipio_id], references: [id])
-  salidas   salidas[]   @relation("SalidasIps")
+  salida_ips salida_ips[]
+}
+
+model ips_actores {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salida_ips salida_ips[]
+}
+
+model salida_ips {
+  id        String  @id @default(cuid())
+  salida_id String
+  ips_id    String
+  actor_id  String?
+
+  salida salidas      @relation(fields: [salida_id], references: [id], onDelete: Cascade)
+  ips    ips          @relation(fields: [ips_id], references: [id])
+  actor  ips_actores? @relation(fields: [actor_id], references: [id])
+
+  @@unique([salida_id, ips_id])
 }
 
 model entidades {
@@ -237,9 +255,9 @@ model salidas {
 
   // Relaciones con Catálogos (Muchos a Muchos implícitos)
   municipios     municipios[]     @relation("SalidasMunicipios")
-  ips            ips[]            @relation("SalidasIps")
   entidades      entidades[]      @relation("SalidasEntidades")
   salida_eapb    salida_eapb[]
+  salida_ips     salida_ips[]
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
   idsn           idsn[]           @relation("SalidasIdsn")
 

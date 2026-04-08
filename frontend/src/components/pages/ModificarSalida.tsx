@@ -177,8 +177,8 @@ export default function ModificarSalida() {
                                                     {salida.entidades?.length > 0 && (
                                                         <div><span className="font-semibold text-primary">Entidades:</span> {formatList(salida.entidades)}</div>
                                                     )}
-                                                    {salida.ips?.length > 0 && (
-                                                        <div><span className="font-semibold text-primary">IPS:</span> {formatList(salida.ips)}</div>
+                                                    {(salida as any).salida_ips?.length > 0 && (
+                                                        <div><span className="font-semibold text-primary">IPS:</span> {(salida as any).salida_ips.map((si: any) => si.ips?.type + (si.actor ? ` (${si.actor.name})` : '')).join(', ')}</div>
                                                     )}
                                                     {salida.salida_eapb?.length > 0 && (
                                                         <div><span className="font-semibold text-primary">EAPB:</span> {salida.salida_eapb.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ')}</div>

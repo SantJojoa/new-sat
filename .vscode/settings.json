@@ -1,0 +1,13 @@
+{
+    "editor.codeActionsOnSave": {},
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "editor.formatOnSave": true,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "explicit",
+    "workbench.sideBar.location": "right",
+    "workbench.statusBar.visible": true,
+    "zenMode.hideActivityBar": true,
+    "zenMode.hideStatusBar": true,
+    "debug.enableStatusBarColor": true,
+}

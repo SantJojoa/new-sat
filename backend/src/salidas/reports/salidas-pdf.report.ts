@@ -658,7 +658,7 @@ export class SalidasPdfReport {
                 push('Aprobador', item.aprobador ? `${item.aprobador.names} ${item.aprobador.last_name}` : 'N/A');
                 push('Lugar / Destino', item.lugar_evento?.name || this.toCsv(item.municipios));
                 push('Municipios convocados', this.normalizeText(item.municipios_convocados));
-                push('IPS', this.toCsv(item.ips));
+                push('IPS', (item as any).salida_ips?.map((si: any) => si.ips?.type + (si.actor ? ` (${si.actor.name})` : '')).join(', ') || 'N/A');
                 push('Entidades', this.toCsv(item.entidades));
                 push('EAPB', (item as any).salida_eapb?.map((se: any) => se.eapb?.name + (se.actor ? ` (${se.actor.name})` : '')).join(', ') || 'N/A');
                 push('Organizaciones', this.toCsv(item.organizaciones));

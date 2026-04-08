@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
-import type { CreateSalidaPayload, EapbSelection } from "../../types/salidas"
+import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem } from "../../types/salidas"
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 
 export default function SolicitarSalida() {
@@ -37,7 +37,7 @@ export default function SolicitarSalida() {
 
     // Selected Items State
     const [selectedMunicipios, setSelectedMunicipios] = useState<CatalogoItem[]>([]);
-    const [selectedIPS, setSelectedIPS] = useState<CatalogoItem[]>([]);
+    const [selectedIPS, setSelectedIPS] = useState<IpsSelection[]>([]);
     const [selectedEntidades, setSelectedEntidades] = useState<CatalogoItem[]>([]);
     const [selectedEAPB, setSelectedEAPB] = useState<EapbSelection[]>([]);
     const [selectedOrganizaciones, setSelectedOrganizaciones] = useState<CatalogoItem[]>([]);
@@ -132,11 +132,13 @@ export default function SolicitarSalida() {
 
     // Catalog Data State
     const [municipiosData, setMunicipiosData] = useState<CatalogoItem[]>([]);
-    const [ipsData, setIpsData] = useState<CatalogoItem[]>([]);
+    const [ipsData, setIpsData] = useState<IpsCatalogoItem[]>([]);
     const [entidadesData, setEntidadesData] = useState<CatalogoItem[]>([]);
     const [eapbData, setEapbData] = useState<CatalogoItem[]>([]);
     const [eapbActoresData, setEapbActoresData] = useState<CatalogoItem[]>([]);
     const [activeEapbActorModal, setActiveEapbActorModal] = useState(false);
+    const [ipsActoresData, setIpsActoresData] = useState<CatalogoItem[]>([]);
+    const [activeIpsActorModal, setActiveIpsActorModal] = useState(false);
     const [organizacionesData, setOrganizacionesData] = useState<CatalogoItem[]>([]);
     const [idsnData, setIdsnData] = useState<CatalogoItem[]>([]);
     const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
@@ -148,6 +150,7 @@ export default function SolicitarSalida() {
                 const data = await salidasService.getCatalogos();
                 setMunicipiosData(data.municipios);
                 setIpsData(data.ips);
+                setIpsActoresData(data.ipsActores || []);
                 setEntidadesData(data.entidades);
                 setEapbData(data.eapb);
                 setEapbActoresData(data.eapbActores || []);
@@ -195,7 +198,10 @@ export default function SolicitarSalida() {
 
                 // Map relations
                 setSelectedMunicipios(salida.municipios.map((m) => ({ id: m.id, name: m.name })));
-                setSelectedIPS(salida.ips.map((i) => ({ id: i.id, name: i.name })));
+                setSelectedIPS(salida.salida_ips.map((si: any) => ({
+                    ips: { id: si.ips.id, type: si.ips.type },
+                    actor: si.actor ? { id: si.actor.id, name: si.actor.name } : null
+                })));
                 setSelectedEntidades(salida.entidades.map((e) => ({ id: e.id, name: e.name })));
                 setSelectedEAPB(salida.salida_eapb.map(se => ({
                     eapb: { id: se.eapb.id, name: se.eapb.name },
@@ -354,7 +360,7 @@ export default function SolicitarSalida() {
             jornada: mapJornada(formData.jornada),
             descripcion: formData.descripcion,
             municipios_ids: selectedMunicipios.map(i => i.id),
-            ips_ids: selectedIPS.map(i => i.id),
+            ips_actores: selectedIPS.map(i => ({ ips_id: i.ips.id, actor_id: i.actor?.id })),
             entidades_ids: selectedEntidades.map(i => i.id),
             eapb_actores: selectedEAPB.map(i => ({ eapb_id: i.eapb.id, actor_id: i.actor?.id })),
             organizaciones_ids: selectedOrganizaciones.map(i => i.id),
@@ -450,6 +456,24 @@ export default function SolicitarSalida() {
 
     const removeChip = (item: CatalogoItem, setterFunction: React.Dispatch<React.SetStateAction<CatalogoItem[]>>, currentArray: CatalogoItem[]) => {
         setterFunction(currentArray.filter(i => i.id !== item.id));
+    };
+
+    const removeIpsChip = (ipsId: string) => {
+        setSelectedIPS(prev => prev.filter(s => s.ips.id !== ipsId));
+    };
+
+    const handleIpsModalSave = (selectedItems: CatalogoItem[]) => {
+        setSelectedIPS(prev => {
+            const prevMap = new Map(prev.map(s => [s.ips.id, s]));
+            return selectedItems.map(item => ({
+                ips: { id: item.id, type: item.name } as IpsCatalogoItem,
+                actor: prevMap.get(item.id)?.actor ?? null,
+            }));
+        });
+        setActiveModal(null);
+        if (selectedItems.length > 0) {
+            setActiveIpsActorModal(true);
+        }
     };
 
     const removeEapbChip = (eapbId: string) => {
@@ -767,11 +791,23 @@ export default function SolicitarSalida() {
                                                 </button>
                                             </div>
                                             <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center">
-                                                <ChipList
-                                                    items={selectedIPS}
-                                                    onRemove={(item) => removeChip(item, setSelectedIPS, selectedIPS)}
-                                                    emptyText="No hay IPS seleccionadas"
-                                                />
+                                                {selectedIPS.length === 0 ? (
+                                                    <p className="text-sm text-zinc-400 italic">No hay IPS seleccionadas</p>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {selectedIPS.map(sel => (
+                                                            <span key={sel.ips.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                                                                <span>{sel.ips.type}</span>
+                                                                {sel.actor && (
+                                                                    <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full font-semibold">{sel.actor.name}</span>
+                                                                )}
+                                                                <button onClick={() => removeIpsChip(sel.ips.id)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors" type="button">
+                                                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-3">
@@ -1067,9 +1103,9 @@ export default function SolicitarSalida() {
                 isOpen={activeModal === 'ips'}
                 onClose={() => setActiveModal(null)}
                 title="Seleccionar IPS"
-                items={ipsData}
-                selectedItems={selectedIPS}
-                onSave={setSelectedIPS}
+                items={ipsData.map(i => ({ id: i.id, name: i.type }))}
+                selectedItems={selectedIPS.map(s => ({ id: s.ips.id, name: s.ips.type }))}
+                onSave={handleIpsModalSave}
                 searchPlaceholder="Buscar IPS..."
                 icon="local_hospital"
             />
@@ -1142,6 +1178,81 @@ export default function SolicitarSalida() {
                 singleSelect={true}
             />
 
+            {/* Actor de IPS Modal */}
+            {activeIpsActorModal && selectedIPS.length > 0 && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+                    onClick={(e) => { if (e.target === e.currentTarget) setActiveIpsActorModal(false); }}
+                >
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-zinc-200 animate-slideUp">
+                        <div className="p-6 border-b border-zinc-200">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-primary/10 size-10 rounded-lg flex items-center justify-center text-primary">
+                                        <span className="material-symbols-outlined">person_check</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-zinc-900">Actor a Visitar por IPS</h3>
+                                        <p className="text-sm text-zinc-500 mt-0.5">Seleccione el actor a visitar en cada IPS</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setActiveIpsActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {selectedIPS.map(sel => (
+                                <div key={sel.ips.id} className="border border-zinc-200 rounded-lg p-4">
+                                    <p className="text-sm font-bold text-zinc-800 mb-3">{sel.ips.type}</p>
+                                    <div className="flex flex-col gap-2">
+                                        {ipsActoresData.map(actor => (
+                                            <label
+                                                key={actor.id}
+                                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${sel.actor?.id === actor.id
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name={`ips-actor-${sel.ips.id}`}
+                                                    checked={sel.actor?.id === actor.id}
+                                                    onChange={() => setSelectedIPS(prev =>
+                                                        prev.map(s => s.ips.id === sel.ips.id ? { ...s, actor } : s)
+                                                    )}
+                                                    className="text-primary focus:ring-primary"
+                                                />
+                                                <span className={`text-sm ${sel.actor?.id === actor.id ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
+                                                    {actor.name}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-6 border-t border-zinc-200 flex gap-3">
+                            <button
+                                onClick={() => setActiveIpsActorModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-100 transition-colors"
+                                type="button"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => setActiveIpsActorModal(false)}
+                                className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
+                                type="button"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">check</span>
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Actor de EAPB Modal */}
             {activeEapbActorModal && selectedEAPB.length > 0 && (
                 <div
@@ -1174,8 +1285,8 @@ export default function SolicitarSalida() {
                                             <label
                                                 key={actor.id}
                                                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${sel.actor?.id === actor.id
-                                                        ? 'border-primary bg-primary/5'
-                                                        : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-zinc-200 hover:border-primary/50 hover:bg-zinc-50'
                                                     }`}
                                             >
                                                 <input
