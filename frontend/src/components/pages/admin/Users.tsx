@@ -11,6 +11,7 @@ interface UserType {
 interface Area {
     id: string;
     name: string;
+    subdirecciones?: Subdireccion;
 }
 
 interface Subdireccion {
@@ -182,6 +183,7 @@ export default function Users() {
     const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
     const selectedRoleName = selectedUserType?.name;
     const showsSubdireccion = selectedRoleName === 'admin_subdireccion';
+    const isSuperAdmin = selectedRoleName === 'superadmin';
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -222,6 +224,7 @@ export default function Users() {
                                     <tr>
                                         <th className="px-6 py-4">Usuario</th>
                                         <th className="px-6 py-4">Rol</th>
+                                        <th className="px-6 py-4">Subdirección</th>
                                         <th className="px-6 py-4">Área</th>
                                         <th className="px-6 py-4">Estado</th>
                                         <th className="px-6 py-4 text-right">Acciones</th>
@@ -230,11 +233,11 @@ export default function Users() {
                                 <tbody className="divide-y divide-zinc-200">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">Cargando...</td>
+                                            <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">Cargando...</td>
                                         </tr>
                                     ) : filteredUsers.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">No se encontraron usuarios</td>
+                                            <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">No se encontraron usuarios</td>
                                         </tr>
                                     ) : (
                                         filteredUsers.map((user) => (
@@ -255,6 +258,11 @@ export default function Users() {
                                                 <td className="px-6 py-4 text-zinc-600">
                                                     {user.user_types?.name === 'admin_subdireccion'
                                                         ? (user.subdirecciones?.name || 'N/A')
+                                                        : (user.areas?.subdirecciones?.name || 'N/A')}
+                                                </td>
+                                                <td className="px-6 py-4 text-zinc-600">
+                                                    {user.user_types?.name === 'admin_subdireccion'
+                                                        ? 'N/A'
                                                         : (user.areas?.name || 'N/A')}
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -428,6 +436,7 @@ export default function Users() {
                                                         user_type_id: nextId,
                                                         area_id: '',
                                                         subdireccion_id: '',
+                                                        charge: '',
                                                     }));
                                                 }
                                             }}
@@ -439,30 +448,33 @@ export default function Users() {
                                             ))}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-zinc-700 mb-1">Área</label>
-                                        <select
-                                            required
-                                            value={formData.area_id}
-                                            onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}
-                                            className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
-                                        >
-                                            <option value="">N/A (Sin área)</option>
-                                            {areas.map(area => (
-                                                <option key={area.id} value={area.id}>{area.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-zinc-700 mb-1">Cargo</label>
-                                        <input
-                                            type="text"
-                                            value={formData.charge}
-                                            onChange={(e) => setFormData({ ...formData, charge: e.target.value })}
-                                            className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                                            placeholder="Cargo opcional"
-                                        />
-                                    </div>
+                                    {!isSuperAdmin && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-zinc-700 mb-1">Área</label>
+                                            <select
+                                                value={formData.area_id}
+                                                onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                                            >
+                                                <option value="">N/A (Sin área)</option>
+                                                {areas.map(area => (
+                                                    <option key={area.id} value={area.id}>{area.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {!isSuperAdmin && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-zinc-700 mb-1">Cargo</label>
+                                            <input
+                                                type="text"
+                                                value={formData.charge}
+                                                onChange={(e) => setFormData({ ...formData, charge: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                                placeholder="Cargo opcional"
+                                            />
+                                        </div>
+                                    )}
                                 </form>
                             </div>
                             <div className="p-6 border-t border-zinc-200 shrink-0 flex gap-3 bg-zinc-50">

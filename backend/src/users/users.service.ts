@@ -63,7 +63,11 @@ export class UsersService {
     async findAll() {
         const users = await this.prisma.users.findMany({
             include: {
-                areas: true,
+                areas: {
+                    include: {
+                        subdirecciones: true
+                    }
+                },
                 subdirecciones: true,
                 user_types: true
             },
