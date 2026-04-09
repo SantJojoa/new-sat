@@ -100,18 +100,22 @@ export class SalidasService {
     }
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
-        const today = new Date();
-        const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        const nextMonthYear = nextMonthDate.getFullYear();
-        const nextMonthIdx = nextMonthDate.getMonth();
-        const firstDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-01`;
-        const lastDayNum = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
-        const lastDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
-        const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-        const nextMonthName = `${MONTHS_ES[nextMonthIdx]} de ${nextMonthYear}`;
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        const isSuperadmin = userType?.name === 'superadmin';
 
-        if (createSalidaDto.fecha_inicio < firstDay || createSalidaDto.fecha_inicio > lastDay)
-            throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${nextMonthName}`);
+        if (!isSuperadmin) {
+            const today = new Date();
+            const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+            const nextMonthYear = nextMonthDate.getFullYear();
+            const nextMonthIdx = nextMonthDate.getMonth();
+            const firstDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-01`;
+            const lastDayNum = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
+            const lastDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
+            const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            const nextMonthName = `${MONTHS_ES[nextMonthIdx]} de ${nextMonthYear}`;
+            if (createSalidaDto.fecha_inicio < firstDay || createSalidaDto.fecha_inicio > lastDay)
+                throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${nextMonthName}`);
+        }
 
         const targetAreaId = createSalidaDto.area_id || user.area_id;
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
@@ -128,14 +132,16 @@ export class SalidasService {
         if (await this.prisma.salidas.findUnique({ where: { codigo: newCodigo } }))
             throw new ConflictException('Error generando código único, intente nuevamente');
 
-        await this.checkConflicts(
-            this.parseDateLocal(createSalidaDto.fecha_inicio), this.parseDateLocal(createSalidaDto.fecha_final),
-            createSalidaDto.jornada, createSalidaDto.municipios_ids,
-            createSalidaDto.ips_actores || [],
-            createSalidaDto.entidades_ids,
-            createSalidaDto.eapb_actores || [],
-            createSalidaDto.organizaciones_ids, createSalidaDto.idsn_ids
-        );
+        if (!isSuperadmin) {
+            await this.checkConflicts(
+                this.parseDateLocal(createSalidaDto.fecha_inicio), this.parseDateLocal(createSalidaDto.fecha_final),
+                createSalidaDto.jornada, createSalidaDto.municipios_ids,
+                createSalidaDto.ips_actores || [],
+                createSalidaDto.entidades_ids,
+                createSalidaDto.eapb_actores || [],
+                createSalidaDto.organizaciones_ids, createSalidaDto.idsn_ids
+            );
+        }
 
         let municipiosConvocadosStr: string | undefined;
         if (createSalidaDto.municipios_ids?.length) {

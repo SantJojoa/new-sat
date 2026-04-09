@@ -632,7 +632,7 @@ export default function SolicitarSalida() {
         ? now >= new Date(ventanaStatus.ventana.fecha_inicio) && now <= new Date(ventanaStatus.ventana.fecha_fin)
         : false;
 
-    if (!isEditing && !clientAbierta) {
+    if (!isEditing && !clientAbierta && user?.user_type?.name !== 'superadmin') {
         const fmt = (d: string) => new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         const fmtDuration = (ms: number) => {
             if (ms <= 0) return '0 min';
@@ -861,7 +861,7 @@ export default function SolicitarSalida() {
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Fecha de Inicio <span className="text-red-500">*</span>
                                             </label>
-                                            {!isEditing && (
+                                            {!isEditing && user?.user_type?.name !== 'superadmin' && (
                                                 <p className="text-xs text-blue-600 font-medium -mt-1 flex items-center gap-1">
                                                     <Clock size={11} /> Solo fechas de {nextMonthLabel}
                                                 </p>
@@ -872,8 +872,8 @@ export default function SolicitarSalida() {
                                                     name="fechaInicio"
                                                     value={formData.fechaInicio}
                                                     onChange={handleInputChange}
-                                                    min={isEditing ? undefined : nextMonthMin}
-                                                    max={isEditing ? undefined : nextMonthMax}
+                                                    min={isEditing || user?.user_type?.name === 'superadmin' ? undefined : nextMonthMin}
+                                                    max={isEditing || user?.user_type?.name === 'superadmin' ? undefined : nextMonthMax}
                                                     className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaInicio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
                                                 <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaInicio ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -886,7 +886,7 @@ export default function SolicitarSalida() {
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Fecha Final <span className="text-red-500">*</span>
                                             </label>
-                                            {!isEditing && (
+                                            {!isEditing && user?.user_type?.name !== 'superadmin' && (
                                                 <p className="text-xs text-blue-600 font-medium -mt-1 flex items-center gap-1">
                                                     <Clock size={11} /> Solo fechas de {nextMonthLabel}
                                                 </p>
@@ -897,8 +897,8 @@ export default function SolicitarSalida() {
                                                     name="fechaFinal"
                                                     value={formData.fechaFinal}
                                                     onChange={handleInputChange}
-                                                    min={isEditing ? undefined : (formData.fechaInicio || nextMonthMin)}
-                                                    max={isEditing ? undefined : nextMonthMax}
+                                                    min={isEditing || user?.user_type?.name === 'superadmin' ? undefined : (formData.fechaInicio || nextMonthMin)}
+                                                    max={isEditing || user?.user_type?.name === 'superadmin' ? undefined : nextMonthMax}
                                                     className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaFinal ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
                                                 <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaFinal ? 'text-red-500' : 'text-zinc-400'}`}>
