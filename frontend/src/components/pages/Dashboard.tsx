@@ -44,15 +44,17 @@ export default function Dashboard() {
     const extraModules: DashboardModulePermission[] = [
         {
             id: 'reportes-salidas-module',
-            modules: {
-                id: 'reportes-salidas-module',
-                name: 'reportes_salidas',
-                description: 'Reportes y Estadisticas',
-                icon: 'bar_chart',
-                path: '/reportes-salidas',
-                is_active: true,
-                order: 99
-            },
+            modules: { id: 'reportes-salidas-module', name: 'reportes_salidas', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-salidas', is_active: true, order: 99 },
+            can_view: true
+        },
+        {
+            id: 'reportes-articulacion-module',
+            modules: { id: 'reportes-articulacion-module', name: 'reportes_articulacion', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-articulacion', is_active: true, order: 100 },
+            can_view: true
+        },
+        {
+            id: 'reportes-ivc-module',
+            modules: { id: 'reportes-ivc-module', name: 'reportes_ivc', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-ivc', is_active: true, order: 101 },
             can_view: true
         }
     ];

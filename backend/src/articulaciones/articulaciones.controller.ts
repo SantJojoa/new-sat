@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, Res } from '@nestjs/common';
+import { StreamableFile } from '@nestjs/common';
+import type { Response } from 'express';
 import { ArticulacionesService } from './articulaciones.service';
 import { CreateArticulacionDto } from './dto/create-articulacion.dto';
 import { UpdateArticulacionDto } from './dto/update-articulacion.dto';
@@ -30,6 +32,51 @@ export class ArticulacionesController {
     @RequirePermissions('solicitar_articulacion', 'view')
     getCatalogos(@Request() req) {
         return this.articulacionesService.getCatalogos(req.user);
+    }
+
+    @Get('estadisticas')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    getEstadisticas(
+        @Request() req,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+    ) {
+        return this.articulacionesService.getEstadisticas(req.user, startDate, endDate, areaId, estado);
+    }
+
+    @Get('estadisticas/excel')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async downloadExcel(
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+    ) {
+        const { buffer, filename } = await this.articulacionesService.exportExcel(req.user, startDate, endDate, areaId, estado);
+        res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${filename}"` });
+        return new StreamableFile(buffer);
+    }
+
+    @Get('estadisticas/pdf')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async downloadPdf(
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('area_id') areaId?: string,
+        @Query('estado') estado?: string,
+    ) {
+        const { buffer, filename } = await this.articulacionesService.exportPdf(req.user, startDate, endDate, areaId, estado);
+        res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${filename}"` });
+        return new StreamableFile(buffer);
     }
 
     @Get(':id')

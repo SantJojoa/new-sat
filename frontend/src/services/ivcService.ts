@@ -30,4 +30,38 @@ export const ivcService = {
     delete: async (id: string): Promise<void> => {
         await api.delete(`/ivc/${id}`);
     },
+
+    downloadExcel: async (startDate?: string, endDate?: string, areaId?: string, estado?: string) => {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        if (areaId) params.area_id = areaId;
+        if (estado) params.estado = estado;
+        const response = await api.get('/ivc/estadisticas/excel', { params, responseType: 'blob' });
+        const cd = response.headers['content-disposition'] as string | undefined;
+        const match = cd && /filename="([^"]+)"/i.exec(cd);
+        return { blob: response.data as Blob, filename: match?.[1] ?? 'Reporte_IVC.xlsx' };
+    },
+
+    downloadPdf: async (startDate?: string, endDate?: string, areaId?: string, estado?: string) => {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        if (areaId) params.area_id = areaId;
+        if (estado) params.estado = estado;
+        const response = await api.get('/ivc/estadisticas/pdf', { params, responseType: 'blob' });
+        const cd = response.headers['content-disposition'] as string | undefined;
+        const match = cd && /filename="([^"]+)"/i.exec(cd);
+        return { blob: response.data as Blob, filename: match?.[1] ?? 'Reporte_IVC.pdf' };
+    },
+
+    getEstadisticas: async (startDate?: string, endDate?: string, areaId?: string, estado?: string) => {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        if (areaId) params.area_id = areaId;
+        if (estado) params.estado = estado;
+        const response = await api.get('/ivc/estadisticas', { params });
+        return response.data as { total: number; estados: { name: string; count: number }[]; topSolicitantes: { name: string; count: number }[]; areas: { name: string; count: number }[] };
+    },
 };

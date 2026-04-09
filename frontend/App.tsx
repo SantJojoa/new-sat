@@ -18,6 +18,8 @@ import CalendarioArticulaciones from './src/components/pages/CalendarioArticulac
 import GestionarIvc from './src/components/pages/GestionarIvc'
 import CalendarioIvc from './src/components/pages/CalendarioIvc'
 import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacion'
+import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
+import ReportesIvc from './src/components/pages/ReportesIvc'
 
 function App() {
     return (
@@ -105,6 +107,18 @@ function App() {
                         <Route path="calendario-ivc" element={
                             <ProtectedRoute>
                                 <CalendarioIvc />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="reportes-articulacion" element={
+                            <ProtectedRoute>
+                                <ReportesArticulacion />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="reportes-ivc" element={
+                            <ProtectedRoute>
+                                <ReportesIvc />
                             </ProtectedRoute>
                         } />
 

@@ -3,10 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateIvcDto } from './dto/create-ivc.dto';
 import { UpdateIvcDto } from './dto/update-ivc.dto';
 import { users } from '@prisma/client';
+import { IvcExcelReport } from './reports/ivc-excel.report';
+import { IvcPdfReport } from './reports/ivc-pdf.report';
 
 @Injectable()
 export class IvcService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly excelReport: IvcExcelReport,
+        private readonly pdfReport: IvcPdfReport,
+    ) { }
 
     private async getUserType(user: users) {
         return this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -145,6 +151,63 @@ export class IvcService {
         }
 
         return this.prisma.ivc.delete({ where: { id } });
+    }
+
+    async exportExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado);
+        const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
+        const userInfo = await this.prisma.users.findUnique({ where: { id: user.id }, select: { names: true, last_name: true } });
+        return this.excelReport.generate(data, {
+            startDate, endDate, areaName: area?.name, authorName: `${userInfo?.names ?? ''} ${userInfo?.last_name ?? ''}`.trim(),
+            reportTitle: 'Reporte de IVC — Inspección, Vigilancia y Control', filenamePrefix: 'Reporte_IVC',
+        });
+    }
+
+    async exportPdf(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado);
+        const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
+        const userInfo = await this.prisma.users.findUnique({ where: { id: user.id }, select: { names: true, last_name: true } });
+        return this.pdfReport.generate(data, {
+            startDate, endDate, areaName: area?.name, authorName: `${userInfo?.names ?? ''} ${userInfo?.last_name ?? ''}`.trim(),
+            reportTitle: 'Reporte de IVC — Inspección, Vigilancia y Control', filenamePrefix: 'Reporte_IVC',
+        });
+    }
+
+    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
+        const userType = await this.getUserType(user);
+        const where: any = {};
+        if (areaId) where.area_id = areaId;
+        if (estado) where.estado = estado;
+        if (userType?.name !== 'superadmin' && userType?.name !== 'admin_subdireccion') {
+            where.solicitante_id = user.id;
+        }
+        if (startDate || endDate) {
+            where.fecha_inicio = {};
+            if (startDate) where.fecha_inicio.gte = new Date(`${startDate}T00:00:00`);
+            if (endDate) where.fecha_inicio.lte = new Date(`${endDate}T23:59:59`);
+        }
+
+        const items = await this.prisma.ivc.findMany({
+            where,
+            include: { solicitante: { select: { id: true, names: true, last_name: true } }, areas: { select: { id: true, name: true } } },
+            orderBy: { fecha_inicio: 'desc' }
+        });
+
+        const total = items.length;
+
+        const estadosMap = items.reduce((acc, item) => { acc[item.estado] = (acc[item.estado] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const estados = Object.entries(estadosMap).map(([name, count]) => ({ name, count }));
+
+        const solMap = items.reduce((acc, item) => {
+            const name = `${item.solicitante.names} ${(item.solicitante as any).last_name || ''}`.trim();
+            acc[name] = (acc[name] || 0) + 1; return acc;
+        }, {} as Record<string, number>);
+        const topSolicitantes = Object.entries(solMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        const areasMap = items.reduce((acc, item) => { const name = item.areas?.name || 'Sin área'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const areas = Object.entries(areasMap).map(([name, count]) => ({ name, count }));
+
+        return { total, estados, topSolicitantes, areas, items };
     }
 
     async getCatalogos() {

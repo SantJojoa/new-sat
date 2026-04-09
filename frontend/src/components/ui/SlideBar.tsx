@@ -99,6 +99,20 @@ export default function SlideBar() {
             label: 'Reportes y Estadísticas',
             icon: 'bar_chart',
             href: '/reportes-salidas'
+        },
+        {
+            id: 'reportes-articulacion-module',
+            name: 'reportes_articulacion',
+            label: 'Reportes y Estadísticas',
+            icon: 'bar_chart',
+            href: '/reportes-articulacion'
+        },
+        {
+            id: 'reportes-ivc-module',
+            name: 'reportes_ivc',
+            label: 'Reportes y Estadísticas',
+            icon: 'bar_chart',
+            href: '/reportes-ivc'
         }
     ];
 
@@ -108,8 +122,8 @@ export default function SlideBar() {
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
-        'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones'],
-        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'],
+        'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
+        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
