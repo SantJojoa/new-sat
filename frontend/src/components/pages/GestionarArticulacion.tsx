@@ -137,6 +137,7 @@ export default function GestionarArticulacion() {
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Área</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Fechas</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Lugar</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Instituciones Convocadas</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-zinc-100">
@@ -151,6 +152,20 @@ export default function GestionarArticulacion() {
                                                 </td>
                                                 <td className="px-4 py-3 text-zinc-600">
                                                     <span className="flex items-center gap-1"><MapPin size={12} className="text-zinc-400" />{r.lugar_evento?.name || '—'}</span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {r.instituciones_convocadas ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {r.instituciones_convocadas.split(',').slice(0, 3).map((inst, i) => (
+                                                                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20">{inst.trim()}</span>
+                                                            ))}
+                                                            {r.instituciones_convocadas.split(',').length > 3 && (
+                                                                <span className="px-2 py-0.5 bg-zinc-100 text-zinc-500 rounded-full text-xs font-medium">+{r.instituciones_convocadas.split(',').length - 3} más</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-zinc-400 italic text-xs">—</span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

@@ -25,12 +25,15 @@ export default function GestionarSalida() {
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
     const [filterMunicipio, setFilterMunicipio] = useState('');
+    const [filterMonth, setFilterMonth] = useState('');
+    const [filterYear, setFilterYear] = useState('');
 
     const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [uniqueTipos, setUniqueTipos] = useState<string[]>([]);
     const [uniqueSubtipos, setUniqueSubtipos] = useState<string[]>([]);
     const [uniqueMunicipios, setUniqueMunicipios] = useState<string[]>([]);
+    const [uniqueYears, setUniqueYears] = useState<number[]>([]);
 
     // Action Modals
     const [actionModal, setActionModal] = useState<{
@@ -190,6 +193,8 @@ export default function GestionarSalida() {
             setUniqueTipos(tipos);
             setUniqueSubtipos(subtipos);
             setUniqueMunicipios(municipios);
+            const years = Array.from(new Set(data.map((s) => new Date(s.fecha_inicio).getFullYear()))).sort((a, b) => b - a);
+            setUniqueYears(years);
         } catch (error) {
             console.error('Error fetching salidas:', error);
         } finally {
@@ -229,6 +234,8 @@ export default function GestionarSalida() {
         setFilterDateStart('');
         setFilterDateEnd('');
         setFilterMunicipio('');
+        setFilterMonth('');
+        setFilterYear('');
     };
 
     const handleAction = async () => {
@@ -346,7 +353,12 @@ export default function GestionarSalida() {
         const matchesEndDate = filterDateEnd ? salidaEndDate <= filterDateEnd : true;
         const matchesDate = matchesStartDate && matchesEndDate;
 
-        return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate;
+        const salidaMonth = new Date(s.fecha_inicio).getMonth() + 1;
+        const salidaYear = new Date(s.fecha_inicio).getFullYear();
+        const matchesMonth = filterMonth ? salidaMonth === parseInt(filterMonth) : true;
+        const matchesYear = filterYear ? salidaYear === parseInt(filterYear) : true;
+
+        return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate && matchesMonth && matchesYear;
     });
 
     return (
@@ -392,7 +404,7 @@ export default function GestionarSalida() {
                                 <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-2">
                                     <Search size={16} /> Filtros de Búsqueda
                                 </h3>
-                                {(searchTerm || filterArea || filterSubdireccion || filterTipo || filterSubtipo || filterMunicipio || filterDateStart || filterDateEnd) && (
+                                {(searchTerm || filterArea || filterSubdireccion || filterTipo || filterSubtipo || filterMunicipio || filterDateStart || filterDateEnd || filterMonth || filterYear) && (
                                     <button
                                         onClick={handleResetFilters}
                                         className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover font-medium transition-colors"
@@ -474,6 +486,41 @@ export default function GestionarSalida() {
                                         <option value="">Todos los Municipios</option>
                                         {uniqueMunicipios.map(m => (
                                             <option key={m} value={m}>{m}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <select
+                                        value={filterMonth}
+                                        onChange={(e) => setFilterMonth(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Todos los Meses</option>
+                                        <option value="1">Enero</option>
+                                        <option value="2">Febrero</option>
+                                        <option value="3">Marzo</option>
+                                        <option value="4">Abril</option>
+                                        <option value="5">Mayo</option>
+                                        <option value="6">Junio</option>
+                                        <option value="7">Julio</option>
+                                        <option value="8">Agosto</option>
+                                        <option value="9">Septiembre</option>
+                                        <option value="10">Octubre</option>
+                                        <option value="11">Noviembre</option>
+                                        <option value="12">Diciembre</option>
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <select
+                                        value={filterYear}
+                                        onChange={(e) => setFilterYear(e.target.value)}
+                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                                    >
+                                        <option value="">Todos los Años</option>
+                                        {uniqueYears.map(y => (
+                                            <option key={y} value={y}>{y}</option>
                                         ))}
                                     </select>
                                 </div>
