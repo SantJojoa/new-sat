@@ -7,6 +7,7 @@ export default function VentanaProgramacion() {
     const [status, setStatus] = useState<VentanaStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [now, setNow] = useState(new Date());
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -17,8 +18,8 @@ export default function VentanaProgramacion() {
             const data = await ventanaProgramacionService.get();
             setStatus(data);
             if (data.ventana) {
-                setFechaInicio(data.ventana.fecha_inicio.split('T')[0]);
-                setFechaFin(data.ventana.fecha_fin.split('T')[0]);
+                setFechaInicio(data.ventana.fecha_inicio.slice(0, 16));
+                setFechaFin(data.ventana.fecha_fin.slice(0, 16));
             }
         } catch {
             setFeedback({ type: 'error', message: 'Error al cargar la configuración' });
@@ -28,6 +29,15 @@ export default function VentanaProgramacion() {
     };
 
     useEffect(() => { void fetchStatus(); }, []);
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const clientAbierta = status?.ventana
+        ? now >= new Date(status.ventana.fecha_inicio) && now <= new Date(status.ventana.fecha_fin)
+        : false;
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,7 +72,7 @@ export default function VentanaProgramacion() {
     };
 
     const fmt = (dateStr: string) =>
-        new Date(dateStr).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+        new Date(dateStr).toLocaleString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -92,8 +102,8 @@ export default function VentanaProgramacion() {
                                 <p className="text-zinc-500 text-sm">Cargando...</p>
                             ) : status?.ventana ? (
                                 <div className="space-y-3">
-                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${status.abierta ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                                        {status.abierta
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${clientAbierta ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                        {clientAbierta
                                             ? <><Unlock size={14} /> Ventana Abierta</>
                                             : <><Lock size={14} /> Ventana Cerrada</>
                                         }
@@ -108,7 +118,7 @@ export default function VentanaProgramacion() {
                                             <p className="text-sm font-bold text-zinc-800">{fmt(status.ventana.fecha_fin)}</p>
                                         </div>
                                     </div>
-                                    {status.abierta && (
+                                    {clientAbierta && (
                                         <button
                                             onClick={handleDeactivate}
                                             disabled={saving}
@@ -142,10 +152,10 @@ export default function VentanaProgramacion() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-semibold text-zinc-700">
-                                        Fecha de Apertura <span className="text-red-500">*</span>
+                                        Fecha y Hora de Apertura <span className="text-red-500">*</span>
                                     </label>
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         value={fechaInicio}
                                         onChange={e => setFechaInicio(e.target.value)}
                                         required
@@ -154,10 +164,10 @@ export default function VentanaProgramacion() {
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-semibold text-zinc-700">
-                                        Fecha de Cierre <span className="text-red-500">*</span>
+                                        Fecha y Hora de Cierre <span className="text-red-500">*</span>
                                     </label>
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         value={fechaFin}
                                         min={fechaInicio}
                                         onChange={e => setFechaFin(e.target.value)}

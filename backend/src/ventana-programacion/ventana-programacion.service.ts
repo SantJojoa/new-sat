@@ -1,10 +1,14 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SetVentanaDto } from './dto/set-ventana.dto';
+import { VentanaGateway } from './ventana-programacion.gateway';
 
 @Injectable()
 export class VentanaProgramacionService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private ventanaGateway: VentanaGateway,
+    ) { }
 
     async get() {
         const ventana = await this.prisma.ventana_programacion.findFirst({
@@ -30,12 +34,16 @@ export class VentanaProgramacionService {
             data: { activo: false },
         });
 
-        const fecha_inicio = new Date(`${dto.fecha_inicio}T00:00:00`);
-        const fecha_fin = new Date(`${dto.fecha_fin}T23:59:59`);
+        const fecha_inicio = new Date(dto.fecha_inicio);
+        const fecha_fin = new Date(dto.fecha_fin);
 
-        return this.prisma.ventana_programacion.create({
+        const created = await this.prisma.ventana_programacion.create({
             data: { fecha_inicio, fecha_fin, activo: true },
         });
+        const now = new Date();
+        const abierta = now >= fecha_inicio && now <= fecha_fin;
+        this.ventanaGateway.emitVentanaActualizada(abierta);
+        return created;
     }
 
     async deactivate(user: any) {
@@ -47,7 +55,7 @@ export class VentanaProgramacionService {
             where: { activo: true },
             data: { activo: false },
         });
-
+        this.ventanaGateway.emitVentanaActualizada(false);
         return { message: 'Ventana desactivada' };
     }
 }

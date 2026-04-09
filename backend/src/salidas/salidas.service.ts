@@ -101,10 +101,17 @@ export class SalidasService {
 
     async create(createSalidaDto: CreateSalidaDto, user: users) {
         const today = new Date();
-        const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+        const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        const nextMonthYear = nextMonthDate.getFullYear();
+        const nextMonthIdx = nextMonthDate.getMonth();
+        const firstDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-01`;
+        const lastDayNum = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
+        const lastDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
+        const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const nextMonthName = `${MONTHS_ES[nextMonthIdx]} de ${nextMonthYear}`;
 
-        if (createSalidaDto.fecha_inicio < todayStr)
-            throw new BadRequestException('No se puede programar una salida en una fecha anterior a la actual');
+        if (createSalidaDto.fecha_inicio < firstDay || createSalidaDto.fecha_inicio > lastDay)
+            throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${nextMonthName}`);
 
         const targetAreaId = createSalidaDto.area_id || user.area_id;
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');

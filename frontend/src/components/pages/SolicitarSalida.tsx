@@ -4,12 +4,13 @@ import { useEffect, useState } from "react"
 import { AxiosError } from "axios"
 import { salidasService, type CatalogoItem } from "../../services/salidasService"
 import { useParams, useNavigate } from "react-router-dom"
-import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users } from "lucide-react"
+import { CheckCircle, AlertCircle, ClipboardList, AlertTriangle, Users, Clock } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
 import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem, IpsActorItem, EapbActorItem } from "../../types/salidas"
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 import { ventanaProgramacionService, type VentanaStatus } from "../../services/ventanaProgramacionService"
+import { io } from "socket.io-client"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -82,6 +83,7 @@ export default function SolicitarSalida() {
     // Ventana programacion state
     const [ventanaStatus, setVentanaStatus] = useState<VentanaStatus | null>(null);
     const [ventanaLoading, setVentanaLoading] = useState(true);
+    const [now, setNow] = useState(new Date());
 
     // Join request state
     const [joinRequestModal, setJoinRequestModal] = useState<{ open: boolean; salida_id: string; codigo: string; area: string }>({ open: false, salida_id: '', codigo: '', area: '' });
@@ -179,16 +181,23 @@ export default function SolicitarSalida() {
     }, []);
 
     useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
         if (isEditing) { setVentanaLoading(false); return; }
-        const checkVentana = () => {
+        const fetchVentana = () =>
             ventanaProgramacionService.get()
                 .then(data => setVentanaStatus(data))
                 .catch(() => setVentanaStatus({ ventana: null, abierta: false }))
                 .finally(() => setVentanaLoading(false));
-        };
-        checkVentana();
-        const interval = setInterval(checkVentana, 30000);
-        return () => clearInterval(interval);
+        fetchVentana();
+
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const socket = io(API_URL, { transports: ['websocket'] });
+        socket.on('ventana_actualizada', () => { void fetchVentana(); });
+        return () => { socket.disconnect(); };
     }, [isEditing]);
 
     useEffect(() => {
@@ -610,25 +619,67 @@ export default function SolicitarSalida() {
         );
     }
 
-    if (!isEditing && (!ventanaStatus?.abierta)) {
-        const fmt = (d: string) => new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthYear = nextMonthDate.getFullYear();
+    const nextMonthIdx = nextMonthDate.getMonth();
+    const nextMonthMin = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-01`;
+    const nextMonthLastDay = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
+    const nextMonthMax = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(nextMonthLastDay).padStart(2, '0')}`;
+    const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const nextMonthLabel = `${MONTHS_ES[nextMonthIdx]} ${nextMonthYear}`;
+
+    const clientAbierta = ventanaStatus?.ventana
+        ? now >= new Date(ventanaStatus.ventana.fecha_inicio) && now <= new Date(ventanaStatus.ventana.fecha_fin)
+        : false;
+
+    if (!isEditing && !clientAbierta) {
+        const fmt = (d: string) => new Date(d).toLocaleString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const fmtDuration = (ms: number) => {
+            if (ms <= 0) return '0 min';
+            const totalSec = Math.floor(ms / 1000);
+            const d = Math.floor(totalSec / 86400);
+            const h = Math.floor((totalSec % 86400) / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            if (d > 0) return `${d}d ${h}h ${m}min`;
+            if (h > 0) return `${h}h ${m}min ${s}s`;
+            return `${m}min ${s}s`;
+        };
+        const ventana = ventanaStatus?.ventana;
+        const upcoming = ventana && new Date(ventana.fecha_inicio) > now;
+        const msToOpen = upcoming ? new Date(ventana!.fecha_inicio).getTime() - now.getTime() : 0;
         return (
             <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
                 <SlideBar />
                 <main className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                     <div className="max-w-md w-full text-center">
-                        <div className="w-20 h-20 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-6">
-                            <AlertTriangle className="text-red-500" size={36} />
+                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${upcoming ? 'bg-blue-50 border border-blue-200' : 'bg-red-50 border border-red-200'}`}>
+                            {upcoming ? <Clock className="text-blue-500" size={36} /> : <AlertTriangle className="text-red-500" size={36} />}
                         </div>
-                        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Módulo No Disponible</h2>
+                        <h2 className="text-2xl font-bold text-zinc-900 mb-2">
+                            {upcoming ? 'Módulo Próximamente Disponible' : 'Módulo No Disponible'}
+                        </h2>
                         <p className="text-zinc-500 text-sm mb-4">
-                            El periodo de solicitud de programaciones está cerrado en este momento.
+                            {upcoming
+                                ? 'El módulo de programaciones aún no está abierto.'
+                                : 'El periodo de solicitud de programaciones está cerrado.'}
                         </p>
-                        {ventanaStatus?.ventana ? (
+                        {upcoming ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm space-y-2">
+                                <p className="text-blue-700 font-semibold">Próxima apertura</p>
+                                <p className="text-blue-900 font-bold text-base">{fmt(ventana!.fecha_inicio)}</p>
+                                <div className="flex items-center justify-center gap-2 mt-2 bg-white rounded-lg px-3 py-2 border border-blue-100">
+                                    <Clock size={14} className="text-blue-500" />
+                                    <span className="text-blue-800 font-mono font-bold text-sm">Faltan: {fmtDuration(msToOpen)}</span>
+                                </div>
+                                <p className="text-blue-600 text-xs">Cierre: {fmt(ventana!.fecha_fin)}</p>
+                            </div>
+                        ) : ventana ? (
                             <div className="bg-white rounded-xl border border-zinc-200 p-4 text-sm text-zinc-600 space-y-1">
-                                <p><span className="font-semibold">Última ventana:</span></p>
-                                <p>Apertura: <span className="font-medium text-zinc-800">{fmt(ventanaStatus.ventana.fecha_inicio)}</span></p>
-                                <p>Cierre: <span className="font-medium text-zinc-800">{fmt(ventanaStatus.ventana.fecha_fin)}</span></p>
+                                <p className="font-semibold text-zinc-700">Última ventana configurada:</p>
+                                <p>Apertura: <span className="font-medium text-zinc-800">{fmt(ventana.fecha_inicio)}</span></p>
+                                <p>Cierre: <span className="font-medium text-zinc-800">{fmt(ventana.fecha_fin)}</span></p>
+                                <p className="text-xs text-zinc-400 mt-2">Sin próxima apertura configurada. Contacte al administrador.</p>
                             </div>
                         ) : (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
@@ -659,6 +710,23 @@ export default function SolicitarSalida() {
                                         <p className="text-sm text-zinc-500">{isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}</p>
                                     </div>
                                 </div>
+                                {!isEditing && ventanaStatus?.ventana && clientAbierta && (() => {
+                                    const msLeft = new Date(ventanaStatus.ventana!.fecha_fin).getTime() - now.getTime();
+                                    const totalSec = Math.max(0, Math.floor(msLeft / 1000));
+                                    const d = Math.floor(totalSec / 86400);
+                                    const h = Math.floor((totalSec % 86400) / 3600);
+                                    const m = Math.floor((totalSec % 3600) / 60);
+                                    const s = totalSec % 60;
+                                    const label = d > 0 ? `${d}d ${h}h ${m}min` : h > 0 ? `${h}h ${m}min ${s}s` : `${m}min ${s}s`;
+                                    const fmtClose = new Date(ventanaStatus.ventana!.fecha_fin).toLocaleString('es-CO', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' });
+                                    return (
+                                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-xs text-green-700 font-medium">
+                                            <Clock size={13} className="text-green-600" />
+                                            Ventana abierta — cierra el {fmtClose}
+                                            <span className="font-mono bg-green-100 px-1.5 py-0.5 rounded-md text-green-800">Faltan: {label}</span>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                             <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden">
                                 <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-8 py-5 border-b border-zinc-100">
@@ -793,13 +861,19 @@ export default function SolicitarSalida() {
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Fecha de Inicio <span className="text-red-500">*</span>
                                             </label>
+                                            {!isEditing && (
+                                                <p className="text-xs text-blue-600 font-medium -mt-1 flex items-center gap-1">
+                                                    <Clock size={11} /> Solo fechas de {nextMonthLabel}
+                                                </p>
+                                            )}
                                             <div className="relative">
                                                 <input
                                                     type="date"
                                                     name="fechaInicio"
                                                     value={formData.fechaInicio}
                                                     onChange={handleInputChange}
-                                                    min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                                                    min={isEditing ? undefined : nextMonthMin}
+                                                    max={isEditing ? undefined : nextMonthMax}
                                                     className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaInicio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
                                                 <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaInicio ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -812,13 +886,19 @@ export default function SolicitarSalida() {
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Fecha Final <span className="text-red-500">*</span>
                                             </label>
+                                            {!isEditing && (
+                                                <p className="text-xs text-blue-600 font-medium -mt-1 flex items-center gap-1">
+                                                    <Clock size={11} /> Solo fechas de {nextMonthLabel}
+                                                </p>
+                                            )}
                                             <div className="relative">
                                                 <input
                                                     type="date"
                                                     name="fechaFinal"
                                                     value={formData.fechaFinal}
                                                     onChange={handleInputChange}
-                                                    min={formData.fechaInicio || new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                                                    min={isEditing ? undefined : (formData.fechaInicio || nextMonthMin)}
+                                                    max={isEditing ? undefined : nextMonthMax}
                                                     className={`w-full h-12 pl-10 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaFinal ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 />
                                                 <span className={`material-symbols-outlined absolute left-3 top-3 pointer-events-none ${errors.fechaFinal ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -830,6 +910,7 @@ export default function SolicitarSalida() {
                                             <label className="text-sm font-semibold text-zinc-700">
                                                 Jornada <span className="text-red-500">*</span>
                                             </label>
+                                            {!isEditing && <p className="text-xs invisible select-none -mt-1" aria-hidden="true">_</p>}
                                             <select
                                                 name="jornada"
                                                 value={formData.jornada}
