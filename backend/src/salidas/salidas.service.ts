@@ -35,8 +35,10 @@ export class SalidasService {
 
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
-        municipios: string[] = [], ips: string[] = [],
-        entidades: string[] = [], eapb: string[] = [],
+        municipios: string[] = [],
+        ips_actores: { ips_id: string; actor_id?: string | null }[] = [],
+        entidades: string[] = [],
+        eapb_actores: { eapb_id: string; actor_id?: string | null }[] = [],
         organizaciones: string[] = [], idsn: string[] = [],
         excludeId?: string
     ) {
@@ -44,21 +46,27 @@ export class SalidasService {
             ? {}
             : { OR: [{ jornada: 'Completa' }, { jornada: jornada }] };
 
+        const resourceOr: any[] = [
+            ...(municipios.length > 0 ? [{ municipios: { some: { id: { in: municipios } } } }] : []),
+            ...ips_actores.map(item => ({
+                salida_ips: { some: { ips_id: item.ips_id, actor_id: item.actor_id ?? null } }
+            })),
+            ...(entidades.length > 0 ? [{ entidades: { some: { id: { in: entidades } } } }] : []),
+            ...eapb_actores.map(item => ({
+                salida_eapb: { some: { eapb_id: item.eapb_id, actor_id: item.actor_id ?? null } }
+            })),
+            ...(organizaciones.length > 0 ? [{ organizaciones: { some: { id: { in: organizaciones } } } }] : []),
+            ...(idsn.length > 0 ? [{ idsn: { some: { id: { in: idsn } } } }] : []),
+        ];
+
+        if (resourceOr.length === 0) return;
+
         const whereClause: any = {
             AND: [
                 { fecha_inicio: { lte: end }, fecha_final: { gte: start } },
                 { estado: { in: ['aprobada', 'pendiente'] } },
                 jornadaFilter,
-                {
-                    OR: [
-                        { municipios: { some: { id: { in: municipios } } } },
-                        { salida_ips: { some: { ips_id: { in: ips } } } },
-                        { entidades: { some: { id: { in: entidades } } } },
-                        { salida_eapb: { some: { eapb_id: { in: eapb } } } },
-                        { organizaciones: { some: { id: { in: organizaciones } } } },
-                        { idsn: { some: { id: { in: idsn } } } },
-                    ]
-                }
+                { OR: resourceOr }
             ]
         };
 
@@ -115,9 +123,10 @@ export class SalidasService {
 
         await this.checkConflicts(
             this.parseDateLocal(createSalidaDto.fecha_inicio), this.parseDateLocal(createSalidaDto.fecha_final),
-            createSalidaDto.jornada, createSalidaDto.municipios_ids, createSalidaDto.ips_actores?.map(e => e.ips_id),
+            createSalidaDto.jornada, createSalidaDto.municipios_ids,
+            createSalidaDto.ips_actores || [],
             createSalidaDto.entidades_ids,
-            createSalidaDto.eapb_actores?.map(e => e.eapb_id),
+            createSalidaDto.eapb_actores || [],
             createSalidaDto.organizaciones_ids, createSalidaDto.idsn_ids
         );
 
@@ -248,9 +257,9 @@ export class SalidasService {
                 updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
                 updateSalidaDto.jornada || salida.jornada,
                 updateSalidaDto.municipios_ids || salida.municipios.map(m => m.id),
-                updateSalidaDto.ips_actores?.map(e => e.ips_id) || (salida as any).salida_ips.map((m: any) => m.ips_id),
+                updateSalidaDto.ips_actores || (salida as any).salida_ips.map((m: any) => ({ ips_id: m.ips_id, actor_id: m.actor_id })),
                 updateSalidaDto.entidades_ids || salida.entidades.map(m => m.id),
-                updateSalidaDto.eapb_actores?.map(e => e.eapb_id) || salida.salida_eapb.map(m => m.eapb_id),
+                updateSalidaDto.eapb_actores || salida.salida_eapb.map(m => ({ eapb_id: m.eapb_id, actor_id: (m as any).actor_id })),
                 updateSalidaDto.organizaciones_ids || salida.organizaciones.map(m => m.id),
                 updateSalidaDto.idsn_ids || salida.idsn.map(m => m.id),
                 id

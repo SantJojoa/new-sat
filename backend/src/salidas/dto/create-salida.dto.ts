@@ -7,8 +7,8 @@ export class EapbActorItemDto {
     eapb_id: string;
 
     @IsString()
-    @IsOptional()
-    actor_id?: string;
+    @IsNotEmpty()
+    actor_id: string;
 }
 
 export class IpsActorItemDto {
@@ -17,8 +17,8 @@ export class IpsActorItemDto {
     ips_id: string;
 
     @IsString()
-    @IsOptional()
-    actor_id?: string;
+    @IsNotEmpty()
+    actor_id: string;
 }
 
 export class CreateSalidaDto {

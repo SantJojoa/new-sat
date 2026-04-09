@@ -306,6 +306,18 @@ export default function SolicitarSalida() {
         }
     }, [transporteResponsables, errors.transporteResponsables]);
 
+    useEffect(() => {
+        if (selectedIpsActors.length > 0 && errors.ipsActores) {
+            setErrors(prev => ({ ...prev, ipsActores: false }));
+        }
+    }, [selectedIpsActors, errors.ipsActores]);
+
+    useEffect(() => {
+        if (selectedEapbActors.length > 0 && errors.eapbActores) {
+            setErrors(prev => ({ ...prev, eapbActores: false }));
+        }
+    }, [selectedEapbActors, errors.eapbActores]);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -336,6 +348,9 @@ export default function SolicitarSalida() {
         if (!hasAnyParticipant) {
             newErrors.participantes = true;
         }
+
+        if (selectedIPS.length > 0 && selectedIpsActors.length === 0) newErrors.ipsActores = true;
+        if (selectedEAPB.length > 0 && selectedEapbActors.length === 0) newErrors.eapbActores = true;
 
         if (!formData.transporteMedio) newErrors.transporteMedio = true;
 
@@ -379,15 +394,11 @@ export default function SolicitarSalida() {
             descripcion: formData.descripcion,
             municipios_ids: selectedMunicipios.map(i => i.id),
             ips_actores: selectedIPS.flatMap<IpsActorItem>(i =>
-                selectedIpsActors.length > 0
-                    ? selectedIpsActors.map(actor => ({ ips_id: i.ips.id, actor_id: actor.id }))
-                    : [{ ips_id: i.ips.id }]
+                selectedIpsActors.map(actor => ({ ips_id: i.ips.id, actor_id: actor.id }))
             ),
             entidades_ids: selectedEntidades.map(i => i.id),
             eapb_actores: selectedEAPB.flatMap<EapbActorItem>(i =>
-                selectedEapbActors.length > 0
-                    ? selectedEapbActors.map(actor => ({ eapb_id: i.eapb.id, actor_id: actor.id }))
-                    : [{ eapb_id: i.eapb.id }]
+                selectedEapbActors.map(actor => ({ eapb_id: i.eapb.id, actor_id: actor.id }))
             ),
             organizaciones_ids: selectedOrganizaciones.map(i => i.id),
             idsn_ids: selectedIDSN.map(i => i.id),
@@ -521,6 +532,22 @@ export default function SolicitarSalida() {
         setActiveModal(null);
         if (selectedItems.length > 0) {
             setActiveEapbActorModal(true);
+        }
+    };
+
+    const closeIpsActorModal = () => {
+        setIpsActorSearch('');
+        setActiveIpsActorModal(false);
+        if (selectedIpsActors.length === 0) {
+            setSelectedIPS([]);
+        }
+    };
+
+    const closeEapbActorModal = () => {
+        setEapbActorSearch('');
+        setActiveEapbActorModal(false);
+        if (selectedEapbActors.length === 0) {
+            setSelectedEAPB([]);
         }
     };
 
@@ -851,6 +878,12 @@ export default function SolicitarSalida() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {errors.ipsActores && (
+                                                <div className="bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 text-sm flex items-center gap-2">
+                                                    <AlertCircle size={18} />
+                                                    Debe seleccionar al menos un actor para las IPS elegidas.
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
@@ -920,6 +953,12 @@ export default function SolicitarSalida() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {errors.eapbActores && (
+                                                <div className="bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 text-sm flex items-center gap-2">
+                                                    <AlertCircle size={18} />
+                                                    Debe seleccionar al menos un actor para las EAPB elegidas.
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
@@ -1236,7 +1275,7 @@ export default function SolicitarSalida() {
             {activeIpsActorModal && selectedIPS.length > 0 && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
-                    onClick={(e) => { if (e.target === e.currentTarget) setActiveIpsActorModal(false); }}
+                    onClick={(e) => { if (e.target === e.currentTarget) closeIpsActorModal(); }}
                 >
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-zinc-200 animate-slideUp">
                         <div className="p-6 border-b border-zinc-200">
@@ -1250,7 +1289,7 @@ export default function SolicitarSalida() {
                                         <p className="text-sm text-zinc-500 mt-0.5">Los actores seleccionados se aplicarán a las {selectedIPS.length} IPS elegidas</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setActiveIpsActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
+                                <button onClick={closeIpsActorModal} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
@@ -1297,14 +1336,14 @@ export default function SolicitarSalida() {
                         </div>
                         <div className="p-6 border-t border-zinc-200 flex gap-3">
                             <button
-                                onClick={() => setActiveIpsActorModal(false)}
+                                onClick={closeIpsActorModal}
                                 className="flex-1 px-4 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-100 transition-colors"
                                 type="button"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => { setIpsActorSearch(''); setActiveIpsActorModal(false); }}
+                                onClick={closeIpsActorModal}
                                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
                                 type="button"
                             >
@@ -1320,7 +1359,7 @@ export default function SolicitarSalida() {
             {activeEapbActorModal && selectedEAPB.length > 0 && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
-                    onClick={(e) => { if (e.target === e.currentTarget) setActiveEapbActorModal(false); }}
+                    onClick={(e) => { if (e.target === e.currentTarget) closeEapbActorModal(); }}
                 >
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-zinc-200 animate-slideUp">
                         <div className="p-6 border-b border-zinc-200">
@@ -1334,7 +1373,7 @@ export default function SolicitarSalida() {
                                         <p className="text-sm text-zinc-500 mt-0.5">Los actores seleccionados se aplicarán a las {selectedEAPB.length} EAPB elegidas</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setActiveEapbActorModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
+                                <button onClick={closeEapbActorModal} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
@@ -1381,14 +1420,14 @@ export default function SolicitarSalida() {
                         </div>
                         <div className="p-6 border-t border-zinc-200 flex gap-3">
                             <button
-                                onClick={() => setActiveEapbActorModal(false)}
+                                onClick={closeEapbActorModal}
                                 className="flex-1 px-4 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-100 transition-colors"
                                 type="button"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => { setEapbActorSearch(''); setActiveEapbActorModal(false); }}
+                                onClick={closeEapbActorModal}
                                 className="flex-1 px-4 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
                                 type="button"
                             >
