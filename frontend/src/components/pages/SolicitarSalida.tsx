@@ -590,20 +590,23 @@ export default function SolicitarSalida() {
                     <div className="p-4 md:p-8">
                         <div className="max-w-7xl mx-auto">
                             <div className="mb-8">
-                                <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
-                                    <ClipboardList className="text-primary" size={32} />
-                                    {isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}
-                                </h1>
-                                <p className="text-zinc-500 mt-1">
-                                    {isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}
-                                </p>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <ClipboardList className="text-primary" size={22} />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-zinc-900">{isEditing ? 'Editar Programación' : 'Solicitar Programación SIVAT'}</h1>
+                                        <p className="text-sm text-zinc-500">{isEditing ? 'Modifique la información de la programación.' : 'Formulario para la programación de programaciones, acompañamientos, etc.'}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
-                                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
-                                    <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-primary">description</span>
+                            <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden">
+                                <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-8 py-5 border-b border-zinc-100">
+                                    <h2 className="text-base font-bold text-zinc-800 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary text-[20px]">description</span>
                                         Información General de la Programación
-                                    </h3>
+                                    </h2>
+                                    <p className="text-sm text-zinc-500 mt-0.5">Diligencie todos los campos requeridos</p>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="p-8">
@@ -615,7 +618,7 @@ export default function SolicitarSalida() {
                                         {user?.user_type?.name === 'superadmin' && (
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Área <span className="text-xs text-primary font-normal">(Selección Superadmin)</span>
+                                                    Área <span className="text-red-500">*</span>
                                                 </label>
                                                 <select
                                                     name="areaId"
@@ -635,7 +638,7 @@ export default function SolicitarSalida() {
                                         {user?.user_type?.name === 'admin_subdireccion' && (
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Líder Solicitante <span className="text-xs text-primary font-normal">(Requerido)</span>
+                                                    Líder Solicitante <span className="text-red-500">*</span>
                                                 </label>
                                                 <select
                                                     name="solicitanteId"
@@ -660,7 +663,7 @@ export default function SolicitarSalida() {
                                         {user?.user_type?.name === 'superadmin' && formData.areaId && (
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Líder Solicitante <span className="text-xs text-primary font-normal">(Requerido)</span>
+                                                    Líder Solicitante <span className="text-red-500">*</span>
                                                 </label>
                                                 <select
                                                     name="solicitanteId"
@@ -683,7 +686,7 @@ export default function SolicitarSalida() {
 
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Tipo de Programación
+                                                Tipo de Programación <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 name="tipoSalida"
@@ -698,7 +701,7 @@ export default function SolicitarSalida() {
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Subtipo de Programación
+                                                Subtipo de Programación <span className="text-red-500">*</span>
                                             </label>
                                             <button
                                                 type="button"
@@ -715,7 +718,7 @@ export default function SolicitarSalida() {
                                         </div>
                                         <div className="flex flex-col gap-2 md:col-span-2 lg:col-span-3">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Tema
+                                                Tema <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -728,7 +731,7 @@ export default function SolicitarSalida() {
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Fecha de Inicio
+                                                Fecha de Inicio <span className="text-red-500">*</span>
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -747,7 +750,7 @@ export default function SolicitarSalida() {
 
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Fecha Final
+                                                Fecha Final <span className="text-red-500">*</span>
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -765,7 +768,7 @@ export default function SolicitarSalida() {
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Jornada
+                                                Jornada <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 name="jornada"
@@ -1091,7 +1094,7 @@ export default function SolicitarSalida() {
                                         {/* Medio de Transporte */}
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
-                                                Medio de Transporte
+                                                Medio de Transporte <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 name="transporteMedio"
@@ -1099,7 +1102,7 @@ export default function SolicitarSalida() {
                                                 onChange={handleInputChange}
                                                 className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.transporteMedio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             >
-                                                <option value="">Seleccione medio</option>
+                                                <option value="" disabled>Seleccione medio</option>
                                                 <option value="Pasajero">Pasajero</option>
                                                 <option value="Permanente">Permanente</option>
                                                 <option value="Institucional">Institucional</option>
@@ -1127,7 +1130,7 @@ export default function SolicitarSalida() {
                                         <div className="flex flex-col gap-3 md:col-span-2">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Lugar del Evento (Municipio)
+                                                    Lugar del Evento (Municipio) <span className="text-red-500">*</span>
                                                 </label>
                                                 <button
                                                     type="button"
