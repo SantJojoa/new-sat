@@ -130,8 +130,19 @@ export default function SlideBar() {
         return acc;
     }, {} as Record<string, typeof allNavItems>);
 
+    if (user?.user_type?.name === 'superadmin') {
+        if (!groupedItems['Configuración']) groupedItems['Configuración'] = [];
+        groupedItems['Configuración'].push({
+            id: 'ventana-programacion-module',
+            name: 'ventana_programacion',
+            label: 'Ventana de Programación',
+            icon: 'calendar_month',
+            href: '/ventana-programacion',
+        });
+    }
+
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Gestión de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">

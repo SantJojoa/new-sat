@@ -17,6 +17,7 @@ import GestionarArticulacion from './src/components/pages/GestionarArticulacion'
 import CalendarioArticulaciones from './src/components/pages/CalendarioArticulaciones'
 import GestionarIvc from './src/components/pages/GestionarIvc'
 import CalendarioIvc from './src/components/pages/CalendarioIvc'
+import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacion'
 
 function App() {
     return (
@@ -122,6 +123,12 @@ function App() {
                         <Route path="users" element={
                             <ProtectedRoute allowedRoles={['superadmin']}>
                                 <Users />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="ventana-programacion" element={
+                            <ProtectedRoute allowedRoles={['superadmin']}>
+                                <VentanaProgramacion />
                             </ProtectedRoute>
                         } />
 

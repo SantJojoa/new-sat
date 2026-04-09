@@ -9,6 +9,7 @@ import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
 import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem, IpsActorItem, EapbActorItem } from "../../types/salidas"
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
+import { ventanaProgramacionService, type VentanaStatus } from "../../services/ventanaProgramacionService"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -77,6 +78,10 @@ export default function SolicitarSalida() {
         idsn: string[];
     }
     const [conflictModal, setConflictModal] = useState<ConflictItem[]>([]);
+
+    // Ventana programacion state
+    const [ventanaStatus, setVentanaStatus] = useState<VentanaStatus | null>(null);
+    const [ventanaLoading, setVentanaLoading] = useState(true);
 
     // Join request state
     const [joinRequestModal, setJoinRequestModal] = useState<{ open: boolean; salida_id: string; codigo: string; area: string }>({ open: false, salida_id: '', codigo: '', area: '' });
@@ -172,6 +177,19 @@ export default function SolicitarSalida() {
 
         fetchCatalogos();
     }, []);
+
+    useEffect(() => {
+        if (isEditing) { setVentanaLoading(false); return; }
+        const checkVentana = () => {
+            ventanaProgramacionService.get()
+                .then(data => setVentanaStatus(data))
+                .catch(() => setVentanaStatus({ ventana: null, abierta: false }))
+                .finally(() => setVentanaLoading(false));
+        };
+        checkVentana();
+        const interval = setInterval(checkVentana, 30000);
+        return () => clearInterval(interval);
+    }, [isEditing]);
 
     useEffect(() => {
         const fetchSalida = async () => {
@@ -580,6 +598,48 @@ export default function SolicitarSalida() {
             </div>
         );
     };
+
+    if (!isEditing && ventanaLoading) {
+        return (
+            <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
+                <SlideBar />
+                <main className="flex-1 flex items-center justify-center bg-zinc-50/50">
+                    <p className="text-zinc-500 text-sm">Verificando disponibilidad del módulo...</p>
+                </main>
+            </div>
+        );
+    }
+
+    if (!isEditing && (!ventanaStatus?.abierta)) {
+        const fmt = (d: string) => new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+        return (
+            <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
+                <SlideBar />
+                <main className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
+                    <div className="max-w-md w-full text-center">
+                        <div className="w-20 h-20 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-6">
+                            <AlertTriangle className="text-red-500" size={36} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Módulo No Disponible</h2>
+                        <p className="text-zinc-500 text-sm mb-4">
+                            El periodo de solicitud de programaciones está cerrado en este momento.
+                        </p>
+                        {ventanaStatus?.ventana ? (
+                            <div className="bg-white rounded-xl border border-zinc-200 p-4 text-sm text-zinc-600 space-y-1">
+                                <p><span className="font-semibold">Última ventana:</span></p>
+                                <p>Apertura: <span className="font-medium text-zinc-800">{fmt(ventanaStatus.ventana.fecha_inicio)}</span></p>
+                                <p>Cierre: <span className="font-medium text-zinc-800">{fmt(ventanaStatus.ventana.fecha_fin)}</span></p>
+                            </div>
+                        ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
+                                No hay ningún periodo de solicitud configurado. Contacte al administrador.
+                            </div>
+                        )}
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-bg-light font-display min-h-screen">

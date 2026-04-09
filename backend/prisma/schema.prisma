@@ -337,6 +337,15 @@ model ivc {
   updated_at DateTime @updatedAt
 }
 
+model ventana_programacion {
+  id           String   @id @default(cuid())
+  fecha_inicio DateTime
+  fecha_fin    DateTime
+  activo       Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
 model solicitudes_union {
   id                  String   @id @default(cuid())
   salida_id           String

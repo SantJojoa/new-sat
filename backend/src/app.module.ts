@@ -10,6 +10,7 @@ import { SolicitudesUnionModule } from './solicitudes-union/solicitudes-union.mo
 import { NotificationsModule } from './notifications/notifications.module';
 import { ArticulacionesModule } from './articulaciones/articulaciones.module';
 import { IvcModule } from './ivc/ivc.module';
+import { VentanaProgramacionModule } from './ventana-programacion/ventana-programacion.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { IvcModule } from './ivc/ivc.module';
     NotificationsModule,
     ArticulacionesModule,
     IvcModule,
+    VentanaProgramacionModule,
   ],
   controllers: [],
   providers: [PrismaService],
