@@ -43,6 +43,11 @@ export default function Dashboard() {
 
     const extraModules: DashboardModulePermission[] = [
         {
+            id: 'calendario-salidas-module',
+            modules: { id: 'calendario-salidas-module', name: 'calendario_salidas', description: 'Calendario de Programación', icon: 'calendar_month', path: '/calendario-salidas', is_active: true, order: 98 },
+            can_view: true
+        },
+        {
             id: 'reportes-salidas-module',
             modules: { id: 'reportes-salidas-module', name: 'reportes_salidas', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-salidas', is_active: true, order: 99 },
             can_view: true

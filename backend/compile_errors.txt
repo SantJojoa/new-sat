@@ -1,2 +1,0 @@
-src/salidas/salidas.controller.ts(18,34): error TS2307: Cannot find module '../auth/guards/permissions.guard' or its corresponding type declarations.
-src/salidas/salidas.controller.ts(19,36): error TS2307: Cannot find module '../auth/decorators/permissions.decorator' or its corresponding type declarations.

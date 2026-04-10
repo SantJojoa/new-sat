@@ -94,6 +94,13 @@ export default function SlideBar() {
     // Inject Reportes manually
     const extraNavItems = [
         {
+            id: 'calendario-salidas-module',
+            name: 'calendario_salidas',
+            label: 'Calendario de Programación',
+            icon: 'calendar_month',
+            href: '/calendario-salidas'
+        },
+        {
             id: 'reportes-salidas-module',
             name: 'reportes_salidas',
             label: 'Reportes y Estadísticas',
@@ -117,6 +124,12 @@ export default function SlideBar() {
     ];
 
     const allCombinedNavItems = [...allNavItems, ...extraNavItems];
+    for (const extra of extraNavItems) {
+        if (!allCombinedNavItems.some(item => item.name === extra.name)) {
+            allCombinedNavItems.push(extra);
+        }
+    }
+
 
     // Define categories
     const categories: Record<string, string[]> = {
