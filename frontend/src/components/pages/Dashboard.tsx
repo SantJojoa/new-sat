@@ -30,6 +30,8 @@ export default function Dashboard() {
 
     const categories: Record<string, string[]> = {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
+        'Articulacion': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
+        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -38,7 +40,7 @@ export default function Dashboard() {
         for (const [category, modules] of Object.entries(categories)) {
             if (modules.includes(moduleName)) return category;
         }
-        return 'Otras Funciones';
+        return 'Otros';
     };
 
     const extraModules: DashboardModulePermission[] = [
@@ -79,7 +81,7 @@ export default function Dashboard() {
         return acc;
     }, {} as Record<string, DashboardModulePermission[]>);
 
-    const categoryOrder = ['Programaciones', 'Gestion de Dependencias', 'Usuarios', 'Otras Funciones'];
+    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="bg-bg-light font-display min-h-screen">
