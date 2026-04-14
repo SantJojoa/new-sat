@@ -33,7 +33,8 @@ export default function Dashboard() {
         'Articulacion': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
-        'Usuarios': ['usuarios']
+        'Usuarios': ['usuarios'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones']
     };
 
     const getCategory = (moduleName: string) => {
@@ -63,6 +64,11 @@ export default function Dashboard() {
             id: 'reportes-ivc-module',
             modules: { id: 'reportes-ivc-module', name: 'reportes_ivc', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-ivc', is_active: true, order: 101 },
             can_view: true
+        },
+        {
+            id: 'seguimiento-capacitaciones-module',
+            modules: { id: 'seguimiento-capacitaciones-module', name: 'seguimiento_capacitaciones', description: 'Seguimiento de Capacitaciones', icon: 'stack', path: '/seguimiento-capacitaciones', is_active: true, order: 102 },
+            can_view: true
         }
     ];
 
@@ -81,7 +87,7 @@ export default function Dashboard() {
         return acc;
     }, {} as Record<string, DashboardModulePermission[]>);
 
-    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Seguimiento/Actas', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="bg-bg-light font-display min-h-screen">

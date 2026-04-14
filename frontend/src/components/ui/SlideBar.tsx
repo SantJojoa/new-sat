@@ -120,6 +120,13 @@ export default function SlideBar() {
             label: 'Reportes y Estadísticas',
             icon: 'bar_chart',
             href: '/reportes-ivc'
+        },
+        {
+            id: 'seguimiento-capacitaciones-module',
+            name: 'seguimiento_capacitaciones',
+            label: 'Seguimiento de Capacitaciones',
+            icon: 'stack',
+            href: '/seguimiento-capacitaciones'
         }
     ];
 
@@ -137,6 +144,7 @@ export default function SlideBar() {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
@@ -169,7 +177,7 @@ export default function SlideBar() {
     }
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">

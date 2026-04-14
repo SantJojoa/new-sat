@@ -20,6 +20,7 @@ import CalendarioIvc from './src/components/pages/CalendarioIvc'
 import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacion'
 import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
 import ReportesIvc from './src/components/pages/ReportesIvc'
+import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacitaciones'
 
 function App() {
     return (
@@ -157,6 +158,12 @@ function App() {
 
 
                         {/* 404 dentro del layout */}
+
+                        <Route path="seguimiento-capacitaciones" element={
+                            <ProtectedRoute>
+                                <SeguimientoCapacitaciones />
+                            </ProtectedRoute>
+                        } />
                     </Route>
                 </Routes>
             </Router>
