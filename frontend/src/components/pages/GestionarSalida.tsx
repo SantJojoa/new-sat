@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { ApiErrorPayload } from '../../types/api';
 import type { BulkActionResult, SalidaRecord } from '../../types/salidas';
 import { solicitudesUnionService, type SolicitudUnion } from '../../services/solicitudesUnionService';
+import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 
 export default function GestionarSalida() {
     const { user } = useAuth();
@@ -361,6 +362,32 @@ export default function GestionarSalida() {
         return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate && matchesMonth && matchesYear;
     });
 
+    const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, subdireccion: filterSubdireccion, tipo: filterTipo, subtipo: filterSubtipo, municipio: filterMunicipio, month: filterMonth, year: filterYear, dateStart: filterDateStart, dateEnd: filterDateEnd };
+    const filterFields: FilterField[] = [
+        { type: 'search', key: 'search', placeholder: 'Código o solicitante...' },
+        { type: 'select', key: 'area', emptyLabel: 'Todas las Áreas', options: uniqueAreas },
+        { type: 'select', key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones },
+        { type: 'select', key: 'tipo', emptyLabel: 'Todos los Tipos', options: uniqueTipos },
+        { type: 'select', key: 'subtipo', emptyLabel: 'Todos los Subtipos', options: uniqueSubtipos },
+        { type: 'select', key: 'municipio', emptyLabel: 'Todos los Municipios', options: uniqueMunicipios, icon: 'pin' },
+        { type: 'month', key: 'month' },
+        { type: 'year', key: 'year', years: uniqueYears },
+        { type: 'date', key: 'dateStart', title: 'Fecha Inicio' },
+        { type: 'date', key: 'dateEnd', title: 'Fecha Final' },
+    ];
+    const handleFilterChange = (key: string, value: string) => {
+        if (key === 'search') setSearchTerm(value);
+        else if (key === 'area') setFilterArea(value);
+        else if (key === 'subdireccion') setFilterSubdireccion(value);
+        else if (key === 'tipo') setFilterTipo(value);
+        else if (key === 'subtipo') setFilterSubtipo(value);
+        else if (key === 'municipio') setFilterMunicipio(value);
+        else if (key === 'month') setFilterMonth(value);
+        else if (key === 'year') setFilterYear(value);
+        else if (key === 'dateStart') setFilterDateStart(value);
+        else if (key === 'dateEnd') setFilterDateEnd(value);
+    };
+
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
@@ -397,148 +424,7 @@ export default function GestionarSalida() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mb-6">
-                        {/* Filters Header */}
-                        <div className="p-4 border-b border-zinc-200 bg-zinc-50/50">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-2">
-                                    <Search size={16} /> Filtros de Búsqueda
-                                </h3>
-                                {(searchTerm || filterArea || filterSubdireccion || filterTipo || filterSubtipo || filterMunicipio || filterDateStart || filterDateEnd || filterMonth || filterYear) && (
-                                    <button
-                                        onClick={handleResetFilters}
-                                        className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover font-medium transition-colors"
-                                    >
-                                        <RefreshCcw size={12} /> Limpiar Filtros
-                                    </button>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder="Código o solicitante..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterArea}
-                                        onChange={(e) => setFilterArea(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todas las Áreas</option>
-                                        {uniqueAreas.map(area => (
-                                            <option key={area} value={area}>{area}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterSubdireccion}
-                                        onChange={(e) => setFilterSubdireccion(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todas las Subdirecciones</option>
-                                        {uniqueSubdirecciones.map(sub => (
-                                            <option key={sub} value={sub}>{sub}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterTipo}
-                                        onChange={(e) => setFilterTipo(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todos los Tipos</option>
-                                        {uniqueTipos.map(t => (
-                                            <option key={t} value={t}>{t}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterSubtipo}
-                                        onChange={(e) => setFilterSubtipo(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todos los Subtipos</option>
-                                        {uniqueSubtipos.map(st => (
-                                            <option key={st} value={st}>{st}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterMunicipio}
-                                        onChange={(e) => setFilterMunicipio(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todos los Municipios</option>
-                                        {uniqueMunicipios.map(m => (
-                                            <option key={m} value={m}>{m}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterMonth}
-                                        onChange={(e) => setFilterMonth(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todos los Meses</option>
-                                        <option value="1">Enero</option>
-                                        <option value="2">Febrero</option>
-                                        <option value="3">Marzo</option>
-                                        <option value="4">Abril</option>
-                                        <option value="5">Mayo</option>
-                                        <option value="6">Junio</option>
-                                        <option value="7">Julio</option>
-                                        <option value="8">Agosto</option>
-                                        <option value="9">Septiembre</option>
-                                        <option value="10">Octubre</option>
-                                        <option value="11">Noviembre</option>
-                                        <option value="12">Diciembre</option>
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                    <select
-                                        value={filterYear}
-                                        onChange={(e) => setFilterYear(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
-                                    >
-                                        <option value="">Todos los Años</option>
-                                        {uniqueYears.map(y => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="relative">
-                                    <div className="flex items-center gap-2 w-full pl-3 pr-4 py-2 rounded-lg border border-zinc-300 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary bg-white">
-                                        <Calendar size={16} className="text-zinc-400" />
-                                        <input
-                                            type="date"
-                                            value={filterDateStart}
-                                            onChange={(e) => setFilterDateStart(e.target.value)}
-                                            className="w-full outline-none text-sm bg-transparent"
-                                            title="Filtrar por Fecha Inicio"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <FiltersPanel values={filterValues} onChange={handleFilterChange} onReset={handleResetFilters} fields={filterFields} />
 
                     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                         <div className="overflow-x-auto">

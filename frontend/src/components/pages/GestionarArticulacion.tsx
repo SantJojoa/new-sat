@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { User, Search, RefreshCcw, Calendar, MapPin, Layers, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, RefreshCcw, Calendar, MapPin, Layers, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { articulacionesService } from '../../services/articulacionesService';
+import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import type { ArticulacionRecord } from '../../types/articulaciones';
 
 export default function GestionarArticulacion() {
@@ -55,6 +56,21 @@ export default function GestionarArticulacion() {
         return matchSearch && matchArea && matchStart && matchEnd;
     });
 
+    const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, dateStart: filterDateStart, dateEnd: filterDateEnd };
+    const filterFields: FilterField[] = [
+        { type: 'search', key: 'search', placeholder: 'Código, tema o solicitante...' },
+        ...(isAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: uniqueAreas }] : []),
+        { type: 'date', key: 'dateStart', title: 'Fecha Inicio' },
+        { type: 'date', key: 'dateEnd', title: 'Fecha Final' },
+    ];
+    const handleFilterChange = (key: string, value: string) => {
+        if (key === 'search') setSearchTerm(value);
+        else if (key === 'area') setFilterArea(value);
+        else if (key === 'dateStart') setFilterDateStart(value);
+        else if (key === 'dateEnd') setFilterDateEnd(value);
+    };
+    const handleResetFilters = () => { setSearchTerm(''); setFilterArea(''); setFilterDateStart(''); setFilterDateEnd(''); };
+
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
@@ -93,26 +109,7 @@ export default function GestionarArticulacion() {
                         </div>
                     </div>
 
-                    {/* Filters */}
-                    <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm mb-4 flex flex-wrap gap-3">
-                        <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-zinc-50 rounded-lg border border-zinc-200 px-3 py-2">
-                            <Search size={16} className="text-zinc-400 shrink-0" />
-                            <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar por código, tema, solicitante..." className="bg-transparent w-full text-sm outline-none text-zinc-700 placeholder-zinc-400" />
-                        </div>
-                        {isAdmin && (
-                            <select value={filterArea} onChange={e => setFilterArea(e.target.value)} className="h-10 px-3 rounded-lg border border-zinc-200 text-sm text-zinc-700 bg-white">
-                                <option value="">Todas las áreas</option>
-                                {uniqueAreas.map(a => <option key={a} value={a}>{a}</option>)}
-                            </select>
-                        )}
-                        <input type="date" value={filterDateStart} onChange={e => setFilterDateStart(e.target.value)} className="h-10 px-3 rounded-lg border border-zinc-200 text-sm text-zinc-700 bg-white" />
-                        <input type="date" value={filterDateEnd} onChange={e => setFilterDateEnd(e.target.value)} className="h-10 px-3 rounded-lg border border-zinc-200 text-sm text-zinc-700 bg-white" />
-                        {(searchTerm || filterArea || filterDateStart || filterDateEnd) && (
-                            <button onClick={() => { setSearchTerm(''); setFilterArea(''); setFilterDateStart(''); setFilterDateEnd(''); }} className="h-10 px-3 rounded-lg border border-zinc-200 text-sm text-zinc-500 hover:bg-zinc-50 flex items-center gap-1">
-                                <XCircle size={14} /> Limpiar
-                            </button>
-                        )}
-                    </div>
+                    <FiltersPanel values={filterValues} onChange={handleFilterChange} onReset={handleResetFilters} fields={filterFields} />
 
                     {/* Table */}
                     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
