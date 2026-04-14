@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
-import { Search, CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare, Users, Bell, X } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, MapPin, Layers, Edit2, Trash2, RefreshCcw, Calendar, CheckSquare, Users, Bell, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import type { ApiErrorPayload } from '../../types/api';
 import type { BulkActionResult, SalidaRecord } from '../../types/salidas';
 import { solicitudesUnionService, type SolicitudUnion } from '../../services/solicitudesUnionService';
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
+import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 
 export default function GestionarSalida() {
     const { user } = useAuth();
@@ -388,6 +389,71 @@ export default function GestionarSalida() {
         else if (key === 'dateEnd') setFilterDateEnd(value);
     };
 
+    const tableColumns: TableColumn<SalidaRecord>[] = [
+        ...(hasApprovePermission ? [{
+            header: (
+                <input
+                    type="checkbox"
+                    checked={(() => {
+                        const selectableIds = filteredSalidas.filter(canBulkSelect).map(s => s.id);
+                        return selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
+                    })()}
+                    onChange={toggleSelectAll}
+                    disabled={filteredSalidas.filter(canBulkSelect).length === 0}
+                    className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Seleccionar todas las pendientes de mi área"
+                />
+            ),
+            render: (salida: SalidaRecord) => (
+                <input
+                    type="checkbox"
+                    checked={selectedIds.has(salida.id)}
+                    onChange={() => toggleSelect(salida.id)}
+                    disabled={!canBulkSelect(salida)}
+                    className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    title={!canBulkSelect(salida) ? (salida.estado !== 'pendiente' ? 'No se puede seleccionar (ya procesada)' : 'No pertenece a su área') : ''}
+                />
+            ),
+        } as TableColumn<SalidaRecord>] : []),
+        { header: 'Código', render: s => <span className="font-medium text-zinc-900">{s.codigo}</span> },
+        {
+            header: 'Solicitante', render: s => (
+                <div>
+                    <div className="font-medium text-zinc-900">{s.solicitante.names}</div>
+                    <div className="text-zinc-500 text-xs">{s.areas?.name}</div>
+                    {s.areas_participantes && s.areas_participantes.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {s.areas_participantes.map(ap => (
+                                <span key={ap.id} className="inline-flex items-center gap-0.5 bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                    <Users size={9} /> {ap.name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Detalles', render: s => (
+                <div className="text-zinc-600">
+                    <div className="font-medium">{s.tipo_salida}</div>
+                    <div className="text-xs text-zinc-500 truncate max-w-[200px] flex items-center gap-1">
+                        <MapPin size={10} />{s.lugar_evento?.name || 'Varios / No especificado'}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Fecha / Jornada', render: s => (
+                <div className="text-zinc-600">
+                    <div>{new Date(s.fecha_inicio).toLocaleDateString()}</div>
+                    <div className="text-xs text-zinc-500">{s.jornada}</div>
+                </div>
+            )
+        },
+        { header: 'Estado', render: s => getStatusBadge(s.estado) },
+    ];
+
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
@@ -426,146 +492,53 @@ export default function GestionarSalida() {
 
                     <FiltersPanel values={filterValues} onChange={handleFilterChange} onReset={handleResetFilters} fields={filterFields} />
 
-                    <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-zinc-50 text-zinc-500 font-semibold text-sm uppercase tracking-wider">
-                                    <tr>
-                                        {hasApprovePermission && (
-                                            <th className="px-4 py-4 w-10">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(() => {
-                                                        const selectableIds = filteredSalidas.filter(canBulkSelect).map(s => s.id);
-                                                        return selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
-                                                    })()}
-                                                    onChange={toggleSelectAll}
-                                                    disabled={filteredSalidas.filter(canBulkSelect).length === 0}
-                                                    className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title="Seleccionar todas las pendientes de mi área"
-                                                />
-                                            </th>
-                                        )}
-                                        <th className="px-6 py-4">Código</th>
-                                        <th className="px-6 py-4">Solicitante</th>
-                                        <th className="px-6 py-4">Detalles</th>
-                                        <th className="px-6 py-4">Fecha / Jornada</th>
-                                        <th className="px-6 py-4">Estado</th>
-                                        <th className="px-6 py-4 text-right">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-zinc-200">
-                                    {loading ? (
-                                        <tr><td colSpan={hasApprovePermission ? 7 : 6} className="px-6 py-8 text-center text-zinc-500">Cargando solicitudes...</td></tr>
-                                    ) : filteredSalidas.length === 0 ? (
-                                        <tr><td colSpan={hasApprovePermission ? 7 : 6} className="px-6 py-8 text-center text-zinc-500">No hay solicitudes encontradas</td></tr>
-                                    ) : (
-                                        filteredSalidas.map((salida) => (
-                                            <tr key={salida.id} className={`hover:bg-zinc-50 transition-colors text-sm ${selectedIds.has(salida.id) ? 'bg-primary/5' : ''}`}>
-                                                {hasApprovePermission && (
-                                                    <td className="px-4 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedIds.has(salida.id)}
-                                                            onChange={() => toggleSelect(salida.id)}
-                                                            disabled={!canBulkSelect(salida)}
-                                                            className="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                                                            title={!canBulkSelect(salida) ? (salida.estado !== 'pendiente' ? 'No se puede seleccionar (ya procesada)' : 'No pertenece a su área') : ''}
-                                                        />
-                                                    </td>
-                                                )}
-                                                <td className="px-6 py-4 font-medium text-zinc-900">{salida.codigo}</td>
-                                                <td className="px-6 py-4">
-                                                    <div className="font-medium text-zinc-900">{salida.solicitante.names}</div>
-                                                    <div className="text-zinc-500 text-xs">{salida.areas?.name}</div>
-                                                    {salida.areas_participantes && salida.areas_participantes.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {salida.areas_participantes.map(ap => (
-                                                                <span key={ap.id} className="inline-flex items-center gap-0.5 bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
-                                                                    <Users size={9} /> {ap.name}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-zinc-600">
-                                                    <div className="font-medium">{salida.tipo_salida}</div>
-                                                    <div className="text-xs text-zinc-500 truncate max-w-[200px] flex items-center gap-1">
-                                                        <MapPin size={10} />
-                                                        {salida.lugar_evento?.name || 'Varios / No especificado'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-zinc-600">
-                                                    <div>{new Date(salida.fecha_inicio).toLocaleDateString()}</div>
-                                                    <div className="text-xs text-zinc-500">{salida.jornada}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {getStatusBadge(salida.estado)}
-                                                </td>
-                                                <td className="px-6 py-4 flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => setDetailsModal({ isOpen: true, salida })}
-                                                        className="px-3 py-1.5 bg-zinc-100 text-zinc-700 hover:bg-zinc-200 rounded-lg text-xs font-semibold transition-colors border border-zinc-200 flex items-center gap-1"
-                                                        title="Ver Detalles"
-                                                    >
-                                                        <Search size={12} /> Ver
-                                                    </button>
-                                                    {canEdit(salida) && (
-                                                        <button
-                                                            onClick={() => navigate(`/gestionar-salida/editar/${salida.id}`)}
-                                                            className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors border border-blue-200 flex items-center gap-1"
-                                                            title="Editar"
-                                                        >
-                                                            <Edit2 size={12} /> Editar
-                                                        </button>
-                                                    )}
-                                                    {canDelete(salida) && (
-                                                        <button
-                                                            onClick={() => setActionModal({ type: 'delete', salidaId: salida.id })}
-                                                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200 flex items-center gap-1"
-                                                            title="Eliminar"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    )}
-                                                    {canApprove(salida) && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setComment('');
-                                                                    setActionModal({ type: 'approve', salidaId: salida.id });
-                                                                }}
-                                                                disabled={salida.estado === 'aprobada'}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'aprobada'
-                                                                    ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
-                                                                    : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
-                                                                    }`}
-                                                            >
-                                                                Aprobar
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setComment('');
-                                                                    setActionModal({ type: 'reject', salidaId: salida.id });
-                                                                }}
-                                                                disabled={salida.estado === 'rechazada'}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'rechazada'
-                                                                    ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
-                                                                    : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
-                                                                    }`}
-                                                            >
-                                                                Rechazar
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <RecordsTable
+                        records={filteredSalidas}
+                        loading={loading}
+                        columns={tableColumns}
+                        rowClassName={s => selectedIds.has(s.id) ? 'bg-primary/5' : ''}
+                        renderActions={salida => (
+                            <>
+                                <ViewButton onClick={() => setDetailsModal({ isOpen: true, salida })} />
+                                {canEdit(salida) && (
+                                    <button
+                                        onClick={() => navigate(`/gestionar-salida/editar/${salida.id}`)}
+                                        className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors border border-blue-200 flex items-center gap-1"
+                                    >
+                                        <Edit2 size={12} /> Editar
+                                    </button>
+                                )}
+                                {canDelete(salida) && (
+                                    <button
+                                        onClick={() => setActionModal({ type: 'delete', salidaId: salida.id })}
+                                        className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors border border-red-200 flex items-center gap-1"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                )}
+                                {canApprove(salida) && (
+                                    <>
+                                        <button
+                                            onClick={() => { setComment(''); setActionModal({ type: 'approve', salidaId: salida.id }); }}
+                                            disabled={salida.estado === 'aprobada'}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'aprobada' ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'}`}
+                                        >
+                                            Aprobar
+                                        </button>
+                                        <button
+                                            onClick={() => { setComment(''); setActionModal({ type: 'reject', salidaId: salida.id }); }}
+                                            disabled={salida.estado === 'rechazada'}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border flex items-center gap-1 ${salida.estado === 'rechazada' ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'}`}
+                                        >
+                                            Rechazar
+                                        </button>
+                                    </>
+                                )}
+                            </>
+                        )}
+                        emptyMessage="No hay solicitudes encontradas"
+                        emptyIcon="assignment"
+                    />
                 </div>
 
                 {/* Join Requests Modal */}

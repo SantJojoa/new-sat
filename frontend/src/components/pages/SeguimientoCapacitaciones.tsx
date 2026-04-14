@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, XCircle, Eye } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers, XCircle } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
+import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
 import { salidasService } from "../../services/salidasService";
@@ -24,6 +25,37 @@ const ESTADO_LABEL: Record<string, string> = {
 };
 
 
+
+const capacitacionColumns: TableColumn<SalidaRecord>[] = [
+    { header: 'Código', render: r => <span className="font-mono font-bold text-primary text-xs">{r.codigo}</span> },
+    { header: 'Tema', render: r => <span className="max-w-[180px] truncate font-medium text-zinc-800 block">{r.tema}</span> },
+    {
+        header: 'Tipo / Subtipo', render: r => (
+            <div>
+                <span className="block text-xs text-zinc-700">{r.tipo_salida}</span>
+                <span className="text-zinc-400 text-xs">{r.subtipo_salida}</span>
+            </div>
+        )
+    },
+    { header: 'Área', render: r => <span className="text-zinc-600">{r.areas?.name || '—'}</span> },
+    {
+        header: 'Fechas', render: r => (
+            <div className="whitespace-nowrap text-zinc-600">
+                <span className="flex items-center gap-1"><Calendar size={12} className="text-zinc-400" />{new Date(r.fecha_inicio).toLocaleDateString('es-CO')}</span>
+                {r.fecha_inicio !== r.fecha_final && <span className="text-zinc-400 text-xs">→ {new Date(r.fecha_final).toLocaleDateString('es-CO')}</span>}
+            </div>
+        )
+    },
+    { header: 'Lugar', render: r => <span className="flex items-center gap-1 text-zinc-600"><MapPin size={12} className="text-zinc-400" />{r.lugar_evento?.name || '—'}</span> },
+    {
+        header: 'Estado', render: r => (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${ESTADO_STYLES[r.estado] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'}`}>
+                {ESTADO_LABEL[r.estado] ?? r.estado}
+            </span>
+        )
+    },
+    { header: 'Solicitante', render: r => <span className="text-zinc-600 text-xs">{r.solicitante?.names || '—'}</span> },
+];
 
 export default function SeguimientoCapacitaciones() {
 
@@ -171,80 +203,15 @@ export default function SeguimientoCapacitaciones() {
                         ))}
                     </div>
                     <FiltersPanel values={filterValues} onChange={handleFilterChange} onReset={handleResetFilters} fields={filterFields} />
-                    <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                        {loading ? (
-                            <div className="flex items-center justify-center py-20">
-                                <RefreshCcw size={24} className="animate-spin text-primary" />
-                                <span className="ml-3 text-zinc-500 font-medium">Cargando...</span>
-                            </div>
-                        ) : filtered.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <span className="material-symbols-outlined text-zinc-300 text-[48px] mb-3">school</span>
-                                <p className="text-zinc-600 font-medium">No hay capacitaciones para mostrar</p>
-                                <p className="text-zinc-400 text-sm mt-1">Registre una programación con subtipo Capacitación o ajuste los filtros.</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-zinc-50 border-b border-zinc-200">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Código</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tema</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tipo / Subtipo</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Área</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Fechas</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Lugar</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Estado</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Solicitante</th>
-                                            <th className="px-4 py-3"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-zinc-100">
-                                        {filtered.map(r => (
-                                            <tr key={r.id} className="hover:bg-zinc-50 transition-colors">
-                                                <td className="px-4 py-3 font-mono font-bold text-primary text-xs">{r.codigo}</td>
-                                                <td className="px-4 py-3 max-w-[180px] truncate font-medium text-zinc-800">{r.tema}</td>
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    <span className="block text-xs text-zinc-700">{r.tipo_salida}</span>
-                                                    <span className="text-zinc-400 text-xs">{r.subtipo_salida}</span>
-                                                </td>
-                                                <td className="px-4 py-3 text-zinc-600">{r.areas?.name || '—'}</td>
-                                                <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar size={12} className="text-zinc-400" />
-                                                        {new Date(r.fecha_inicio).toLocaleDateString('es-CO')}
-                                                    </span>
-                                                    {r.fecha_inicio !== r.fecha_final && (
-                                                        <span className="text-zinc-400 text-xs">→ {new Date(r.fecha_final).toLocaleDateString('es-CO')}</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-zinc-600">
-                                                    <span className="flex items-center gap-1">
-                                                        <MapPin size={12} className="text-zinc-400" />
-                                                        {r.lugar_evento?.name || '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${ESTADO_STYLES[r.estado] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'}`}>
-                                                        {ESTADO_LABEL[r.estado] ?? r.estado}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-zinc-600 text-xs">{r.solicitante?.names || '—'}</td>
-                                                <td className="px-4 py-3">
-                                                    <button
-                                                        onClick={() => setDetailRecord(r)}
-                                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                                                    >
-                                                        <Eye size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                    <RecordsTable
+                        records={filtered}
+                        loading={loading}
+                        columns={capacitacionColumns}
+                        renderActions={r => <ViewButton onClick={() => setDetailRecord(r)} />}
+                        emptyIcon="school"
+                        emptyMessage="No hay capacitaciones para mostrar"
+                        emptySubMessage="Registre una programación con subtipo Capacitación o ajuste los filtros."
+                    />
                 </div>
 
                 {detailRecord && (
