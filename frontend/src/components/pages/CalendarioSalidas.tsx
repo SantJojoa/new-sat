@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { EventClickArg } from '@fullcalendar/core';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { RefreshCcw, XCircle, CheckCircle, AlertCircle, MapPin, Calendar, Layers, Clock, User, Users } from 'lucide-react';
+import { RefreshCcw, XCircle, CheckCircle, AlertCircle, MapPin, Calendar, Layers, Users } from 'lucide-react';
 import { salidasService } from '../../services/salidasService';
 import SlideBar from '../ui/SlideBar';
 import type { SalidaRecord } from '../../types/salidas';
+import DetailModal from '../ui/DetailModal';
 
 interface CalendarEvent {
     id: string;
@@ -193,126 +194,223 @@ export default function CalendarioSalidas() {
                 </div>
 
                 {selectedSalida && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
-                        onClick={(e) => { if (e.target === e.currentTarget) setSelectedSalida(null); }}
-                    >
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-slideUp">
-                            <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                                <div>
-                                    <h3 className="text-xl font-black text-zinc-900">Detalle de Programación</h3>
-                                    <p className="text-zinc-500 text-sm">Codigo: <span className="font-mono font-bold text-primary">{selectedSalida.codigo}</span></p>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedSalida(null)}
-                                    className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors"
-                                >
-                                    <XCircle size={24} />
-                                </button>
-                            </div>
-
-                            <div className="p-6 space-y-6">
-                                <div className="flex items-center gap-3 flex-wrap">
-                                    {getStatusBadge(selectedSalida.estado)}
-                                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-medium border border-primary/20">
-                                        <Layers size={12} /> {selectedSalida.tipo_salida}
-                                    </span>
-                                    {selectedSalida.subtipo_salida && (
-                                        <span className="bg-zinc-100 text-zinc-600 px-2.5 py-0.5 rounded-full text-xs font-medium border border-zinc-200">
-                                            {selectedSalida.subtipo_salida}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                                            <User size={12} /> Solicitante
-                                        </span>
-                                        <p className="text-zinc-900 font-medium mt-1">{selectedSalida.solicitante.names}</p>
-                                        <p className="text-zinc-500 text-xs">{selectedSalida.solicitante.email}</p>
-                                    </div>
-
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                                            <Layers size={12} /> Area / Subdireccion
-                                        </span>
-                                        <p className="text-zinc-900 font-medium mt-1">{selectedSalida.areas?.name || 'N/A'}</p>
-                                        <p className="text-zinc-500 text-xs">{selectedSalida.areas?.subdirecciones?.name || ''}</p>
-                                    </div>
-
-                                    {selectedSalida.areas_participantes && selectedSalida.areas_participantes.length > 0 && (
-                                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 sm:col-span-2">
-                                            <span className="text-blue-600 text-xs uppercase tracking-wider font-semibold flex items-center gap-1 mb-2">
-                                                <Users size={12} /> Áreas Unidas ({selectedSalida.areas_participantes.length})
-                                            </span>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedSalida.areas_participantes.map(ap => (
-                                                    <div key={ap.id} className="flex items-center gap-1.5 bg-white border border-blue-200 rounded-lg px-2.5 py-1.5">
-                                                        <Users size={11} className="text-blue-500 shrink-0" />
-                                                        <div>
-                                                            <span className="text-blue-800 font-medium text-xs">{ap.name}</span>
-                                                            {ap.subdirecciones?.name && (
-                                                                <span className="text-blue-400 text-[10px] block leading-tight">{ap.subdirecciones.name}</span>
-                                                            )}
+                    <DetailModal title="Detalles de la Programación" codigo={selectedSalida.codigo} onClose={() => setSelectedSalida(null)} maxWidth="max-w-4xl">
+                        <div className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* General Info */}
+                                <div className="space-y-6">
+                                    <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                        <Layers size={18} className="text-primary" /> Información General
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Estado</span>
+                                            <div className="mt-1">{getStatusBadge(selectedSalida.estado)}</div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Solicitante</span>
+                                            <span className="text-zinc-900 font-medium">{selectedSalida.solicitante.names}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Área Principal</span>
+                                            <span className="text-zinc-700">{selectedSalida.areas?.name}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subdirección</span>
+                                            <span className="text-zinc-700">{selectedSalida.areas?.subdirecciones?.name || 'N/A'}</span>
+                                        </div>
+                                        {selectedSalida.areas_participantes && selectedSalida.areas_participantes.length > 0 && (
+                                            <div className="col-span-2">
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Áreas Participantes (Unidas)</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedSalida.areas_participantes.map(ap => (
+                                                        <div key={ap.id} className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                                                            <Users size={13} className="text-blue-600 shrink-0" />
+                                                            <div>
+                                                                <span className="text-blue-800 font-medium text-xs">{ap.name}</span>
+                                                                {ap.subdirecciones?.name && (
+                                                                    <span className="text-blue-500 text-[10px] block">{ap.subdirecciones.name}</span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tipo Programación</span>
+                                            <span className="text-zinc-700">{selectedSalida.tipo_salida}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtipo</span>
+                                            <span className="text-zinc-700">{selectedSalida.subtipo_salida || 'N/A'}</span>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tema</span>
+                                            <span className="text-zinc-700">{selectedSalida.tema}</span>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Descripción</span>
+                                            <p className="text-zinc-600 mt-1 leading-relaxed bg-zinc-50 p-3 rounded-lg border border-zinc-100">
+                                                {selectedSalida.descripcion || 'Sin descripción'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Logistics & Transport */}
+                                <div className="space-y-6">
+                                    <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                        <Calendar size={18} className="text-primary" /> Logística y Transporte
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Inicio</span>
+                                            <span className="text-zinc-900">{new Date(selectedSalida.fecha_inicio).toLocaleDateString('es-CO')}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Fecha Final</span>
+                                            <span className="text-zinc-900">{new Date(selectedSalida.fecha_final).toLocaleDateString('es-CO')}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Jornada</span>
+                                            <span className="text-zinc-900">{selectedSalida.jornada}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Lugar Evento</span>
+                                            <span className="text-zinc-700">{selectedSalida.lugar_evento?.name || 'No aplica'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Medio Transporte</span>
+                                            <span className="text-zinc-700">{selectedSalida.transporte_medio || 'No requerido'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Instituciones Inv.</span>
+                                            <span className="text-zinc-700">{selectedSalida.instituciones_convocadas || 0}</span>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Responsables Transporte</span>
+                                            <span className="text-zinc-700">{selectedSalida.transporte_responsables || 'Ninguno'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Locations & Participants */}
+                                <div className="col-span-1 md:col-span-2 space-y-6">
+                                    <h4 className="font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                                        <MapPin size={18} className="text-primary" /> Ubicaciones y Actores
+                                    </h4>
+                                    <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
+                                        <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Municipios Convocados</span>
+                                        <p className="text-zinc-700 text-sm">{selectedSalida.municipios_convocados || 'Ninguno'}</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Municipios ({selectedSalida.municipios.length})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedSalida.municipios.length > 0 ? (
+                                                    selectedSalida.municipios.map((m, idx) => (
+                                                        <span key={idx} className="bg-zinc-100 text-zinc-600 px-2 py-1 rounded text-xs border border-zinc-200">{m.name}</span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguno</span>}
                                             </div>
                                         </div>
-                                    )}
-
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                                            <Calendar size={12} /> Fechas
-                                        </span>
-                                        <p className="text-zinc-900 font-medium mt-1">
-                                            {new Date(selectedSalida.fecha_inicio).toLocaleDateString('es-CO')}
-                                            {selectedSalida.fecha_inicio !== selectedSalida.fecha_final &&
-                                                ` - ${new Date(selectedSalida.fecha_final).toLocaleDateString('es-CO')}`}
-                                        </p>
-                                    </div>
-
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                                            <Clock size={12} /> Jornada
-                                        </span>
-                                        <p className="text-zinc-900 font-medium mt-1">{selectedSalida.jornada}</p>
-                                    </div>
-
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100 sm:col-span-2">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                                            <MapPin size={12} /> Lugar
-                                        </span>
-                                        <p className="text-zinc-900 font-medium mt-1">{selectedSalida.lugar_evento?.name || 'No especificado'}</p>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IPS ({(selectedSalida as any).salida_ips?.length ?? 0})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {((selectedSalida as any).salida_ips?.length ?? 0) > 0 ? (
+                                                    (selectedSalida as any).salida_ips.map((si: any, idx: number) => (
+                                                        <span key={idx} className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs border border-blue-100">
+                                                            {si.ips?.type}
+                                                            {si.actor && <span className="bg-blue-200 text-blue-700 px-1 rounded font-semibold">{si.actor.name}</span>}
+                                                        </span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Entidades ({selectedSalida.entidades.length})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedSalida.entidades.length > 0 ? (
+                                                    selectedSalida.entidades.map((e, idx) => (
+                                                        <span key={idx} className="bg-purple-50 text-purple-600 px-2 py-1 rounded text-xs border border-purple-100">{e.name}</span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">EAPB ({selectedSalida.salida_eapb?.length ?? 0})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {(selectedSalida.salida_eapb?.length ?? 0) > 0 ? (
+                                                    selectedSalida.salida_eapb.map((se: any, idx: number) => (
+                                                        <span key={idx} className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-1 rounded text-xs border border-orange-100">
+                                                            {se.eapb?.name}
+                                                            {se.actor && <span className="bg-orange-200 text-orange-700 px-1 rounded font-semibold">{se.actor.name}</span>}
+                                                        </span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">Organizaciones ({selectedSalida.organizaciones.length})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedSalida.organizaciones.length > 0 ? (
+                                                    selectedSalida.organizaciones.map((o, idx) => (
+                                                        <span key={idx} className="bg-rose-50 text-rose-600 px-2 py-1 rounded text-xs border border-rose-100">{o.name}</span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguna</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-2">IDSN ({selectedSalida.idsn.length})</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedSalida.idsn.length > 0 ? (
+                                                    selectedSalida.idsn.map((i, idx) => (
+                                                        <span key={idx} className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs border border-emerald-100">{i.name}</span>
+                                                    ))
+                                                ) : <span className="text-zinc-400 italic">Ninguno</span>}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Tema</h4>
-                                    <p className="text-zinc-800 font-medium">{selectedSalida.tema}</p>
-                                </div>
+                                {/* Approval Info */}
+                                {selectedSalida.aprobador && (
+                                    <div className="col-span-1 md:col-span-2 bg-zinc-50 rounded-lg p-4 border border-zinc-200">
+                                        <h4 className="font-bold text-zinc-900 border-b border-zinc-200 pb-2 mb-3 flex items-center gap-2">
+                                            <CheckCircle size={18} className="text-green-600" /> Información de Aprobación
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Aprobado Por</span>
+                                                <span className="text-zinc-900">{selectedSalida.aprobador.names}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Email</span>
+                                                <span className="text-zinc-700">{selectedSalida.aprobador.email}</span>
+                                            </div>
+                                            {selectedSalida.observaciones_aprobacion && (
+                                                <div className="col-span-2">
+                                                    <span className="block text-zinc-500 text-xs uppercase tracking-wider font-semibold">Observaciones Aprobación</span>
+                                                    <p className="text-zinc-600 mt-1">{selectedSalida.observaciones_aprobacion}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
-                                {selectedSalida.descripcion && (
-                                    <div>
-                                        <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Descripcion</h4>
-                                        <p className="text-zinc-600 text-sm leading-relaxed bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                                            {selectedSalida.descripcion}
-                                        </p>
+                                {/* Rejection Info */}
+                                {selectedSalida.estado === 'rechazada' && selectedSalida.motivo_rechazo && (
+                                    <div className="col-span-1 md:col-span-2 bg-red-50 rounded-lg p-4 border border-red-200">
+                                        <h4 className="font-bold text-red-900 border-b border-red-200 pb-2 mb-3 flex items-center gap-2">
+                                            <XCircle size={18} className="text-red-600" /> Motivo del Rechazo
+                                        </h4>
+                                        <p className="text-red-700 text-sm">{selectedSalida.motivo_rechazo}</p>
                                     </div>
                                 )}
                             </div>
-
-                            <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end">
-                                <button
-                                    onClick={() => setSelectedSalida(null)}
-                                    className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    Cerrar
-                                </button>
-                            </div>
                         </div>
-                    </div>
+                    </DetailModal>
                 )}
             </main>
         </div>

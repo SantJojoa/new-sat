@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, XCircle } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
+import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
 import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
 import { salidasService } from "../../services/salidasService";
@@ -215,104 +216,63 @@ export default function SeguimientoCapacitaciones() {
                 </div>
 
                 {detailRecord && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                        onClick={e => { if (e.target === e.currentTarget) setDetailRecord(null); }}
-                    >
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
-                            <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                                <div>
-                                    <h3 className="text-xl font-black text-zinc-900">Detalle de Capacitación</h3>
-                                    <p className="text-zinc-500 text-sm">Código: <span className="font-mono font-bold text-primary">{detailRecord.codigo}</span></p>
-                                </div>
-                                <button onClick={() => setDetailRecord(null)} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
-                                    <XCircle size={24} />
-                                </button>
-                            </div>
-                            <div className="p-6 space-y-4 text-sm">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Solicitante</span>
-                                        <p className="text-zinc-900 font-medium">{detailRecord.solicitante?.names}</p>
-                                        <p className="text-zinc-500 text-xs">{detailRecord.solicitante?.email}</p>
-                                    </div>
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">
-                                            <Layers size={10} className="inline mr-1" />Área
-                                        </span>
-                                        <p className="text-zinc-900 font-medium">{detailRecord.areas?.name || '—'}</p>
-                                        {detailRecord.areas?.subdirecciones?.name && (
-                                            <p className="text-zinc-500 text-xs">{detailRecord.areas.subdirecciones.name}</p>
-                                        )}
-                                    </div>
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Tipo / Subtipo</span>
-                                        <p className="text-zinc-900 font-medium">{detailRecord.tipo_salida}</p>
-                                        <p className="text-zinc-500 text-xs">{detailRecord.subtipo_salida}</p>
-                                    </div>
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Estado</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${ESTADO_STYLES[detailRecord.estado] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'}`}>
-                                            {ESTADO_LABEL[detailRecord.estado] ?? detailRecord.estado}
-                                        </span>
-                                    </div>
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">
-                                            <Calendar size={10} className="inline mr-1" />Fechas
-                                        </span>
-                                        <p className="text-zinc-900 font-medium">
-                                            {new Date(detailRecord.fecha_inicio).toLocaleDateString('es-CO')} → {new Date(detailRecord.fecha_final).toLocaleDateString('es-CO')}
-                                        </p>
-                                        <p className="text-zinc-500 text-xs mt-0.5">Jornada: {detailRecord.jornada}</p>
-                                    </div>
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">
-                                            <MapPin size={10} className="inline mr-1" />Lugar del Evento
-                                        </span>
-                                        <p className="text-zinc-900 font-medium">{detailRecord.lugar_evento?.name || '—'}</p>
-                                        {detailRecord.municipios_convocados && (
-                                            <p className="text-zinc-500 text-xs mt-0.5">{detailRecord.municipios_convocados}</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                    <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Tema / Actividad</span>
+                    <DetailModal title="Detalle de Capacitación" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
+                        <div className="p-6 space-y-4 text-sm">
+                            <DetailGrid>
+                                <DetailCard label="Solicitante">
+                                    <p className="text-zinc-900 font-medium">{detailRecord.solicitante?.names}</p>
+                                    <p className="text-zinc-500 text-xs">{detailRecord.solicitante?.email}</p>
+                                </DetailCard>
+                                <DetailCard label="Área" icon={<Layers size={10} />}>
+                                    <p className="text-zinc-900 font-medium">{detailRecord.areas?.name || '—'}</p>
+                                    {detailRecord.areas?.subdirecciones?.name && (
+                                        <p className="text-zinc-500 text-xs">{detailRecord.areas.subdirecciones.name}</p>
+                                    )}
+                                </DetailCard>
+                                <DetailCard label="Tipo / Subtipo">
+                                    <p className="text-zinc-900 font-medium">{detailRecord.tipo_salida}</p>
+                                    <p className="text-zinc-500 text-xs">{detailRecord.subtipo_salida}</p>
+                                </DetailCard>
+                                <DetailCard label="Estado">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${ESTADO_STYLES[detailRecord.estado] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'}`}>
+                                        {ESTADO_LABEL[detailRecord.estado] ?? detailRecord.estado}
+                                    </span>
+                                </DetailCard>
+                                <DetailCard label="Fechas" icon={<Calendar size={10} />}>
+                                    <p className="text-zinc-900 font-medium">{new Date(detailRecord.fecha_inicio).toLocaleDateString('es-CO')} → {new Date(detailRecord.fecha_final).toLocaleDateString('es-CO')}</p>
+                                    <p className="text-zinc-500 text-xs mt-0.5">Jornada: {detailRecord.jornada}</p>
+                                </DetailCard>
+                                <DetailCard label="Lugar del Evento" icon={<MapPin size={10} />}>
+                                    <p className="text-zinc-900 font-medium">{detailRecord.lugar_evento?.name || '—'}</p>
+                                    {detailRecord.municipios_convocados && (
+                                        <p className="text-zinc-500 text-xs mt-0.5">{detailRecord.municipios_convocados}</p>
+                                    )}
+                                </DetailCard>
+                                <DetailCard label="Tema / Actividad" fullWidth>
                                     <p className="text-zinc-800 font-medium">{detailRecord.tema}</p>
                                     {detailRecord.descripcion && (
                                         <p className="text-zinc-500 text-xs mt-1">{detailRecord.descripcion}</p>
                                     )}
-                                </div>
+                                </DetailCard>
                                 {detailRecord.instituciones_convocadas != null && (
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Instituciones Convocadas</span>
+                                    <DetailCard label="Instituciones Convocadas" fullWidth>
                                         <p className="text-zinc-900 font-medium">{detailRecord.instituciones_convocadas}</p>
-                                    </div>
+                                    </DetailCard>
                                 )}
                                 {detailRecord.transporte_medio && (
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Transporte</span>
-                                        <p className="text-zinc-800">
-                                            {detailRecord.transporte_medio}
-                                            {detailRecord.transporte_responsables ? ` · ${detailRecord.transporte_responsables}` : ''}
-                                        </p>
-                                    </div>
+                                    <DetailCard label="Transporte" fullWidth>
+                                        <p className="text-zinc-800">{detailRecord.transporte_medio}{detailRecord.transporte_responsables ? ` · ${detailRecord.transporte_responsables}` : ''}</p>
+                                    </DetailCard>
                                 )}
                                 {detailRecord.observaciones_aprobacion && (
-                                    <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold block mb-1">Observaciones</span>
+                                    <DetailCard label="Observaciones" fullWidth>
                                         <p className="text-zinc-800">{detailRecord.observaciones_aprobacion}</p>
-                                    </div>
+                                    </DetailCard>
                                 )}
-                            </div>
-                            <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end">
-                                <button onClick={() => setDetailRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">
-                                    Cerrar
-                                </button>
-                            </div>
+                            </DetailGrid>
                         </div>
-                    </div>
+                    </DetailModal>
                 )}
-
 
             </main>
         </div>
