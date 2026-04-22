@@ -21,6 +21,7 @@ import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacio
 import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
 import ReportesIvc from './src/components/pages/ReportesIvc'
 import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacitaciones'
+import SeguimientoIVC from './src/components/pages/SeguimientoIVC'
 
 function App() {
     return (
@@ -162,6 +163,12 @@ function App() {
                         <Route path="seguimiento-capacitaciones" element={
                             <ProtectedRoute>
                                 <SeguimientoCapacitaciones />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="seguimiento-ivc" element={
+                            <ProtectedRoute>
+                                <SeguimientoIVC />
                             </ProtectedRoute>
                         } />
                     </Route>

@@ -125,9 +125,17 @@ export const salidasService = {
         evaluacion_satisfaccion?: number;
         observaciones?: string;
     }) => {
-
         const response = await api.patch(`/salidas/${id}/seguimiento`, data);
         return response.data;
+    },
 
-    }
+    setSeguimientoIvc: async (id: string, data: {
+        se_realizo: boolean;
+        num_autocomisorio?: number;
+        fecha_autocomisorio?: string;
+        observaciones?: string;
+    }) => {
+        const response = await api.patch(`/salidas/${id}/seguimiento-ivc`, data);
+        return response.data;
+    },
 }

@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
+import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 
 @Controller('salidas')
 @UseGuards(JwtAuthGuard)
@@ -198,5 +199,16 @@ export class SalidasController {
         @Request() req
     ) {
         return this.salidasService.setSeguimiento(id, dto, req.user);
+    }
+
+    @Patch(':id/seguimiento-ivc')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'edit')
+    setSeguimientoIvc(
+        @Param('id') id: string,
+        @Body() dto: SetSeguimientoIvcDto,
+        @Request() req
+    ) {
+        return this.salidasService.setSeguimientoIvc(id, dto, req.user);
     }
 }

@@ -69,6 +69,11 @@ export default function Dashboard() {
             id: 'seguimiento-capacitaciones-module',
             modules: { id: 'seguimiento-capacitaciones-module', name: 'seguimiento_capacitaciones', description: 'Seguimiento de Capacitaciones', icon: 'stack', path: '/seguimiento-capacitaciones', is_active: true, order: 102 },
             can_view: true
+        },
+        {
+            id: 'seguimiento-ivc-module',
+            modules: { id: 'seguimiento-ivc-module', name: 'seguimiento_ivc', description: 'Seguimiento IVC', icon: 'verified_user', path: '/seguimiento-ivc', is_active: true, order: 103 },
+            can_view: true
         }
     ];
 

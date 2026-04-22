@@ -127,6 +127,13 @@ export default function SlideBar() {
             label: 'Seguimiento de Desarrollo de Capacidades',
             icon: 'stack',
             href: '/seguimiento-capacitaciones'
+        },
+        {
+            id: 'seguimiento-ivc-module',
+            name: 'seguimiento_ivc',
+            label: 'Seguimiento IVC',
+            icon: 'verified_user',
+            href: '/seguimiento-ivc'
         }
     ];
 
@@ -144,7 +151,7 @@ export default function SlideBar() {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };

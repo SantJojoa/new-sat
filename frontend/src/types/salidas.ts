@@ -117,6 +117,14 @@ export interface SalidaRecord {
         evaluacion_satisfaccion?: number | null;
         observaciones?: string | null;
     } | null;
+
+    seguimiento_ivc?: {
+        id?: string;
+        se_realizo: boolean;
+        num_autocomisorio?: number | null;
+        fecha_autocomisorio?: string | null;
+        observaciones?: string | null;
+    } | null;
 }
 
 export interface CreateSalidaPayload {
