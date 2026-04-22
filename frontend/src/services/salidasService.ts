@@ -116,5 +116,18 @@ export const salidasService = {
     bulkRejectSalidas: async (ids: string[], motivo: string): Promise<BulkActionResult> => {
         const response = await api.post<BulkActionResult>('/salidas/bulk-reject', { ids, motivo });
         return response.data;
+    },
+
+    setSeguimiento: async (id: string, data: {
+        se_realizo: boolean;
+        num_instituciones_asistieron?: number;
+        num_total_asistentes?: number;
+        evaluacion_satisfaccion?: number;
+        observaciones?: string;
+    }) => {
+
+        const response = await api.patch(`/salidas/${id}/seguimiento`, data);
+        return response.data;
+
     }
-};
+}

@@ -261,14 +261,33 @@ model salidas {
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
   idsn           idsn[]           @relation("SalidasIdsn")
 
+  seguimiento_capacitacion seguimiento_capacitaciones?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  solicitante         users               @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
-  aprobador           users?              @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
-  areas               areas               @relation(fields: [area_id], references: [id])
-  solicitudes_union   solicitudes_union[]
-  areas_participantes areas[]             @relation("SalidasAreasParticipantes")
+  solicitante                  users               @relation("SolicitanteSalidas", fields: [solicitante_id], references: [id])
+  aprobador                    users?              @relation("AprobadorSalidas", fields: [aprobador_id], references: [id])
+  areas                        areas               @relation(fields: [area_id], references: [id])
+  solicitudes_union            solicitudes_union[]
+  areas_participantes          areas[]             @relation("SalidasAreasParticipantes")
+  seguimiento_capacitacionesId String?
+}
+
+model seguimiento_capacitaciones {
+  id        String @id @default(cuid())
+  salida_id String @unique
+
+  se_realizo                   Boolean
+  num_instituciones_asistieron Int?
+  num_total_asistentes         Int?
+  evaluacion_satisfaccion      Float?
+  observaciones                String?
+
+  created_at DateTime @default(now())
+  update_at  DateTime @updatedAt
+
+  salida salidas @relation(fields: [salida_id], references: [id], onDelete: Cascade)
 }
 
 model articulaciones {

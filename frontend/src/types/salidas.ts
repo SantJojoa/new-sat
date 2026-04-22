@@ -108,6 +108,15 @@ export interface SalidaRecord {
     };
     observaciones_aprobacion?: string;
     motivo_rechazo?: string;
+
+    seguimiento_capacitacion?: {
+        id?: string;
+        se_realizo: boolean;
+        num_instituciones_asistieron?: number | null;
+        num_total_asistentes?: number | null;
+        evaluacion_satisfaccion?: number | null;
+        observaciones?: string | null;
+    } | null;
 }
 
 export interface CreateSalidaPayload {

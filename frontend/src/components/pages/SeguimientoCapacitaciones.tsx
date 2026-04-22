@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, XCircle, X } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
@@ -58,6 +58,165 @@ const capacitacionColumns: TableColumn<SalidaRecord>[] = [
     { header: 'Solicitante', render: r => <span className="text-zinc-600 text-xs">{r.solicitante?.names || '—'}</span> },
 ];
 
+interface SeguimientoModalProps {
+    record: SalidaRecord,
+    onClose: () => void,
+    onSaved: () => void,
+}
+
+function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
+
+    const existing = record.seguimiento_capacitacion;
+
+    const [seRealizo, setSeRealizo] = useState<string>(
+        existing != null ? (existing.se_realizo ? 'true' : 'false') : ''
+    );
+
+    const [numInstituciones, setNumInstituciones] = useState(
+        existing?.num_instituciones_asistieron?.toString() ?? ''
+    );
+    const [numAsistentes, setNumAsistentes] = useState(
+        existing?.num_total_asistentes?.toString() ?? ''
+    );
+    const [evaluacion, setEvaluacion] = useState(
+        existing?.evaluacion_satisfaccion?.toString() ?? ''
+    );
+
+    const [observaciones, setObservaciones] = useState<string>(existing?.observaciones ?? '');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+        try {
+            await salidasService.setSeguimiento(record.id, {
+                se_realizo: seRealizo === 'true',
+                num_instituciones_asistieron: numInstituciones !== '' ? parseInt(numInstituciones) : undefined,
+                num_total_asistentes: numAsistentes !== '' ? parseInt(numAsistentes) : undefined,
+                evaluacion_satisfaccion: evaluacion !== '' ? parseFloat(evaluacion) : undefined,
+                observaciones: observaciones || undefined,
+            });
+            onSaved();
+            onClose();
+
+        } catch (err) {
+            setError('Error al guardar el seguimiento');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={e => { if (e.target === e.currentTarget) onClose() }}
+        >
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-[85vh] overflow-y-auto">
+                <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <div>
+                        <h3 className="text-xl font-black text-zinc-900">Seguimiento de Capacitación</h3>
+                        <p className="text-zinc-500 text-sm">Codigo: <span className="font-mono font-bold text-primary">{record.codigo}</span></p>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+                <form id="seguimiento-form" onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {
+                        error && (
+                            <div className="bg-red-50 border-red-200 text-red-700 rounded-lg px-4 py-2 text-sm">{error}</div>
+                        )
+                    }
+                    <div>
+                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                            ¿Se realizó la capacitación? <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex gap-6 mt-1">
+                            {[{ value: 'true', label: 'Sí' }, { value: 'false', label: 'No' }].map(opt => (
+                                <label key={opt.value} className="flex items-center gap-2 cursor-pointer select-none">
+                                    <input
+                                        type="radio"
+                                        name="se_realizo"
+                                        value={opt.value}
+                                        checked={seRealizo === opt.value}
+                                        onChange={e => setSeRealizo(e.target.value)}
+                                        required
+                                        className="accent-primary w-4 h-4"
+                                    />
+                                    <span className="text-sm font-medium text-zinc-700">{opt.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            className="block text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                            Número de instituciones que asistieron
+                        </label>
+
+                        <input
+                            type="number"
+                            min="0"
+                            value={numAsistentes}
+                            onChange={e => setNumAsistentes(e.target.value)}
+                            placeholder="0"
+                            className="w-full px-3 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                            Evaluación de satisfacción (0 – 100)
+                        </label>
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={evaluacion}
+                            onChange={e => setEvaluacion(e.target.value)}
+                            placeholder="Ej: 85"
+                            className="w-full px-3 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                            Observaciones
+                        </label>
+                        <textarea
+                            value={observaciones}
+                            onChange={e => setObservaciones(e.target.value)}
+                            rows={4}
+                            maxLength={2000}
+                            placeholder="Observaciones del seguimiento..."
+                            className="w-full px-3 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm resize-none"
+                        />
+                        <p className="text-zinc-400 text-xs mt-1 text-right">{observaciones.length}/2000</p>
+                    </div>
+                </form>
+
+                <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-3">
+                    <button type="button" onClick={onClose} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        form="seguimiento-form"
+                        disabled={saving}
+                        className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                        {saving ? <RefreshCcw size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+                        {saving ? 'Guardando...' : 'Guardar Seguimiento'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function SeguimientoCapacitaciones() {
 
     const { user } = useAuth();
@@ -78,6 +237,7 @@ export default function SeguimientoCapacitaciones() {
     const [uniqueMunicipios, setUniqueMunicipios] = useState<string[]>([]);
     const [uniqueYears, setUniqueYears] = useState<number[]>([]);
     const [detailRecord, setDetailRecord] = useState<SalidaRecord | null>(null);
+    const [seguimientoRecord, setSeguimientoRecord] = useState<SalidaRecord | null>(null);
 
     const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
 
@@ -167,6 +327,13 @@ export default function SeguimientoCapacitaciones() {
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
+            {seguimientoRecord && (
+                <SeguimientoModal
+                    record={seguimientoRecord}
+                    onClose={() => setSeguimientoRecord(null)}
+                    onSaved={fetchRecords}
+                />
+            )}
             <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
                 <div className="max-w-7xl mx-auto w-full">
                     <div className="mb-6">
@@ -208,8 +375,18 @@ export default function SeguimientoCapacitaciones() {
                         records={filtered}
                         loading={loading}
                         columns={capacitacionColumns}
-                        renderActions={r => <ViewButton onClick={() => setDetailRecord(r)} />}
-                        emptyIcon="school"
+                        renderActions={r => (
+                            <>
+                                <button
+                                    onClick={() => setSeguimientoRecord(r)}
+                                    title="Registrar seguimiento"
+                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                >
+                                    <ClipboardList size={16} />
+                                </button>
+                                <ViewButton onClick={() => setDetailRecord(r)} />
+                            </>
+                        )} emptyIcon="school"
                         emptyMessage="No hay capacitaciones para mostrar"
                         emptySubMessage="Registre una programación con subtipo Capacitación o ajuste los filtros."
                     />

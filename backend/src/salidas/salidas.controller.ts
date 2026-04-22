@@ -20,6 +20,7 @@ import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSali
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 
 @Controller('salidas')
 @UseGuards(JwtAuthGuard)
@@ -186,5 +187,16 @@ export class SalidasController {
     getHistorial(@Param('id') id: string, @Request() req) {
         // Aquí podrías implementar un historial de cambios si lo necesitas
         return { message: 'Historial no implementado aún' };
+    }
+
+    @Patch(':id/seguimiento')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'edit')
+    setSeguimiento(
+        @Param('id') id: string,
+        @Body() dto: SetSeguimientoDto,
+        @Request() req
+    ) {
+        return this.salidasService.setSeguimiento(id, dto, req.user);
     }
 }

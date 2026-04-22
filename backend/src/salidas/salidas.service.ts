@@ -7,6 +7,8 @@ import { users } from '@prisma/client';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
 import { SalidasExcelReport } from './reports/salidas-excel.report';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
+import { time } from 'console';
 
 @Injectable()
 export class SalidasService {
@@ -200,7 +202,8 @@ export class SalidasService {
             aprobador: { select: { id: true, names: true, email: true } },
             areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
             areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
-            lugar_evento: true
+            lugar_evento: true,
+            seguimiento_capacitacion: true,
         };
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -235,7 +238,8 @@ export class SalidasService {
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
-                areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } }
+                areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
+                seguimiento_capacitacion: true
             }
         });
 
@@ -506,6 +510,34 @@ export class SalidasService {
         return results;
     }
 
+    async setSeguimiento(id: string, dto: SetSeguimientoDto, user: users) {
+        const salida = await this.findOne(id, user);
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
+
+        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+
+        return this.prisma.seguimiento_capacitaciones.upsert({
+            where: { salida_id: id },
+
+            create: {
+                salida_id: id,
+                se_realizo: dto.se_realizo,
+                num_instituciones_asistieron: dto.num_instituciones_asistieron ?? null,
+                num_total_asistentes: dto.num_total_asistentes ?? null,
+                evaluacion_satisfaccion: dto.evaluacion_satisfaccion ?? null,
+                observaciones: dto.observaciones ?? null,
+            },
+            update: {
+                se_realizo: dto.se_realizo,
+                num_instituciones_asistieron: dto.num_instituciones_asistieron ?? null,
+                num_total_asistentes: dto.num_total_asistentes ?? null,
+                evaluacion_satisfaccion: dto.evaluacion_satisfaccion ?? null,
+                observaciones: dto.observaciones ?? null,
+            }
+        })
+    }
+
     async bulkReject(dto: BulkRejectSalidaDto, user: users) {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || ''))
@@ -539,4 +571,6 @@ export class SalidasService {
 
         return results;
     }
+
+
 }
