@@ -113,7 +113,7 @@ export default function SolicitarSalida() {
     const subtiposItems: CatalogoItem[] = [
         { id: 'Inspección y Vigilancia SP', name: 'Inspección y Vigilancia SP' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
-        { id: 'Capacitación', name: 'Capacitación' },
+        { id: 'Capacitación', name: 'Desarrollo de Capacidades' },
         { id: 'Articulacion I.V', name: 'Articulacion I.V' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
@@ -121,7 +121,7 @@ export default function SolicitarSalida() {
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Capacitación' || s.name === 'Articulacion I.V');
+            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades' || s.name === 'Articulacion I.V');
         }
         return subtiposItems;
     };
@@ -129,7 +129,7 @@ export default function SolicitarSalida() {
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
-            const allowedVirtual = ['Capacitación', 'Articulacion I.V'];
+            const allowedVirtual = ['Desarrollo de Capacidades', 'Articulacion I.V'];
             const hasInvalidSubtypes = selectedSubtipos.some(s => !allowedVirtual.includes(s.name));
             if (hasInvalidSubtypes) {
                 setSelectedSubtipos([]);
@@ -257,7 +257,7 @@ export default function SolicitarSalida() {
 
                 // Subtipos (string split)
                 if (salida.subtipo_salida) {
-                    const subs = salida.subtipo_salida.split(', ').map((s: string) => ({ id: s, name: s }));
+                    const subs = salida.subtipo_salida.split(', ').map((s: string) => ({ id: s, name: s === 'Capacitación' ? 'Desarrollo de Capacidades' : s }));
                     setSelectedSubtipos(subs);
                 }
 
@@ -413,7 +413,7 @@ export default function SolicitarSalida() {
 
         const payload = {
             tipo_salida: formData.tipoSalida,
-            subtipo_salida: selectedSubtipos.map(s => s.name).join(', '),
+            subtipo_salida: selectedSubtipos.map(s => s.id).join(', '),
             tema: formData.tema,
             fecha_inicio: formData.fechaInicio,
             fecha_final: formData.fechaFinal,

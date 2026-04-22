@@ -142,7 +142,7 @@ function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-[85vh] overflow-y-auto">
                 <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div>
-                        <h3 className="text-xl font-black text-zinc-900">Seguimiento de Capacitación</h3>
+                        <h3 className="text-xl font-black text-zinc-900">Seguimiento de Desarrollo de Capacidades</h3>
                         <p className="text-zinc-500 text-sm">Codigo: <span className="font-mono font-bold text-primary">{record.codigo}</span></p>
                     </div>
                     <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
@@ -157,7 +157,7 @@ function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
                     }
                     <div>
                         <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
-                            ¿Se realizó la capacitación? <span className="text-red-500">*</span>
+                            ¿Se realizó el Desarrollo de Capacidades? <span className="text-red-500">*</span>
                         </label>
                         <div className="flex gap-6 mt-1">
                             {[{ value: 'true', label: 'Sí' }, { value: 'false', label: 'No' }].map(opt => (
@@ -364,9 +364,9 @@ export default function SeguimientoCapacitaciones() {
                     <div className="mb-6">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
                             <span className="material-symbols-outlined text-primary text-[32px]">stack</span>
-                            Seguimiento de Capacitaciones
+                            Seguimiento de Desarrollo de Capacidades
                         </h1>
-                        <p className="text-zinc-500 mt-2">Listado de programaciones de Capacitación</p>
+                        <p className="text-zinc-500 mt-2">Listado de programaciones de Desarrollo de Capacidades</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
                             {isAdmin && (
                                 <button
@@ -374,7 +374,7 @@ export default function SeguimientoCapacitaciones() {
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll ? 'bg-primary text-white border-primary' : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'}`}
                                 >
                                     <Layers size={16} />
-                                    {viewAll ? 'Ver solo mis capacitaciones' : 'Ver todas las capacitaciones'}
+                                    {viewAll ? 'Ver solo mis Desarrollo de Capacidades' : 'Ver todos los Desarrollo de Capacidades'}
                                 </button>
                             )}
                             <button onClick={fetchRecords} className="px-4 py-2 rounded-lg text-sm font-medium border bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50 flex items-center gap-2">
@@ -412,13 +412,13 @@ export default function SeguimientoCapacitaciones() {
                                 <ViewButton onClick={() => setDetailRecord(r)} />
                             </>
                         )} emptyIcon="school"
-                        emptyMessage="No hay capacitaciones para mostrar"
+                        emptyMessage="No hay Desarrollo de Capacidades para mostrar"
                         emptySubMessage="Registre una programación con subtipo Capacitación o ajuste los filtros."
                     />
                 </div>
 
                 {detailRecord && (
-                    <DetailModal title="Detalle de Capacitación" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
+                    <DetailModal title="Detalle de Desarrollo de Capacidades" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
                         <div className="p-6 space-y-4 text-sm">
                             <DetailGrid>
                                 <DetailCard label="Solicitante">

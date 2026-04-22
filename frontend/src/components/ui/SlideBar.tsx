@@ -124,7 +124,7 @@ export default function SlideBar() {
         {
             id: 'seguimiento-capacitaciones-module',
             name: 'seguimiento_capacitaciones',
-            label: 'Seguimiento de Capacitaciones',
+            label: 'Seguimiento de Desarrollo de Capacidades',
             icon: 'stack',
             href: '/seguimiento-capacitaciones'
         }
