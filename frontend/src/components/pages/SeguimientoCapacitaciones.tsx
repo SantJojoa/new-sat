@@ -56,6 +56,31 @@ const capacitacionColumns: TableColumn<SalidaRecord>[] = [
         )
     },
     { header: 'Solicitante', render: r => <span className="text-zinc-600 text-xs">{r.solicitante?.names || '—'}</span> },
+    {
+        header: 'Seguimiento', render: r => {
+            const seg = r.seguimiento_capacitacion;
+            if (!seg) {
+                return (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-zinc-100 text-zinc-500 border-zinc-200">
+                        Pendiente
+                    </span>
+                );
+            }
+            return (
+                <div className="space-y-0.5">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${seg.se_realizo ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                        {seg.se_realizo ? 'Realizada' : 'No realizada'}
+                    </span>
+                    {seg.evaluacion_satisfaccion != null && (
+                        <p className="text-zinc-500 text-xs">Eval: <span className="font-semibold text-zinc-700">{seg.evaluacion_satisfaccion}%</span></p>
+                    )}
+                    {seg.num_total_asistentes != null && (
+                        <p className="text-zinc-500 text-xs">Asistentes: <span className="font-semibold text-zinc-700">{seg.num_total_asistentes}</span></p>
+                    )}
+                </div>
+            );
+        }
+    },
 ];
 
 interface SeguimientoModalProps {
@@ -447,6 +472,44 @@ export default function SeguimientoCapacitaciones() {
                                     </DetailCard>
                                 )}
                             </DetailGrid>
+
+                            <div className="border-t border-zinc-200 pt-4">
+                                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+                                    <ClipboardList size={13} />
+                                    Seguimiento
+                                </h4>
+                                {detailRecord.seguimiento_capacitacion ? (
+                                    <DetailGrid>
+                                        <DetailCard label="¿Se realizó?">
+                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${detailRecord.seguimiento_capacitacion.se_realizo ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                                                {detailRecord.seguimiento_capacitacion.se_realizo ? 'Sí' : 'No'}
+                                            </span>
+                                        </DetailCard>
+                                        {detailRecord.seguimiento_capacitacion.num_instituciones_asistieron != null && (
+                                            <DetailCard label="Instituciones asistentes">
+                                                <p className="text-zinc-900 font-medium">{detailRecord.seguimiento_capacitacion.num_instituciones_asistieron}</p>
+                                            </DetailCard>
+                                        )}
+                                        {detailRecord.seguimiento_capacitacion.num_total_asistentes != null && (
+                                            <DetailCard label="Total asistentes">
+                                                <p className="text-zinc-900 font-medium">{detailRecord.seguimiento_capacitacion.num_total_asistentes}</p>
+                                            </DetailCard>
+                                        )}
+                                        {detailRecord.seguimiento_capacitacion.evaluacion_satisfaccion != null && (
+                                            <DetailCard label="Evaluación de satisfacción">
+                                                <p className="text-zinc-900 font-medium">{detailRecord.seguimiento_capacitacion.evaluacion_satisfaccion}%</p>
+                                            </DetailCard>
+                                        )}
+                                        {detailRecord.seguimiento_capacitacion.observaciones && (
+                                            <DetailCard label="Observaciones del seguimiento" fullWidth>
+                                                <p className="text-zinc-800">{detailRecord.seguimiento_capacitacion.observaciones}</p>
+                                            </DetailCard>
+                                        )}
+                                    </DetailGrid>
+                                ) : (
+                                    <p className="text-zinc-400 text-xs italic">Sin seguimiento registrado aún.</p>
+                                )}
+                            </div>
                         </div>
                     </DetailModal>
                 )}
