@@ -138,4 +138,12 @@ export const salidasService = {
         const response = await api.patch(`/salidas/${id}/seguimiento-ivc`, data);
         return response.data;
     },
+
+    setSeguimientoArticulacionIv: async (id: string, data: {
+        se_realizo_vsp: boolean;
+        observaciones?: string;
+    }) => {
+        const response = await api.patch(`/salidas/${id}/seguimiento-articulacion-iv`, data);
+        return response.data;
+    },
 }

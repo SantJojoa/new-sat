@@ -125,6 +125,12 @@ export interface SalidaRecord {
         fecha_autocomisorio?: string | null;
         observaciones?: string | null;
     } | null;
+
+    seguimiento_articulacion_iv?: {
+        id?: string;
+        se_realizo_vsp: boolean;
+        observaciones?: string | null;
+    } | null;
 }
 
 export interface CreateSalidaPayload {

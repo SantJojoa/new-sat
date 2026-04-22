@@ -22,6 +22,7 @@ import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
 import ReportesIvc from './src/components/pages/ReportesIvc'
 import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacitaciones'
 import SeguimientoIVC from './src/components/pages/SeguimientoIVC'
+import SeguimientoArticulacionIV from './src/components/pages/SeguimientoArticulacionIV'
 
 function App() {
     return (
@@ -169,6 +170,12 @@ function App() {
                         <Route path="seguimiento-ivc" element={
                             <ProtectedRoute>
                                 <SeguimientoIVC />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="seguimiento-articulacion-iv" element={
+                            <ProtectedRoute>
+                                <SeguimientoArticulacionIV />
                             </ProtectedRoute>
                         } />
                     </Route>

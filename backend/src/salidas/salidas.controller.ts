@@ -22,6 +22,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
+import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
 
 @Controller('salidas')
 @UseGuards(JwtAuthGuard)
@@ -210,5 +211,16 @@ export class SalidasController {
         @Request() req
     ) {
         return this.salidasService.setSeguimientoIvc(id, dto, req.user);
+    }
+
+    @Patch(':id/seguimiento-articulacion-iv')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'edit')
+    setSeguimientoArticulacionIv(
+        @Param('id') id: string,
+        @Body() dto: SetSeguimientoArticulacionIvDto,
+        @Request() req
+    ) {
+        return this.salidasService.setSeguimientoArticulacionIv(id, dto, req.user);
     }
 }

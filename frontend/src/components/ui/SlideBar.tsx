@@ -134,6 +134,13 @@ export default function SlideBar() {
             label: 'Seguimiento IVC',
             icon: 'verified_user',
             href: '/seguimiento-ivc'
+        },
+        {
+            id: 'seguimiento-articulacion-iv-module',
+            name: 'seguimiento_articulacion_iv',
+            label: 'Seguimiento Articulación I.V',
+            icon: 'hub',
+            href: '/seguimiento-articulacion-iv'
         }
     ];
 
@@ -151,7 +158,7 @@ export default function SlideBar() {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };

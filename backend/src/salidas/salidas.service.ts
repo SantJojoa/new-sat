@@ -9,6 +9,7 @@ import { SalidasExcelReport } from './reports/salidas-excel.report';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
+import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
 import { time } from 'console';
 
 @Injectable()
@@ -206,6 +207,7 @@ export class SalidasService {
             lugar_evento: true,
             seguimiento_capacitacion: true,
             seguimiento_ivc: true,
+            seguimiento_articulacion_iv: true,
         };
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -243,6 +245,7 @@ export class SalidasService {
                 areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
                 seguimiento_capacitacion: true,
                 seguimiento_ivc: true,
+                seguimiento_articulacion_iv: true,
             }
         });
 
@@ -539,6 +542,27 @@ export class SalidasService {
                 observaciones: dto.observaciones ?? null,
             }
         })
+    }
+
+    async setSeguimientoArticulacionIv(id: string, dto: SetSeguimientoArticulacionIvDto, user: users) {
+        const salida = await this.findOne(id, user);
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
+
+        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+
+        return this.prisma.seguimiento_articulacion_iv.upsert({
+            where: { salida_id: id },
+            create: {
+                salida_id: id,
+                se_realizo_vsp: dto.se_realizo_vsp,
+                observaciones: dto.observaciones ?? null,
+            },
+            update: {
+                se_realizo_vsp: dto.se_realizo_vsp,
+                observaciones: dto.observaciones ?? null,
+            }
+        });
     }
 
     async setSeguimientoIvc(id: string, dto: SetSeguimientoIvcDto, user: users) {

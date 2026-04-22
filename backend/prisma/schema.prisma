@@ -261,8 +261,9 @@ model salidas {
   organizaciones organizaciones[] @relation("SalidasOrganizaciones")
   idsn           idsn[]           @relation("SalidasIdsn")
 
-  seguimiento_capacitacion seguimiento_capacitaciones?
-  seguimiento_ivc          seguimiento_ivc?
+  seguimiento_capacitacion    seguimiento_capacitaciones?
+  seguimiento_ivc             seguimiento_ivc?
+  seguimiento_articulacion_iv seguimiento_articulacion_iv?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -273,6 +274,19 @@ model salidas {
   solicitudes_union            solicitudes_union[]
   areas_participantes          areas[]             @relation("SalidasAreasParticipantes")
   seguimiento_capacitacionesId String?
+}
+
+model seguimiento_articulacion_iv {
+  id        String @id @default(cuid())
+  salida_id String @unique
+
+  se_realizo_vsp Boolean
+  observaciones  String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  salida salidas @relation(fields: [salida_id], references: [id], onDelete: Cascade)
 }
 
 model seguimiento_ivc {

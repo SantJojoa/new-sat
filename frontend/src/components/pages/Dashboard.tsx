@@ -74,6 +74,11 @@ export default function Dashboard() {
             id: 'seguimiento-ivc-module',
             modules: { id: 'seguimiento-ivc-module', name: 'seguimiento_ivc', description: 'Seguimiento IVC', icon: 'verified_user', path: '/seguimiento-ivc', is_active: true, order: 103 },
             can_view: true
+        },
+        {
+            id: 'seguimiento-articulacion-iv-module',
+            modules: { id: 'seguimiento-articulacion-iv-module', name: 'seguimiento_articulacion_iv', description: 'Seguimiento Articulación I.V', icon: 'hub', path: '/seguimiento-articulacion-iv', is_active: true, order: 104 },
+            can_view: true
         }
     ];
 
