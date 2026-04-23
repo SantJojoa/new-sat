@@ -402,13 +402,15 @@ export default function SeguimientoCapacitaciones() {
                         columns={capacitacionColumns}
                         renderActions={r => (
                             <>
-                                <button
-                                    onClick={() => setSeguimientoRecord(r)}
-                                    title="Registrar seguimiento"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                >
-                                    <ClipboardList size={16} />
-                                </button>
+                                {r.estado === 'aprobada' && (
+                                    <button
+                                        onClick={() => setSeguimientoRecord(r)}
+                                        title="Registrar seguimiento"
+                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    >
+                                        <ClipboardList size={16} />
+                                    </button>
+                                )}
                                 <ViewButton onClick={() => setDetailRecord(r)} />
                             </>
                         )} emptyIcon="school"

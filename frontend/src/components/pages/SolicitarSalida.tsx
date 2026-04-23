@@ -111,17 +111,17 @@ export default function SolicitarSalida() {
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
-        { id: 'Inspección y Vigilancia SP', name: 'Inspección y Vigilancia SP' },
+        { id: 'Inspección y Vigilancia SP (IV)', name: 'Inspección y Vigilancia SP (IV)' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
         { id: 'Capacitación', name: 'Desarrollo de Capacidades' },
-        { id: 'Articulacion I.V', name: 'Articulacion I.V' },
+        { id: 'IVC', name: 'IVC' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
 
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades' || s.name === 'Articulacion I.V');
+            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades' || s.name === 'IVC');
         }
         return subtiposItems;
     };
@@ -129,7 +129,7 @@ export default function SolicitarSalida() {
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
-            const allowedVirtual = ['Desarrollo de Capacidades', 'Articulacion I.V'];
+            const allowedVirtual = ['Desarrollo de Capacidades', 'IVC'];
             const hasInvalidSubtypes = selectedSubtipos.some(s => !allowedVirtual.includes(s.name));
             if (hasInvalidSubtypes) {
                 setSelectedSubtipos([]);

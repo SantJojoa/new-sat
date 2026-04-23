@@ -115,7 +115,7 @@ function SeguimientoArticulacionIVModal({ record, onClose, onSaved }: Seguimient
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-y-auto">
                 <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div>
-                        <h3 className="text-xl font-black text-zinc-900">Seguimiento Articulación I.V</h3>
+                        <h3 className="text-xl font-black text-zinc-900">Seguimiento Inspección y Vigilancia Salud Pública</h3>
                         <p className="text-zinc-500 text-sm">Codigo: <span className="font-mono font-bold text-primary">{record.codigo}</span></p>
                     </div>
                     <button type="button" onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
@@ -210,7 +210,7 @@ export default function SeguimientoArticulacionIV() {
             const data = await salidasService.getSalidas(viewAll);
             const filtered = data.filter(r =>
                 r.subtipo_salida &&
-                r.subtipo_salida.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('articulacion i.v')
+                r.subtipo_salida.split(', ').some(s => s.trim() === 'Inspección y Vigilancia SP (IV)')
             );
             setRecords(filtered);
             setUniqueAreas(Array.from(new Set(filtered.map(r => r.areas?.name).filter(Boolean))) as string[]);
@@ -294,9 +294,9 @@ export default function SeguimientoArticulacionIV() {
                     <div className="mb-6">
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
                             <span className="material-symbols-outlined text-primary text-[32px]">hub</span>
-                            Seguimiento Articulación I.V
+                            Seguimiento Inspección y Vigilancia Salud Pública
                         </h1>
-                        <p className="text-zinc-500 mt-2">Listado de programaciones con subtipo Articulación I.V</p>
+                        <p className="text-zinc-500 mt-2">Listado de programaciones con subtipo Inspección y Vigilancia SP (IV)</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
                             {isAdmin && (
                                 <button
@@ -335,24 +335,26 @@ export default function SeguimientoArticulacionIV() {
                         columns={articulacionIvColumns}
                         renderActions={r => (
                             <>
-                                <button
-                                    onClick={() => setSeguimientoRecord(r)}
-                                    title="Registrar seguimiento"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                >
-                                    <ClipboardList size={16} />
-                                </button>
+                                {r.estado === 'aprobada' && (
+                                    <button
+                                        onClick={() => setSeguimientoRecord(r)}
+                                        title="Registrar seguimiento"
+                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    >
+                                        <ClipboardList size={16} />
+                                    </button>
+                                )}
                                 <ViewButton onClick={() => setDetailRecord(r)} />
                             </>
                         )}
                         emptyIcon="hub"
-                        emptyMessage="No hay registros de Articulación I.V"
-                        emptySubMessage="Registre una programación con subtipo Articulación I.V o ajuste los filtros."
+                        emptyMessage="No hay registros de Inspección y Vigilancia SP"
+                        emptySubMessage="Registre una programación con subtipo Inspección y Vigilancia SP (IV) o ajuste los filtros."
                     />
                 </div>
 
                 {detailRecord && (
-                    <DetailModal title="Detalle Articulación I.V" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
+                    <DetailModal title="Detalle Inspección y Vigilancia SP" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
                         <div className="p-6 space-y-4 text-sm">
                             <DetailGrid>
                                 <DetailCard label="Solicitante">
@@ -405,7 +407,7 @@ export default function SeguimientoArticulacionIV() {
                             <div className="border-t border-zinc-200 pt-4">
                                 <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
                                     <ClipboardList size={13} />
-                                    Seguimiento Articulación I.V
+                                    Seguimiento Inspección y Vigilancia Salud Pública
                                 </h4>
                                 {detailRecord.seguimiento_articulacion_iv ? (
                                     <DetailGrid>

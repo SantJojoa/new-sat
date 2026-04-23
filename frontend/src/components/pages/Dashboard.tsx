@@ -77,7 +77,7 @@ export default function Dashboard() {
         },
         {
             id: 'seguimiento-articulacion-iv-module',
-            modules: { id: 'seguimiento-articulacion-iv-module', name: 'seguimiento_articulacion_iv', description: 'Seguimiento Articulación I.V', icon: 'hub', path: '/seguimiento-articulacion-iv', is_active: true, order: 104 },
+            modules: { id: 'seguimiento-articulacion-iv-module', name: 'seguimiento_articulacion_iv', description: 'Seguimiento Inspección y Vigilancia SP', icon: 'hub', path: '/seguimiento-articulacion-iv', is_active: true, order: 104 },
             can_view: true
         }
     ];

@@ -252,7 +252,7 @@ export default function SeguimientoIVC() {
             const data = await salidasService.getSalidas(viewAll);
             const ivcRecords = data.filter(r =>
                 r.subtipo_salida &&
-                r.subtipo_salida.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('inspeccion y vigilancia')
+                r.subtipo_salida.split(', ').some(s => s.trim() === 'IVC')
             );
             setRecords(ivcRecords);
             setUniqueAreas(Array.from(new Set(ivcRecords.map(r => r.areas?.name).filter(Boolean))) as string[]);
@@ -377,13 +377,15 @@ export default function SeguimientoIVC() {
                         columns={ivcColumns}
                         renderActions={r => (
                             <>
-                                <button
-                                    onClick={() => setSeguimientoRecord(r)}
-                                    title="Registrar seguimiento IVC"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                >
-                                    <ClipboardList size={16} />
-                                </button>
+                                {r.estado === 'aprobada' && (
+                                    <button
+                                        onClick={() => setSeguimientoRecord(r)}
+                                        title="Registrar seguimiento"
+                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    >
+                                        <ClipboardList size={16} />
+                                    </button>
+                                )}
                                 <ViewButton onClick={() => setDetailRecord(r)} />
                             </>
                         )}

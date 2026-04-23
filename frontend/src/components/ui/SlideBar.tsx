@@ -138,7 +138,7 @@ export default function SlideBar() {
         {
             id: 'seguimiento-articulacion-iv-module',
             name: 'seguimiento_articulacion_iv',
-            label: 'Seguimiento Articulación I.V',
+            label: 'Seguimiento Inspección y Vigilancia SP',
             icon: 'hub',
             href: '/seguimiento-articulacion-iv'
         }
