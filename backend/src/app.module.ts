@@ -11,6 +11,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ArticulacionesModule } from './articulaciones/articulaciones.module';
 import { IvcModule } from './ivc/ivc.module';
 import { VentanaProgramacionModule } from './ventana-programacion/ventana-programacion.module';
+import { AsesoriasModule } from './asesorias/asesorias.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { VentanaProgramacionModule } from './ventana-programacion/ventana-progra
     ArticulacionesModule,
     IvcModule,
     VentanaProgramacionModule,
+    AsesoriasModule,
   ],
   controllers: [],
   providers: [PrismaService],

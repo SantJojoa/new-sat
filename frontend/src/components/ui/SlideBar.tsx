@@ -141,10 +141,17 @@ export default function SlideBar() {
             label: 'Seguimiento Inspección y Vigilancia SP',
             icon: 'hub',
             href: '/seguimiento-articulacion-iv'
+        },
+        {
+            id: 'programar-asesoria-module',
+            name: 'programar_asesoria',
+            label: 'Programar Asesoría',
+            icon: 'support_agent',
+            href: '/programar-asesoria'
         }
     ];
 
-    const allCombinedNavItems = [...allNavItems, ...extraNavItems];
+    const allCombinedNavItems = [...allNavItems];
     for (const extra of extraNavItems) {
         if (!allCombinedNavItems.some(item => item.name === extra.name)) {
             allCombinedNavItems.push(extra);
@@ -158,6 +165,7 @@ export default function SlideBar() {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
+        'Asesorias': ['programar_asesoria'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
@@ -191,7 +199,7 @@ export default function SlideBar() {
     }
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">

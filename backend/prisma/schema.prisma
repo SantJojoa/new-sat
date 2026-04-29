@@ -19,6 +19,7 @@ model areas {
   salidas_como_participante salidas[]           @relation("SalidasAreasParticipantes")
   articulaciones            articulaciones[]    @relation("AreasArticulaciones")
   ivc                       ivc[]               @relation("AreasIvc")
+  asesorias                 asesorias[]         @relation("AreasAsesorias")
 }
 
 model subdirecciones {
@@ -67,6 +68,7 @@ model users {
   notifications                 notifications[]
   articulaciones_solicitadas    articulaciones[]    @relation("SolicitanteArticulaciones")
   ivc_solicitadas               ivc[]               @relation("SolicitanteIvc")
+  asesorias_registradas         asesorias[]         @relation("AsesoriasRegistradas")
 }
 
 model notifications {
@@ -128,6 +130,7 @@ model municipios {
   salidas_evento        salidas[]        @relation("SalidaLugarEvento")
   articulaciones_evento articulaciones[] @relation("ArticulacionLugarEvento")
   ivc_evento            ivc[]            @relation("IvcLugarEvento")
+  asesorias_procedencia asesorias[]      @relation("AsesoriaMunicipioProc")
 }
 
 model ips {
@@ -409,4 +412,62 @@ model solicitudes_union {
   salida           salidas @relation(fields: [salida_id], references: [id])
   solicitante      users   @relation("SolicitudesUnionSolicitante", fields: [solicitante_id], references: [id])
   area_solicitante areas   @relation("SolicitudesUnionArea", fields: [area_solicitante_id], references: [id])
+}
+
+model asesorias {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  fecha       DateTime
+  hora        String
+  medio       String
+  institucion String
+
+  municipio_procedencia_id String?
+  municipio_otro           String?
+  lugar                    String
+
+  temas_tratados     String
+  material_entregado String
+  duracion_minutos   Int
+
+  estado         String   @default("registrada")
+  fecha_registro DateTime @default(now())
+
+  registrador_id String
+  area_id        String
+
+  registrador           users       @relation("AsesoriasRegistradas", fields: [registrador_id], references: [id])
+  areas                 areas       @relation("AreasAsesorias", fields: [area_id], references: [id])
+  municipio_procedencia municipios? @relation("AsesoriaMunicipioProc", fields: [municipio_procedencia_id], references: [id])
+
+  asistentes  asesoria_asistentes[]
+  compromisos asesoria_compromisos[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model asesoria_asistentes {
+  id             String  @id @default(cuid())
+  asesoria_id    String
+  identificacion String
+  nombre         String
+  apellido       String
+  cargo          String?
+  email          String?
+  movil          String?
+
+  asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
+}
+
+model asesoria_compromisos {
+  id            String    @id @default(cuid())
+  asesoria_id   String
+  compromiso    String
+  responsable   String
+  fecha         DateTime?
+  observaciones String?
+
+  asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
 }
