@@ -34,7 +34,8 @@ export default function Dashboard() {
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones']
+        'Asesorias': ['programar_asesoria'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv']
     };
 
     const getCategory = (moduleName: string) => {
@@ -67,7 +68,7 @@ export default function Dashboard() {
         },
         {
             id: 'seguimiento-capacitaciones-module',
-            modules: { id: 'seguimiento-capacitaciones-module', name: 'seguimiento_capacitaciones', description: 'Seguimiento de Capacitaciones', icon: 'stack', path: '/seguimiento-capacitaciones', is_active: true, order: 102 },
+            modules: { id: 'seguimiento-capacitaciones-module', name: 'seguimiento_capacitaciones', description: 'Seguimiento de Desarrollo de Capacidades', icon: 'stack', path: '/seguimiento-capacitaciones', is_active: true, order: 102 },
             can_view: true
         },
         {
@@ -78,6 +79,11 @@ export default function Dashboard() {
         {
             id: 'seguimiento-articulacion-iv-module',
             modules: { id: 'seguimiento-articulacion-iv-module', name: 'seguimiento_articulacion_iv', description: 'Seguimiento Inspección y Vigilancia SP', icon: 'hub', path: '/seguimiento-articulacion-iv', is_active: true, order: 104 },
+            can_view: true
+        },
+        {
+            id: 'programar-asesoria-module',
+            modules: { id: 'programar-asesoria-module', name: 'programar_asesoria', description: 'Programar Asesoría', icon: 'support_agent', path: '/programar-asesoria', is_active: true, order: 105 },
             can_view: true
         }
     ];
@@ -97,7 +103,7 @@ export default function Dashboard() {
         return acc;
     }, {} as Record<string, DashboardModulePermission[]>);
 
-    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Seguimiento/Actas', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="bg-bg-light font-display min-h-screen">
