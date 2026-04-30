@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, Res, StreamableFile } from '@nestjs/common';
+import type { Response } from 'express';
 import { AsesoriasService } from './asesorias.service';
 import { CreateAsesoriaDto } from './dto/create-asesoria.dto';
 import { UpdateAsesoriaDto } from './dto/update-asesoria.dto';
@@ -51,5 +52,34 @@ export class AsesoriasController {
     @RequirePermissions('programar_asesoria', 'delete')
     remove(@Param('id') id: string, @Request() req) {
         return this.asesoriasService.remove(id, req.user);
+    }
+
+    @Get(':id/certificado/preview')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    async previewCertificado(
+        @Param('id') id: string,
+        @Request() req,
+        @Res() res: Response,
+    ) {
+        const html = await this.asesoriasService.previewCertificado(id, req.user);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(html);
+    }
+
+    @Get(':id/certificado')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    async generateCertificado(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const buffer = await this.asesoriasService.generateCertificado(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="certificado-asesoria-${id}.pdf"`,
+        });
+        return new StreamableFile(buffer);
     }
 }

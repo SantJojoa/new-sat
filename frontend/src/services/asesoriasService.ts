@@ -27,4 +27,24 @@ export const asesoriasService = {
     deleteAsesoria: async (id: string): Promise<void> => {
         await api.delete(`/asesorias/${id}`);
     },
+
+    previewCertificado: async (id: string): Promise<string> => {
+        const response = await api.get<string>(`/asesorias/${id}/certificado/preview`, {
+            responseType: 'text',
+            headers: { Accept: 'text/html' },
+        });
+        return response.data;
+    },
+
+    generateCertificado: async (id: string, codigo: string): Promise<void> => {
+        const response = await api.get(`/asesorias/${id}/certificado`, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `certificado-${codigo}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    },
 };

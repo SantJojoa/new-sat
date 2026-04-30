@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAsesoriaDto } from './dto/create-asesoria.dto';
 import { UpdateAsesoriaDto } from './dto/update-asesoria.dto';
 import { users } from '@prisma/client';
+import { AsesoriasCertificateReport } from './reports/asesorias-certificate.report';
 
 @Injectable()
 export class AsesoriasService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private certificateReport: AsesoriasCertificateReport,
+    ) { }
 
     private parseDateLocal(dateStr: string | Date): Date {
         if (dateStr instanceof Date) return dateStr;
@@ -111,7 +115,7 @@ export class AsesoriasService {
         const asesoria = await this.prisma.asesorias.findUnique({
             where: { id },
             include: {
-                registrador: { select: { id: true, names: true, email: true } },
+                registrador: { select: { id: true, names: true, email: true, charge: true, areas: { select: { name: true } } } },
                 areas: { select: { id: true, name: true } },
                 municipio_procedencia: true,
                 asistentes: true,
@@ -187,6 +191,16 @@ export class AsesoriasService {
     async remove(id: string, user: users) {
         await this.findOne(id, user);
         return this.prisma.asesorias.delete({ where: { id } });
+    }
+
+    async generateCertificado(id: string, user: users): Promise<Buffer> {
+        const asesoria = await this.findOne(id, user);
+        return this.certificateReport.generate(asesoria);
+    }
+
+    async previewCertificado(id: string, user: users): Promise<string> {
+        const asesoria = await this.findOne(id, user);
+        return this.certificateReport.getHtml(asesoria);
     }
 
     async getCatalogos(user: users) {

@@ -24,6 +24,7 @@ import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacit
 import SeguimientoIVC from './src/components/pages/SeguimientoIVC'
 import SeguimientoArticulacionIV from './src/components/pages/SeguimientoArticulacionIV'
 import ProgramarAsesoria from './src/components/pages/ProgramarAsesoria'
+import GestionarAsesoria from './src/components/pages/GestionarAsesoria'
 
 function App() {
     return (
@@ -183,6 +184,12 @@ function App() {
                         <Route path="programar-asesoria" element={
                             <ProtectedRoute>
                                 <ProgramarAsesoria />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="gestionar-asesoria" element={
+                            <ProtectedRoute>
+                                <GestionarAsesoria />
                             </ProtectedRoute>
                         } />
                     </Route>

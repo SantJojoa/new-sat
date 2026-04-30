@@ -148,6 +148,13 @@ export default function SlideBar() {
             label: 'Programar Asesoría',
             icon: 'support_agent',
             href: '/programar-asesoria'
+        },
+        {
+            id: 'gestionar-asesoria-module',
+            name: 'gestionar_asesoria',
+            label: 'Gestionar Asesorías',
+            icon: 'manage_search',
+            href: '/gestionar-asesoria'
         }
     ];
 
@@ -165,7 +172,7 @@ export default function SlideBar() {
         'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
-        'Asesorias': ['programar_asesoria'],
+        'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
