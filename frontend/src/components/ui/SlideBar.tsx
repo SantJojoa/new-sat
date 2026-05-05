@@ -242,13 +242,15 @@ export default function SlideBar() {
                                             <Link
                                                 key={item.id}
                                                 to={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-zinc-600 hover:bg-zinc-100'}`}
+                                                className={`nav-item-link flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors overflow-hidden ${isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-zinc-600 hover:bg-zinc-100'}`}
                                             >
                                                 <span className="material-symbols-outlined text-[22px] shrink-0">
                                                     {item.icon}
                                                 </span>
-                                                <span className={`text-sm truncate ${isActive ? 'font-bold' : 'font-medium'}`}>
-                                                    {item.label}
+                                                <span className="overflow-hidden flex-1 min-w-0">
+                                                    <span className={`nav-label-text inline-block whitespace-nowrap text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>
+                                                        {item.label}
+                                                    </span>
                                                 </span>
                                             </Link>
                                         );
