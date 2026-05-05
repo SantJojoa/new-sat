@@ -54,19 +54,6 @@ export class AsesoriasController {
         return this.asesoriasService.remove(id, req.user);
     }
 
-    @Get(':id/certificado/preview')
-    @UseGuards(PermissionsGuard)
-    @RequirePermissions('programar_asesoria', 'view')
-    async previewCertificado(
-        @Param('id') id: string,
-        @Request() req,
-        @Res() res: Response,
-    ) {
-        const html = await this.asesoriasService.previewCertificado(id, req.user);
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.send(html);
-    }
-
     @Get(':id/certificado')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('programar_asesoria', 'view')

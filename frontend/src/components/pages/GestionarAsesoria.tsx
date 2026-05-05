@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, Monitor } from 'lucide-react';
+import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, CheckCircle, AlertCircle, Pencil, Trash2, X, Plus } from 'lucide-react';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { asesoriasService } from '../../services/asesoriasService';
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
-import type { AsesoriaRecord } from '../../types/asesorias';
-import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
+import type { AsesoriaRecord, AsesoriaAsistente, AsesoriaCompromiso, CreateAsesoriaPayload } from '../../types/asesorias';
+import RecordsTable, { ViewButton, EditButton, DeleteButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
 
 const asesoriaColumns: TableColumn<AsesoriaRecord>[] = [
@@ -43,22 +43,19 @@ export default function GestionarAsesoria() {
     const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [detailRecord, setDetailRecord] = useState<AsesoriaRecord | null>(null);
     const [generatingId, setGeneratingId] = useState<string | null>(null);
-    const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-    const [previewingId, setPreviewingId] = useState<string | null>(null);
 
     const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
-
-    const handlePreview = async (record: AsesoriaRecord) => {
-        setPreviewingId(record.id);
-        try {
-            const html = await asesoriasService.previewCertificado(record.id);
-            setPreviewHtml(html);
-        } catch (error) {
-            console.error('Error cargando preview:', error);
-        } finally {
-            setPreviewingId(null);
-        }
-    };
+    const isSuperAdmin = user?.user_type?.name === 'superadmin';
+    const [editRecord, setEditRecord] = useState<AsesoriaRecord | null>(null);
+    const [deleteRecord, setDeleteRecord] = useState<AsesoriaRecord | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [editForm, setEditForm] = useState<Partial<CreateAsesoriaPayload>>({});
+    const [areasData, setAreasData] = useState<{ id: string; name: string }[]>([]);
+    const [municipiosData, setMunicipiosData] = useState<{ id: string; name: string }[]>([]);
+    const [editAsistentes, setEditAsistentes] = useState<AsesoriaAsistente[]>([]);
+    const [editCompromisos, setEditCompromisos] = useState<AsesoriaCompromiso[]>([]);
+    const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string }>({ type: null, title: '', message: '' });
 
     const handleGenerateCertificate = async (record: AsesoriaRecord) => {
         setGeneratingId(record.id);
@@ -87,8 +84,20 @@ export default function GestionarAsesoria() {
     useEffect(() => { void fetchRecords(); }, [fetchRecords]);
 
     useEffect(() => {
+        asesoriasService.getCatalogos().then(data => {
+            setAreasData(data.areas);
+            setMunicipiosData(data.municipios);
+        }).catch(console.error);
+    }, []);
+
+    useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setDetailRecord(null);
+            if (e.key === 'Escape') {
+                setDetailRecord(null);
+                setEditRecord(null);
+                setDeleteRecord(null);
+                setFeedbackModal({ type: null, title: '', message: '' });
+            }
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
@@ -121,6 +130,59 @@ export default function GestionarAsesoria() {
         else if (key === 'dateEnd') setFilterDateEnd(value);
     };
     const handleResetFilters = () => { setSearchTerm(''); setFilterArea(''); setFilterDateStart(''); setFilterDateEnd(''); };
+
+    const handleOpenEdit = (r: AsesoriaRecord) => {
+        setEditForm({
+            fecha: r.fecha.slice(0, 10),
+            hora: r.hora,
+            medio: r.medio,
+            institucion: r.institucion,
+            municipio_procedencia_id: r.municipio_otro ? 'otro' : (r.municipio_procedencia_id ?? ''),
+            municipio_otro: r.municipio_otro ?? '',
+            lugar: r.lugar,
+            temas_tratados: r.temas_tratados,
+            material_entregado: r.material_entregado,
+            duracion_minutos: r.duracion_minutos,
+            area_id: r.areas?.id,
+        });
+        setEditAsistentes(r.asistentes ? r.asistentes.map(a => ({ ...a })) : []);
+        setEditCompromisos(r.compromisos ? r.compromisos.map(c => ({ ...c })) : []);
+        setEditRecord(r);
+    };
+
+    const handleSave = async () => {
+        if (!editRecord) return;
+        setIsSaving(true);
+        try {
+            await asesoriasService.updateAsesoria(editRecord.id, {
+                ...editForm,
+                asistentes: editAsistentes,
+                compromisos: editCompromisos,
+            });
+            setEditRecord(null);
+            setFeedbackModal({ type: 'success', title: '¡Actualizado!', message: 'La asesoría fue actualizada exitosamente.' });
+            void fetchRecords();
+        } catch {
+            setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo actualizar la asesoría.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteRecord) return;
+        setIsDeleting(true);
+        try {
+            await asesoriasService.deleteAsesoria(deleteRecord.id);
+            setDeleteRecord(null);
+            setFeedbackModal({ type: 'success', title: '¡Eliminado!', message: 'La asesoría fue eliminada exitosamente.' });
+            void fetchRecords();
+        } catch {
+            setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo eliminar la asesoría.' });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -178,16 +240,6 @@ export default function GestionarAsesoria() {
                             <>
                                 <ViewButton onClick={() => setDetailRecord(r)} />
                                 <button
-                                    onClick={() => handlePreview(r)}
-                                    disabled={previewingId === r.id}
-                                    title="Previsualizar certificado"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {previewingId === r.id
-                                        ? <RefreshCcw size={16} className="animate-spin" />
-                                        : <Monitor size={16} />}
-                                </button>
-                                <button
                                     onClick={() => handleGenerateCertificate(r)}
                                     disabled={generatingId === r.id}
                                     title="Descargar Certificado PDF"
@@ -197,6 +249,12 @@ export default function GestionarAsesoria() {
                                         ? <RefreshCcw size={16} className="animate-spin" />
                                         : <FileText size={16} />}
                                 </button>
+                                {isSuperAdmin && (
+                                    <>
+                                        <EditButton onClick={() => handleOpenEdit(r)} />
+                                        <DeleteButton onClick={() => setDeleteRecord(r)} />
+                                    </>
+                                )}
                             </>
                         )}
                         emptyIcon="support_agent"
@@ -204,23 +262,6 @@ export default function GestionarAsesoria() {
                         emptySubMessage="Registre una nueva asesoría o ajuste los filtros."
                     />
                 </div>
-
-                {previewHtml && (
-                    <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
-                        <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-zinc-200 shrink-0">
-                            <span className="font-bold text-zinc-800 flex items-center gap-2"><Monitor size={18} className="text-primary" />Previsualización del Certificado</span>
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs text-zinc-400">Edita <code className="bg-zinc-100 px-1 rounded text-xs">asesorias-certificate.report.ts</code> y vuelve a abrir el preview para ver los cambios</p>
-                                <button onClick={() => setPreviewHtml(null)} className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-sm font-medium transition-colors">Cerrar</button>
-                            </div>
-                        </div>
-                        <iframe
-                            srcDoc={previewHtml}
-                            className="flex-1 w-full bg-white"
-                            title="Preview certificado"
-                        />
-                    </div>
-                )}
 
                 {detailRecord && (
                     <DetailModal title="Detalle de Asesoría" codigo={detailRecord.codigo} onClose={() => setDetailRecord(null)}>
@@ -294,6 +335,176 @@ export default function GestionarAsesoria() {
                             </DetailGrid>
                         </div>
                     </DetailModal>
+                )}
+                {editRecord && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+                            <div className="p-6 border-b border-zinc-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                                <div>
+                                    <h3 className="text-xl font-black text-zinc-900">Editar Asesoría</h3>
+                                    <p className="text-zinc-500 text-sm">Código: <span className="font-mono font-bold text-primary">{editRecord.codigo}</span></p>
+                                </div>
+                                <button onClick={() => setEditRecord(null)} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {/* Información básica */}
+                                <div>
+                                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Información General</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Fecha</label>
+                                            <input type="date" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.fecha ?? ''} onChange={e => setEditForm(f => ({ ...f, fecha: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hora</label>
+                                            <input type="time" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.hora ?? ''} onChange={e => setEditForm(f => ({ ...f, hora: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Medio</label>
+                                            <select className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.medio ?? ''} onChange={e => setEditForm(f => ({ ...f, medio: e.target.value }))}>
+                                                <option value="">Seleccionar...</option>
+                                                {['Email', 'Telefónico', 'Presencial', 'Oficio', 'Virtual'].map(m => <option key={m} value={m}>{m}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Área</label>
+                                            <select className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.area_id ?? ''} onChange={e => setEditForm(f => ({ ...f, area_id: e.target.value }))}>
+                                                <option value="">Sin cambiar</option>
+                                                {areasData.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Duración (minutos)</label>
+                                            <input type="number" min={1} className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.duracion_minutos ?? ''} onChange={e => setEditForm(f => ({ ...f, duracion_minutos: e.target.value ? parseInt(e.target.value) : undefined }))} />
+                                        </div>
+                                        <div className="col-span-full">
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Institución</label>
+                                            <input type="text" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.institucion ?? ''} onChange={e => setEditForm(f => ({ ...f, institucion: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Municipio Procedencia</label>
+                                            <select className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.municipio_procedencia_id ?? ''} onChange={e => setEditForm(f => ({ ...f, municipio_procedencia_id: e.target.value, municipio_otro: e.target.value === 'otro' ? f.municipio_otro : '' }))}>
+                                                <option value="">Seleccionar...</option>
+                                                {municipiosData.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                <option value="otro">Otro</option>
+                                            </select>
+                                        </div>
+                                        {editForm.municipio_procedencia_id === 'otro' && (
+                                            <div>
+                                                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Municipio (Otro)</label>
+                                                <input type="text" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.municipio_otro ?? ''} onChange={e => setEditForm(f => ({ ...f, municipio_otro: e.target.value }))} />
+                                            </div>
+                                        )}
+                                        <div className="col-span-full">
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Lugar</label>
+                                            <input type="text" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.lugar ?? ''} onChange={e => setEditForm(f => ({ ...f, lugar: e.target.value }))} />
+                                        </div>
+                                        <div className="col-span-full">
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Temas Tratados</label>
+                                            <textarea rows={3} className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" value={editForm.temas_tratados ?? ''} onChange={e => setEditForm(f => ({ ...f, temas_tratados: e.target.value }))} />
+                                        </div>
+                                        <div className="col-span-full">
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Material Entregado</label>
+                                            <textarea rows={2} className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" value={editForm.material_entregado ?? ''} onChange={e => setEditForm(f => ({ ...f, material_entregado: e.target.value }))} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Asistentes */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Asistentes ({editAsistentes.length})</p>
+                                        <button type="button" onClick={() => setEditAsistentes(a => [...a, { identificacion: '', nombre: '', apellido: '', cargo: '', email: '', movil: '' }])} className="flex items-center gap-1 text-xs text-primary hover:text-primary font-semibold border border-primary/30 px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors">
+                                            <Plus size={12} /> Agregar
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {editAsistentes.length === 0 && <p className="text-zinc-400 text-xs italic py-1">Sin asistentes registrados.</p>}
+                                        {editAsistentes.map((a, i) => (
+                                            <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 relative pr-8">
+                                                <button type="button" onClick={() => setEditAsistentes(arr => arr.filter((_, j) => j !== i))} className="absolute top-2 right-2 p-1 text-zinc-300 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
+                                                <input placeholder="Identificación *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.identificacion} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], identificacion: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Nombre *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.nombre} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], nombre: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Apellido *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.apellido} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], apellido: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Cargo" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.cargo ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], cargo: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Email" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.email ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], email: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Móvil" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.movil ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], movil: e.target.value }; setEditAsistentes(arr); }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Compromisos */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Compromisos ({editCompromisos.length})</p>
+                                        <button type="button" onClick={() => setEditCompromisos(c => [...c, { compromiso: '', responsable: '', fecha: '', observaciones: '' }])} className="flex items-center gap-1 text-xs text-primary hover:text-primary font-semibold border border-primary/30 px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors">
+                                            <Plus size={12} /> Agregar
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {editCompromisos.length === 0 && <p className="text-zinc-400 text-xs italic py-1">Sin compromisos registrados.</p>}
+                                        {editCompromisos.map((c, i) => (
+                                            <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 relative pr-8">
+                                                <button type="button" onClick={() => setEditCompromisos(arr => arr.filter((_, j) => j !== i))} className="absolute top-2 right-2 p-1 text-zinc-300 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
+                                                <input placeholder="Compromiso *" className="sm:col-span-2 border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.compromiso} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], compromiso: e.target.value }; setEditCompromisos(arr); }} />
+                                                <input placeholder="Responsable *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.responsable} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], responsable: e.target.value }; setEditCompromisos(arr); }} />
+                                                <input type="date" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.fecha ? c.fecha.slice(0, 10) : ''} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], fecha: e.target.value }; setEditCompromisos(arr); }} />
+                                                <input placeholder="Observaciones" className="sm:col-span-2 border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.observaciones ?? ''} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], observaciones: e.target.value }; setEditCompromisos(arr); }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-2">
+                                <button onClick={() => setEditRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">Cancelar</button>
+                                <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer">{isSaving ? 'Guardando...' : 'Guardar'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {deleteRecord && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+                            <div className="p-6 border-b bg-red-50 border-red-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+                                        <Trash2 size={20} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-red-900">Eliminar Asesoría</h3>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <p className="text-zinc-700 text-sm">¿Está seguro que desea eliminar la asesoría <span className="font-mono font-bold text-primary">{deleteRecord.codigo}</span>? Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div className="px-6 pb-6 flex justify-end gap-2">
+                                <button onClick={() => setDeleteRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">Cancelar</button>
+                                <button onClick={handleDelete} disabled={isDeleting} className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer">{isDeleting ? 'Eliminando...' : 'Eliminar'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {feedbackModal.type && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+                            <div className={`p-6 border-b ${feedbackModal.type === 'success' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {feedbackModal.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                                    </div>
+                                    <h3 className={`text-lg font-bold ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{feedbackModal.title}</h3>
+                                </div>
+                            </div>
+                            <div className="p-6"><p className="text-zinc-700 text-sm">{feedbackModal.message}</p></div>
+                            <div className="px-6 pb-6 flex justify-end">
+                                <button onClick={() => setFeedbackModal({ type: null, title: '', message: '' })} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer">Aceptar</button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </main>
         </div>

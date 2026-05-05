@@ -115,7 +115,7 @@ export class AsesoriasService {
         const asesoria = await this.prisma.asesorias.findUnique({
             where: { id },
             include: {
-                registrador: { select: { id: true, names: true, email: true, charge: true, areas: { select: { name: true } } } },
+                registrador: { select: { id: true, names: true, last_name: true, email: true, charge: true, areas: { select: { name: true } } } },
                 areas: { select: { id: true, name: true } },
                 municipio_procedencia: true,
                 asistentes: true,
@@ -196,11 +196,6 @@ export class AsesoriasService {
     async generateCertificado(id: string, user: users): Promise<Buffer> {
         const asesoria = await this.findOne(id, user);
         return this.certificateReport.generate(asesoria);
-    }
-
-    async previewCertificado(id: string, user: users): Promise<string> {
-        const asesoria = await this.findOne(id, user);
-        return this.certificateReport.getHtml(asesoria);
     }
 
     async getCatalogos(user: users) {
