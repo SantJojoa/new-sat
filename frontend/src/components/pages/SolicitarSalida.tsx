@@ -126,6 +126,8 @@ export default function SolicitarSalida() {
         return subtiposItems;
     };
 
+    // 'Presencial y Virtual' allows all subtypes (same as Presencial)
+
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
@@ -825,6 +827,7 @@ export default function SolicitarSalida() {
                                                 <option value="">Seleccione tipo</option>
                                                 <option value="Presencial">Presencial</option>
                                                 <option value="Virtual">Virtual</option>
+                                                <option value="Presencial y Virtual">Presencial y Virtual</option>
                                             </select>
                                         </div>
                                         <div className="flex flex-col gap-2">
