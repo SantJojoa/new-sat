@@ -267,6 +267,7 @@ model salidas {
   seguimiento_capacitacion    seguimiento_capacitaciones?
   seguimiento_ivc             seguimiento_ivc?
   seguimiento_articulacion_iv seguimiento_articulacion_iv?
+  seguimiento_acompanamiento  seguimiento_acompanamiento?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -319,6 +320,39 @@ model seguimiento_capacitaciones {
 
   created_at DateTime @default(now())
   update_at  DateTime @updatedAt
+
+  salida salidas @relation(fields: [salida_id], references: [id], onDelete: Cascade)
+}
+
+model seguimiento_acompanamiento {
+  id        String @id @default(cuid())
+  salida_id String @unique
+
+  se_programo Boolean @default(false)
+  se_realizo  Boolean
+
+  nombre_reunion     String?
+  fecha_reunion      DateTime?
+  hora_inicial       String?
+  hora_final         String?
+  acta_numero        String?
+  institucion        String?
+  municipio          String?
+  lugar              String?
+  material_entregado String?
+
+  asistentes    Json?
+  orden_del_dia Json?
+  desarrollo    String?
+  conclusiones  String?
+  compromisos   Json?
+
+  proxima_lugar String?
+  proxima_fecha DateTime?
+  proxima_hora  String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   salida salidas @relation(fields: [salida_id], references: [id], onDelete: Cascade)
 }

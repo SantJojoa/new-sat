@@ -146,4 +146,42 @@ export const salidasService = {
         const response = await api.patch(`/salidas/${id}/seguimiento-articulacion-iv`, data);
         return response.data;
     },
+
+    setSeguimientoAcompanamiento: async (id: string, data: {
+        se_programo: boolean;
+        se_realizo: boolean;
+        nombre_reunion?: string;
+        fecha_reunion?: string;
+        hora_inicial?: string;
+        hora_final?: string;
+        acta_numero?: string;
+        institucion?: string;
+        municipio?: string;
+        lugar?: string;
+        material_entregado?: string;
+        asistentes?: any[];
+        orden_del_dia?: any[];
+        desarrollo?: string;
+        conclusiones?: string;
+        compromisos?: any[];
+        proxima_lugar?: string;
+        proxima_fecha?: string;
+        proxima_hora?: string;
+    }) => {
+        const response = await api.patch(`/salidas/${id}/seguimiento-acompanamiento`, data);
+        return response.data;
+    },
+
+    downloadCertificadoAcompanamiento: async (id: string) => {
+        const response = await api.get(`/salidas/${id}/certificado-acompanamiento`, {
+            responseType: 'blob',
+        });
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = `certificado-acompanamiento-${id}.pdf`;
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+        return { blob: response.data as Blob, filename };
+    },
 }

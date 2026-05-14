@@ -131,6 +131,29 @@ export interface SalidaRecord {
         se_realizo_vsp: boolean;
         observaciones?: string | null;
     } | null;
+
+    seguimiento_acompanamiento?: {
+        id?: string;
+        se_programo: boolean;
+        se_realizo: boolean;
+        nombre_reunion?: string | null;
+        fecha_reunion?: string | null;
+        hora_inicial?: string | null;
+        hora_final?: string | null;
+        acta_numero?: string | null;
+        institucion?: string | null;
+        municipio?: string | null;
+        lugar?: string | null;
+        material_entregado?: string | null;
+        asistentes?: any[] | null;
+        orden_del_dia?: any[] | null;
+        desarrollo?: string | null;
+        conclusiones?: string | null;
+        compromisos?: any[] | null;
+        proxima_lugar?: string | null;
+        proxima_fecha?: string | null;
+        proxima_hora?: string | null;
+    } | null;
 }
 
 export interface CreateSalidaPayload {

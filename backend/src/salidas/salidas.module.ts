@@ -6,11 +6,12 @@ import { AuthModule } from '../auth/auth.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
 import { SalidasExcelReport } from './reports/salidas-excel.report';
+import { AcompanamientoCertificateReport } from './reports/acompanamiento-certificate.report';
 
 @Module({
     imports: [AuthModule, NotificationsModule],
     controllers: [SalidasController],
-    providers: [SalidasService, PrismaService, SalidasPdfReport, SalidasExcelReport],
+    providers: [SalidasService, PrismaService, SalidasPdfReport, SalidasExcelReport, AcompanamientoCertificateReport],
     exports: [SalidasService],
 })
 export class SalidasModule { }

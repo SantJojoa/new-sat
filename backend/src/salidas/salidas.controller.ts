@@ -23,6 +23,7 @@ import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
+import { SetSeguimientoAcompanamientoDto } from './dto/set-seguimiento-acompanamiento.dto';
 
 @Controller('salidas')
 @UseGuards(JwtAuthGuard)
@@ -222,5 +223,32 @@ export class SalidasController {
         @Request() req
     ) {
         return this.salidasService.setSeguimientoArticulacionIv(id, dto, req.user);
+    }
+
+    @Patch(':id/seguimiento-acompanamiento')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'edit')
+    setSeguimientoAcompanamiento(
+        @Param('id') id: string,
+        @Body() dto: SetSeguimientoAcompanamientoDto,
+        @Request() req
+    ) {
+        return this.salidasService.setSeguimientoAcompanamiento(id, dto, req.user);
+    }
+
+    @Get(':id/certificado-acompanamiento')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async getCertificadoAcompanamiento(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const buffer = await this.salidasService.generateCertificadoAcompanamiento(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="certificado-acompanamiento-${id}.pdf"`,
+        });
+        return new StreamableFile(buffer);
     }
 }

@@ -10,6 +10,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
+import { SetSeguimientoAcompanamientoDto } from './dto/set-seguimiento-acompanamiento.dto';
+import { AcompanamientoCertificateReport } from './reports/acompanamiento-certificate.report';
 import { time } from 'console';
 
 @Injectable()
@@ -19,6 +21,7 @@ export class SalidasService {
         private pdfReport: SalidasPdfReport,
         private excelReport: SalidasExcelReport,
         private notifications: NotificationsService,
+        private acompanamientoCertificate: AcompanamientoCertificateReport,
     ) { }
 
     private parseDateLocal(dateStr: string | Date): Date {
@@ -208,6 +211,7 @@ export class SalidasService {
             seguimiento_capacitacion: true,
             seguimiento_ivc: true,
             seguimiento_articulacion_iv: true,
+            seguimiento_acompanamiento: true,
         };
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -246,6 +250,7 @@ export class SalidasService {
                 seguimiento_capacitacion: true,
                 seguimiento_ivc: true,
                 seguimiento_articulacion_iv: true,
+                seguimiento_acompanamiento: true,
             }
         });
 
@@ -590,6 +595,50 @@ export class SalidasService {
                 observaciones: dto.observaciones ?? null,
             }
         });
+    }
+
+    async setSeguimientoAcompanamiento(id: string, dto: SetSeguimientoAcompanamientoDto, user: users) {
+        const salida = await this.findOne(id, user);
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
+
+        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+
+        const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
+        const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;
+
+        const data = {
+            se_programo: dto.se_programo,
+            se_realizo: dto.se_realizo,
+            nombre_reunion: dto.nombre_reunion ?? null,
+            fecha_reunion: fechaReunion,
+            hora_inicial: dto.hora_inicial ?? null,
+            hora_final: dto.hora_final ?? null,
+            acta_numero: dto.acta_numero ?? null,
+            institucion: dto.institucion ?? null,
+            municipio: dto.municipio ?? null,
+            lugar: dto.lugar ?? null,
+            material_entregado: dto.material_entregado ?? null,
+            asistentes: dto.asistentes ?? null,
+            orden_del_dia: dto.orden_del_dia ?? null,
+            desarrollo: dto.desarrollo ?? null,
+            conclusiones: dto.conclusiones ?? null,
+            compromisos: dto.compromisos ?? null,
+            proxima_lugar: dto.proxima_lugar ?? null,
+            proxima_fecha: proximaFecha,
+            proxima_hora: dto.proxima_hora ?? null,
+        };
+
+        return this.prisma.seguimiento_acompanamiento.upsert({
+            where: { salida_id: id },
+            create: { salida_id: id, ...data },
+            update: data,
+        });
+    }
+
+    async generateCertificadoAcompanamiento(id: string, user: users): Promise<Buffer> {
+        const salida = await this.findOne(id, user);
+        return this.acompanamientoCertificate.generate(salida);
     }
 
     async bulkReject(dto: BulkRejectSalidaDto, user: users) {

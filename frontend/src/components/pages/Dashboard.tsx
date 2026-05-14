@@ -35,7 +35,7 @@ export default function Dashboard() {
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios'],
         'Asesorias': ['programar_asesoria'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv']
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento']
     };
 
     const getCategory = (moduleName: string) => {
@@ -84,6 +84,11 @@ export default function Dashboard() {
         {
             id: 'programar-asesoria-module',
             modules: { id: 'programar-asesoria-module', name: 'programar_asesoria', description: 'Programar Asesoría', icon: 'support_agent', path: '/programar-asesoria', is_active: true, order: 105 },
+            can_view: true
+        },
+        {
+            id: 'seguimiento-acompanamiento-module',
+            modules: { id: 'seguimiento-acompanamiento-module', name: 'seguimiento_acompanamiento', description: 'Seguimiento de Acompañamiento', icon: 'handshake', path: '/seguimiento-acompanamiento', is_active: true, order: 106 },
             can_view: true
         }
     ];

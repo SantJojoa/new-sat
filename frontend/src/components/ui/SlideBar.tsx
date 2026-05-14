@@ -155,6 +155,13 @@ export default function SlideBar() {
             label: 'Gestionar Asesorías',
             icon: 'manage_search',
             href: '/gestionar-asesoria'
+        },
+        {
+            id: 'seguimiento-acompanamiento-module',
+            name: 'seguimiento_acompanamiento',
+            label: 'Seguimiento de Acompañamiento',
+            icon: 'handshake',
+            href: '/seguimiento-acompanamiento'
         }
     ];
 
@@ -173,7 +180,7 @@ export default function SlideBar() {
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
