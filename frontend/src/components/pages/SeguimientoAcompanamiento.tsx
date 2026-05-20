@@ -435,11 +435,7 @@ export default function SeguimientoAcompanamiento() {
     const handleDownloadCertificado = async (record: SalidaRecord) => {
         setDownloadingId(record.id);
         try {
-            const { blob, filename } = await salidasService.downloadCertificadoAcompanamiento(record.id);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filename; a.click();
-            URL.revokeObjectURL(url);
+            await salidasService.downloadCertificadoAcompanamiento(record.id, record.codigo);
         } catch { alert('Error al generar el certificado'); }
         finally { setDownloadingId(null); }
     };

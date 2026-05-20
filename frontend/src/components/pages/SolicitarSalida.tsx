@@ -570,7 +570,7 @@ export default function SolicitarSalida() {
         if (selectedIpsActors.length === 0) {
             setSelectedIPS([]);
         }
-    };
+    }; 0
 
     const closeEapbActorModal = () => {
         setEapbActorSearch('');

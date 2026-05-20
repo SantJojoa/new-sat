@@ -172,7 +172,7 @@ export const salidasService = {
         return response.data;
     },
 
-    downloadCertificadoAcompanamiento: async (id: string) => {
+    downloadCertificadoAcompanamiento: async (id: string, codigo?: string): Promise<void> => {
         const response = await api.get(`/salidas/${id}/certificado-acompanamiento`, {
             responseType: 'blob',
         });
@@ -182,6 +182,17 @@ export const salidasService = {
             const match = /filename="([^"]+)"/i.exec(contentDisposition);
             if (match?.[1]) filename = match[1];
         }
-        return { blob: response.data as Blob, filename };
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const windowName = `certificado-acompanamiento-${codigo ?? id}`;
+        const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        if (!popup) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
     },
 }
