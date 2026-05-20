@@ -3,7 +3,7 @@ FROM node:20 AS build
 WORKDIR /app
 
 COPY package*.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --shamefully-hoist && pnpm rebuild esbuild
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate && pnpm install --shamefully-hoist && pnpm rebuild esbuild
 
 
 COPY . .

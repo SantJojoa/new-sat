@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, CheckCircle, AlertCircle, Pencil, Trash2, X, Plus } from 'lucide-react';
+import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, CheckCircle, AlertCircle, Trash2, X, Plus } from 'lucide-react';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { asesoriasService } from '../../services/asesoriasService';

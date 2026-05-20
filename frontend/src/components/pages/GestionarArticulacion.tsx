@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { User, RefreshCcw, Calendar, MapPin, Layers, CheckCircle, AlertCircle, Pencil, Trash2, X } from 'lucide-react';
+import { User, RefreshCcw, Calendar, MapPin, Layers, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { articulacionesService } from '../../services/articulacionesService';

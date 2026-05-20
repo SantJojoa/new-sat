@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, XCircle, X } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, X } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
@@ -97,9 +97,7 @@ function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
         existing != null ? (existing.se_realizo ? 'true' : 'false') : ''
     );
 
-    const [numInstituciones, setNumInstituciones] = useState(
-        existing?.num_instituciones_asistieron?.toString() ?? ''
-    );
+    const numInstituciones = existing?.num_instituciones_asistieron?.toString() ?? '';
     const [numAsistentes, setNumAsistentes] = useState(
         existing?.num_total_asistentes?.toString() ?? ''
     );

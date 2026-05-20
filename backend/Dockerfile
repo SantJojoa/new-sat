@@ -11,7 +11,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 WORKDIR /app
 
 COPY package*.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --shamefully-hoist && \
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate && pnpm install --shamefully-hoist && \
     pnpm rebuild @nestjs/core @prisma/engines bcrypt prisma unrs-resolver
 
 COPY . .
