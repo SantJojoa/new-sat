@@ -194,7 +194,7 @@ export class SalidasController {
 
     @Patch(':id/seguimiento')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'edit')
+    @RequirePermissions('solicitar_salida', 'view')
     setSeguimiento(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoDto,
@@ -205,7 +205,7 @@ export class SalidasController {
 
     @Patch(':id/seguimiento-ivc')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'edit')
+    @RequirePermissions('solicitar_salida', 'view')
     setSeguimientoIvc(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoIvcDto,
@@ -216,7 +216,7 @@ export class SalidasController {
 
     @Patch(':id/seguimiento-articulacion-iv')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'edit')
+    @RequirePermissions('solicitar_salida', 'view')
     setSeguimientoArticulacionIv(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoArticulacionIvDto,
@@ -227,7 +227,7 @@ export class SalidasController {
 
     @Patch(':id/seguimiento-acompanamiento')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'edit')
+    @RequirePermissions('solicitar_salida', 'view')
     setSeguimientoAcompanamiento(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoAcompanamientoDto,

@@ -9,30 +9,42 @@ const prisma = new PrismaClient({ adapter });
 async function fixSubdirectorPermissions() {
     console.log('🔄 Actualizando permisos de subdirector en solicitar_salida...');
 
-    const SUBDIRECTOR_USER_TYPE_ID = 'cml5m06e80001kon9y2rl44jf';
-
+    const userType = await prisma.user_types.findUnique({ where: { name: 'admin_subdireccion' } });
     const module = await prisma.modules.findUnique({ where: { name: 'solicitar_salida' } });
+
+    if (!userType) {
+        console.error('❌ Rol "admin_subdireccion" no encontrado.');
+        return;
+    }
 
     if (!module) {
         console.error('❌ Módulo "solicitar_salida" no encontrado.');
         return;
     }
 
-    const updated = await prisma.permissions.updateMany({
+    await prisma.permissions.upsert({
         where: {
-            user_type_id: SUBDIRECTOR_USER_TYPE_ID,
-            module_id: module.id,
+            user_type_id_module_id: {
+                user_type_id: userType.id,
+                module_id: module.id,
+            },
         },
-        data: {
+        update: {
+            can_view: true,
             can_create: true,
+        },
+        create: {
+            user_type_id: userType.id,
+            module_id: module.id,
+            can_view: true,
+            can_create: true,
+            can_edit: false,
+            can_delete: false,
+            can_approve: true,
         },
     });
 
-    if (updated.count === 0) {
-        console.warn('⚠️  No se encontró el permiso para actualizar. Verifica que exista la combinación user_type_id + module_id.');
-    } else {
-        console.log(`✅ Permiso can_create actualizado a TRUE para subdirector en "solicitar_salida". (${updated.count} registro(s) afectado(s))`);
-    }
+    console.log('✅ Permiso can_create actualizado a TRUE para admin_subdireccion en "solicitar_salida".');
 
     console.log('\n🎉 Actualización completada!');
 }

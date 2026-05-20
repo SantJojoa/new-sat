@@ -522,11 +522,7 @@ export class SalidasService {
     }
 
     async setSeguimiento(id: string, dto: SetSeguimientoDto, user: users) {
-        const salida = await this.findOne(id, user);
-        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
-
-        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+        await this.findOne(id, user);
 
         return this.prisma.seguimiento_capacitaciones.upsert({
             where: { salida_id: id },
@@ -550,11 +546,7 @@ export class SalidasService {
     }
 
     async setSeguimientoArticulacionIv(id: string, dto: SetSeguimientoArticulacionIvDto, user: users) {
-        const salida = await this.findOne(id, user);
-        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
-
-        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+        await this.findOne(id, user);
 
         return this.prisma.seguimiento_articulacion_iv.upsert({
             where: { salida_id: id },
@@ -571,11 +563,7 @@ export class SalidasService {
     }
 
     async setSeguimientoIvc(id: string, dto: SetSeguimientoIvcDto, user: users) {
-        const salida = await this.findOne(id, user);
-        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
-
-        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+        await this.findOne(id, user);
 
         const fechaAutocomisorio = dto.fecha_autocomisorio ? new Date(dto.fecha_autocomisorio) : null;
 
@@ -598,11 +586,7 @@ export class SalidasService {
     }
 
     async setSeguimientoAcompanamiento(id: string, dto: SetSeguimientoAcompanamientoDto, user: users) {
-        const salida = await this.findOne(id, user);
-        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        const canEdit = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '') || salida.solicitante_id === user.id;
-
-        if (!canEdit) throw new ForbiddenException('No tienes permiso para registrar el seguimiento');
+        await this.findOne(id, user);
 
         const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
         const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;

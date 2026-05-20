@@ -272,12 +272,16 @@ async function main() {
                         module_id: module.id,
                     },
                 },
-                update: {},
+                update: {
+                    can_view: true,
+                    can_create: module.name === 'solicitar_salida',
+                    can_approve: true,
+                },
                 create: {
                     user_type_id: userTypes[1].id,
                     module_id: module.id,
                     can_view: true,
-                    can_create: false,
+                    can_create: module.name === 'solicitar_salida',
                     can_edit: false,
                     can_delete: false,
                     can_approve: true, // Puede aprobar
