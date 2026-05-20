@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2pI8ihkp6y7Gc2ffUzfjrDL8eWaVNcbCYLuZt6UVvcADbxIujI466WUMcwBTf8e
+\restrict cyOKnhd9UZZTC843xl0UDYLKzp2WWC8kqJAvFZceA9VWun1SEBk2GedTWG3c5S6
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -19,26 +19,276 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_user_type_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_subdireccion_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_area_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_ivc DROP CONSTRAINT IF EXISTS seguimiento_ivc_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_capacitaciones DROP CONSTRAINT IF EXISTS seguimiento_capacitaciones_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_articulacion_iv DROP CONSTRAINT IF EXISTS seguimiento_articulacion_iv_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_acompanamiento DROP CONSTRAINT IF EXISTS seguimiento_acompanamiento_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salidas DROP CONSTRAINT IF EXISTS salidas_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salidas DROP CONSTRAINT IF EXISTS salidas_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salidas DROP CONSTRAINT IF EXISTS salidas_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salidas DROP CONSTRAINT IF EXISTS salidas_aprobador_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_ips DROP CONSTRAINT IF EXISTS salida_ips_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_ips DROP CONSTRAINT IF EXISTS salida_ips_ips_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_ips DROP CONSTRAINT IF EXISTS salida_ips_actor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_eapb_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_actor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.permissions DROP CONSTRAINT IF EXISTS permissions_user_type_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.permissions DROP CONSTRAINT IF EXISTS permissions_module_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.modules DROP CONSTRAINT IF EXISTS modules_parent_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.ivc DROP CONSTRAINT IF EXISTS ivc_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.ivc DROP CONSTRAINT IF EXISTS ivc_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.ivc DROP CONSTRAINT IF EXISTS ivc_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asesorias DROP CONSTRAINT IF EXISTS asesorias_registrador_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asesorias DROP CONSTRAINT IF EXISTS asesorias_municipio_procedencia_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asesorias DROP CONSTRAINT IF EXISTS asesorias_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asesoria_compromisos DROP CONSTRAINT IF EXISTS asesoria_compromisos_asesoria_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asesoria_asistentes DROP CONSTRAINT IF EXISTS asesoria_asistentes_asesoria_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.articulaciones DROP CONSTRAINT IF EXISTS articulaciones_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.articulaciones DROP CONSTRAINT IF EXISTS articulaciones_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.articulaciones DROP CONSTRAINT IF EXISTS articulaciones_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.areas DROP CONSTRAINT IF EXISTS areas_subdireccion_id_fkey;
+ALTER TABLE IF EXISTS ONLY public."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_B_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_A_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_B_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_A_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_B_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_A_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_B_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_A_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_B_fkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA".users DROP CONSTRAINT IF EXISTS users_user_type_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".users DROP CONSTRAINT IF EXISTS users_subdireccion_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".users DROP CONSTRAINT IF EXISTS users_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_area_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salidas DROP CONSTRAINT IF EXISTS salidas_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salidas DROP CONSTRAINT IF EXISTS salidas_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salidas DROP CONSTRAINT IF EXISTS salidas_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salidas DROP CONSTRAINT IF EXISTS salidas_aprobador_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_salida_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_eapb_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_actor_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".permissions DROP CONSTRAINT IF EXISTS permissions_user_type_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".permissions DROP CONSTRAINT IF EXISTS permissions_module_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".modules DROP CONSTRAINT IF EXISTS modules_parent_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ivc DROP CONSTRAINT IF EXISTS ivc_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ivc DROP CONSTRAINT IF EXISTS ivc_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ivc DROP CONSTRAINT IF EXISTS ivc_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ips DROP CONSTRAINT IF EXISTS ips_municipio_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".articulaciones DROP CONSTRAINT IF EXISTS articulaciones_solicitante_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".articulaciones DROP CONSTRAINT IF EXISTS articulaciones_lugar_evento_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".articulaciones DROP CONSTRAINT IF EXISTS articulaciones_area_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".areas DROP CONSTRAINT IF EXISTS areas_subdireccion_id_fkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIps" DROP CONSTRAINT IF EXISTS "_SalidasIps_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIps" DROP CONSTRAINT IF EXISTS "_SalidasIps_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_A_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_B_fkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_A_fkey";
+DROP INDEX IF EXISTS public.users_username_key;
+DROP INDEX IF EXISTS public.users_num_id_key;
+DROP INDEX IF EXISTS public.users_email_key;
+DROP INDEX IF EXISTS public.user_types_name_key;
+DROP INDEX IF EXISTS public.subdirecciones_name_key;
+DROP INDEX IF EXISTS public.seguimiento_ivc_salida_id_key;
+DROP INDEX IF EXISTS public.seguimiento_capacitaciones_salida_id_key;
+DROP INDEX IF EXISTS public.seguimiento_articulacion_iv_salida_id_key;
+DROP INDEX IF EXISTS public.seguimiento_acompanamiento_salida_id_key;
+DROP INDEX IF EXISTS public.salidas_codigo_key;
+DROP INDEX IF EXISTS public.salida_ips_salida_id_ips_id_actor_id_key;
+DROP INDEX IF EXISTS public.salida_eapb_salida_id_eapb_id_actor_id_key;
+DROP INDEX IF EXISTS public.permissions_user_type_id_module_id_key;
+DROP INDEX IF EXISTS public.municipios_code_key;
+DROP INDEX IF EXISTS public.modules_name_key;
+DROP INDEX IF EXISTS public.ivc_codigo_key;
+DROP INDEX IF EXISTS public.ips_type_key;
+DROP INDEX IF EXISTS public.ips_actores_name_key;
+DROP INDEX IF EXISTS public.eapb_actores_name_key;
+DROP INDEX IF EXISTS public.asesorias_codigo_key;
+DROP INDEX IF EXISTS public.articulaciones_codigo_key;
+DROP INDEX IF EXISTS public.areas_name_key;
+DROP INDEX IF EXISTS public."_SalidasOrganizaciones_B_index";
+DROP INDEX IF EXISTS public."_SalidasMunicipios_B_index";
+DROP INDEX IF EXISTS public."_SalidasIdsn_B_index";
+DROP INDEX IF EXISTS public."_SalidasEntidades_B_index";
+DROP INDEX IF EXISTS public."_SalidasAreasParticipantes_B_index";
+DROP INDEX IF EXISTS "SCHEMA".users_username_key;
+DROP INDEX IF EXISTS "SCHEMA".users_num_id_key;
+DROP INDEX IF EXISTS "SCHEMA".users_email_key;
+DROP INDEX IF EXISTS "SCHEMA".user_types_name_key;
+DROP INDEX IF EXISTS "SCHEMA".subdirecciones_name_key;
+DROP INDEX IF EXISTS "SCHEMA".salidas_codigo_key;
+DROP INDEX IF EXISTS "SCHEMA".salida_eapb_salida_id_eapb_id_key;
+DROP INDEX IF EXISTS "SCHEMA".permissions_user_type_id_module_id_key;
+DROP INDEX IF EXISTS "SCHEMA".municipios_code_key;
+DROP INDEX IF EXISTS "SCHEMA".modules_name_key;
+DROP INDEX IF EXISTS "SCHEMA".ivc_codigo_key;
+DROP INDEX IF EXISTS "SCHEMA".eapb_actores_name_key;
+DROP INDEX IF EXISTS "SCHEMA".articulaciones_codigo_key;
+DROP INDEX IF EXISTS "SCHEMA".areas_name_key;
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasOrganizaciones_B_index";
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasMunicipios_B_index";
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasIps_B_index";
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasIdsn_B_index";
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasEntidades_B_index";
+DROP INDEX IF EXISTS "SCHEMA"."_SalidasAreasParticipantes_B_index";
+ALTER TABLE IF EXISTS ONLY public.ventana_programacion DROP CONSTRAINT IF EXISTS ventana_programacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.user_types DROP CONSTRAINT IF EXISTS user_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.subdirecciones DROP CONSTRAINT IF EXISTS subdirecciones_pkey;
+ALTER TABLE IF EXISTS ONLY public.solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_pkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_ivc DROP CONSTRAINT IF EXISTS seguimiento_ivc_pkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_capacitaciones DROP CONSTRAINT IF EXISTS seguimiento_capacitaciones_pkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_articulacion_iv DROP CONSTRAINT IF EXISTS seguimiento_articulacion_iv_pkey;
+ALTER TABLE IF EXISTS ONLY public.seguimiento_acompanamiento DROP CONSTRAINT IF EXISTS seguimiento_acompanamiento_pkey;
+ALTER TABLE IF EXISTS ONLY public.salidas DROP CONSTRAINT IF EXISTS salidas_pkey;
+ALTER TABLE IF EXISTS ONLY public.salida_ips DROP CONSTRAINT IF EXISTS salida_ips_pkey;
+ALTER TABLE IF EXISTS ONLY public.salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_pkey;
+ALTER TABLE IF EXISTS ONLY public.permissions DROP CONSTRAINT IF EXISTS permissions_pkey;
+ALTER TABLE IF EXISTS ONLY public.organizaciones DROP CONSTRAINT IF EXISTS organizaciones_pkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_pkey;
+ALTER TABLE IF EXISTS ONLY public.municipios DROP CONSTRAINT IF EXISTS municipios_pkey;
+ALTER TABLE IF EXISTS ONLY public.modules DROP CONSTRAINT IF EXISTS modules_pkey;
+ALTER TABLE IF EXISTS ONLY public.ivc DROP CONSTRAINT IF EXISTS ivc_pkey;
+ALTER TABLE IF EXISTS ONLY public.ips DROP CONSTRAINT IF EXISTS ips_pkey;
+ALTER TABLE IF EXISTS ONLY public.ips_actores DROP CONSTRAINT IF EXISTS ips_actores_pkey;
+ALTER TABLE IF EXISTS ONLY public.idsn DROP CONSTRAINT IF EXISTS idsn_pkey;
+ALTER TABLE IF EXISTS ONLY public.entidades DROP CONSTRAINT IF EXISTS entidades_pkey;
+ALTER TABLE IF EXISTS ONLY public.eapb DROP CONSTRAINT IF EXISTS eapb_pkey;
+ALTER TABLE IF EXISTS ONLY public.eapb_actores DROP CONSTRAINT IF EXISTS eapb_actores_pkey;
+ALTER TABLE IF EXISTS ONLY public.asesorias DROP CONSTRAINT IF EXISTS asesorias_pkey;
+ALTER TABLE IF EXISTS ONLY public.asesoria_compromisos DROP CONSTRAINT IF EXISTS asesoria_compromisos_pkey;
+ALTER TABLE IF EXISTS ONLY public.asesoria_asistentes DROP CONSTRAINT IF EXISTS asesoria_asistentes_pkey;
+ALTER TABLE IF EXISTS ONLY public.articulaciones DROP CONSTRAINT IF EXISTS articulaciones_pkey;
+ALTER TABLE IF EXISTS ONLY public.areas DROP CONSTRAINT IF EXISTS areas_pkey;
+ALTER TABLE IF EXISTS ONLY public._prisma_migrations DROP CONSTRAINT IF EXISTS _prisma_migrations_pkey;
+ALTER TABLE IF EXISTS ONLY public."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_AB_pkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_AB_pkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_AB_pkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_AB_pkey";
+ALTER TABLE IF EXISTS ONLY public."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA".users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".user_types DROP CONSTRAINT IF EXISTS user_types_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".subdirecciones DROP CONSTRAINT IF EXISTS subdirecciones_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".solicitudes_union DROP CONSTRAINT IF EXISTS solicitudes_union_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salidas DROP CONSTRAINT IF EXISTS salidas_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".salida_eapb DROP CONSTRAINT IF EXISTS salida_eapb_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".permissions DROP CONSTRAINT IF EXISTS permissions_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".organizaciones DROP CONSTRAINT IF EXISTS organizaciones_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".notifications DROP CONSTRAINT IF EXISTS notifications_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".municipios DROP CONSTRAINT IF EXISTS municipios_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".modules DROP CONSTRAINT IF EXISTS modules_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ivc DROP CONSTRAINT IF EXISTS ivc_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".ips DROP CONSTRAINT IF EXISTS ips_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".idsn DROP CONSTRAINT IF EXISTS idsn_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".entidades DROP CONSTRAINT IF EXISTS entidades_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".eapb DROP CONSTRAINT IF EXISTS eapb_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".eapb_actores DROP CONSTRAINT IF EXISTS eapb_actores_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".articulaciones DROP CONSTRAINT IF EXISTS articulaciones_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA".areas DROP CONSTRAINT IF EXISTS areas_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA"._prisma_migrations DROP CONSTRAINT IF EXISTS _prisma_migrations_pkey;
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasOrganizaciones" DROP CONSTRAINT IF EXISTS "_SalidasOrganizaciones_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasMunicipios" DROP CONSTRAINT IF EXISTS "_SalidasMunicipios_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIps" DROP CONSTRAINT IF EXISTS "_SalidasIps_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasIdsn" DROP CONSTRAINT IF EXISTS "_SalidasIdsn_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasEntidades" DROP CONSTRAINT IF EXISTS "_SalidasEntidades_AB_pkey";
+ALTER TABLE IF EXISTS ONLY "SCHEMA"."_SalidasAreasParticipantes" DROP CONSTRAINT IF EXISTS "_SalidasAreasParticipantes_AB_pkey";
+DROP TABLE IF EXISTS public.ventana_programacion;
+DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.user_types;
+DROP TABLE IF EXISTS public.subdirecciones;
+DROP TABLE IF EXISTS public.solicitudes_union;
+DROP TABLE IF EXISTS public.seguimiento_ivc;
+DROP TABLE IF EXISTS public.seguimiento_capacitaciones;
+DROP TABLE IF EXISTS public.seguimiento_articulacion_iv;
+DROP TABLE IF EXISTS public.seguimiento_acompanamiento;
+DROP TABLE IF EXISTS public.salidas;
+DROP TABLE IF EXISTS public.salida_ips;
+DROP TABLE IF EXISTS public.salida_eapb;
+DROP TABLE IF EXISTS public.permissions;
+DROP TABLE IF EXISTS public.organizaciones;
+DROP TABLE IF EXISTS public.notifications;
+DROP TABLE IF EXISTS public.municipios;
+DROP TABLE IF EXISTS public.modules;
+DROP TABLE IF EXISTS public.ivc;
+DROP TABLE IF EXISTS public.ips_actores;
+DROP TABLE IF EXISTS public.ips;
+DROP TABLE IF EXISTS public.idsn;
+DROP TABLE IF EXISTS public.entidades;
+DROP TABLE IF EXISTS public.eapb_actores;
+DROP TABLE IF EXISTS public.eapb;
+DROP TABLE IF EXISTS public.asesorias;
+DROP TABLE IF EXISTS public.asesoria_compromisos;
+DROP TABLE IF EXISTS public.asesoria_asistentes;
+DROP TABLE IF EXISTS public.articulaciones;
+DROP TABLE IF EXISTS public.areas;
+DROP TABLE IF EXISTS public._prisma_migrations;
+DROP TABLE IF EXISTS public."_SalidasOrganizaciones";
+DROP TABLE IF EXISTS public."_SalidasMunicipios";
+DROP TABLE IF EXISTS public."_SalidasIdsn";
+DROP TABLE IF EXISTS public."_SalidasEntidades";
+DROP TABLE IF EXISTS public."_SalidasAreasParticipantes";
+DROP TABLE IF EXISTS "SCHEMA".users;
+DROP TABLE IF EXISTS "SCHEMA".user_types;
+DROP TABLE IF EXISTS "SCHEMA".subdirecciones;
+DROP TABLE IF EXISTS "SCHEMA".solicitudes_union;
+DROP TABLE IF EXISTS "SCHEMA".salidas;
+DROP TABLE IF EXISTS "SCHEMA".salida_eapb;
+DROP TABLE IF EXISTS "SCHEMA".permissions;
+DROP TABLE IF EXISTS "SCHEMA".organizaciones;
+DROP TABLE IF EXISTS "SCHEMA".notifications;
+DROP TABLE IF EXISTS "SCHEMA".municipios;
+DROP TABLE IF EXISTS "SCHEMA".modules;
+DROP TABLE IF EXISTS "SCHEMA".ivc;
+DROP TABLE IF EXISTS "SCHEMA".ips;
+DROP TABLE IF EXISTS "SCHEMA".idsn;
+DROP TABLE IF EXISTS "SCHEMA".entidades;
+DROP TABLE IF EXISTS "SCHEMA".eapb_actores;
+DROP TABLE IF EXISTS "SCHEMA".eapb;
+DROP TABLE IF EXISTS "SCHEMA".articulaciones;
+DROP TABLE IF EXISTS "SCHEMA".areas;
+DROP TABLE IF EXISTS "SCHEMA"._prisma_migrations;
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasOrganizaciones";
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasMunicipios";
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasIps";
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasIdsn";
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasEntidades";
+DROP TABLE IF EXISTS "SCHEMA"."_SalidasAreasParticipantes";
+-- *not* dropping schema, since initdb creates it
+DROP SCHEMA IF EXISTS "SCHEMA";
 --
--- Name: SCHEMA; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: SCHEMA; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA "SCHEMA";
 
 
-ALTER SCHEMA "SCHEMA" OWNER TO postgres;
-
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 -- *not* creating schema, since initdb creates it
 
 
-ALTER SCHEMA public OWNER TO postgres;
-
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS '';
@@ -49,7 +299,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: _SalidasAreasParticipantes; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasAreasParticipantes; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasAreasParticipantes" (
@@ -58,10 +308,8 @@ CREATE TABLE "SCHEMA"."_SalidasAreasParticipantes" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasAreasParticipantes" OWNER TO postgres;
-
 --
--- Name: _SalidasEntidades; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasEntidades; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasEntidades" (
@@ -70,10 +318,8 @@ CREATE TABLE "SCHEMA"."_SalidasEntidades" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasEntidades" OWNER TO postgres;
-
 --
--- Name: _SalidasIdsn; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIdsn; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasIdsn" (
@@ -82,10 +328,8 @@ CREATE TABLE "SCHEMA"."_SalidasIdsn" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasIdsn" OWNER TO postgres;
-
 --
--- Name: _SalidasIps; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIps; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasIps" (
@@ -94,10 +338,8 @@ CREATE TABLE "SCHEMA"."_SalidasIps" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasIps" OWNER TO postgres;
-
 --
--- Name: _SalidasMunicipios; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasMunicipios; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasMunicipios" (
@@ -106,10 +348,8 @@ CREATE TABLE "SCHEMA"."_SalidasMunicipios" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasMunicipios" OWNER TO postgres;
-
 --
--- Name: _SalidasOrganizaciones; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasOrganizaciones; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"."_SalidasOrganizaciones" (
@@ -118,10 +358,8 @@ CREATE TABLE "SCHEMA"."_SalidasOrganizaciones" (
 );
 
 
-ALTER TABLE "SCHEMA"."_SalidasOrganizaciones" OWNER TO postgres;
-
 --
--- Name: _prisma_migrations; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: _prisma_migrations; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA"._prisma_migrations (
@@ -136,10 +374,8 @@ CREATE TABLE "SCHEMA"._prisma_migrations (
 );
 
 
-ALTER TABLE "SCHEMA"._prisma_migrations OWNER TO postgres;
-
 --
--- Name: areas; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: areas; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".areas (
@@ -151,10 +387,8 @@ CREATE TABLE "SCHEMA".areas (
 );
 
 
-ALTER TABLE "SCHEMA".areas OWNER TO postgres;
-
 --
--- Name: articulaciones; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".articulaciones (
@@ -180,10 +414,8 @@ CREATE TABLE "SCHEMA".articulaciones (
 );
 
 
-ALTER TABLE "SCHEMA".articulaciones OWNER TO postgres;
-
 --
--- Name: eapb; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: eapb; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".eapb (
@@ -194,10 +426,8 @@ CREATE TABLE "SCHEMA".eapb (
 );
 
 
-ALTER TABLE "SCHEMA".eapb OWNER TO postgres;
-
 --
--- Name: eapb_actores; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: eapb_actores; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".eapb_actores (
@@ -208,10 +438,8 @@ CREATE TABLE "SCHEMA".eapb_actores (
 );
 
 
-ALTER TABLE "SCHEMA".eapb_actores OWNER TO postgres;
-
 --
--- Name: entidades; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: entidades; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".entidades (
@@ -222,10 +450,8 @@ CREATE TABLE "SCHEMA".entidades (
 );
 
 
-ALTER TABLE "SCHEMA".entidades OWNER TO postgres;
-
 --
--- Name: idsn; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: idsn; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".idsn (
@@ -236,10 +462,8 @@ CREATE TABLE "SCHEMA".idsn (
 );
 
 
-ALTER TABLE "SCHEMA".idsn OWNER TO postgres;
-
 --
--- Name: ips; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: ips; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".ips (
@@ -252,10 +476,8 @@ CREATE TABLE "SCHEMA".ips (
 );
 
 
-ALTER TABLE "SCHEMA".ips OWNER TO postgres;
-
 --
--- Name: ivc; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: ivc; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".ivc (
@@ -281,10 +503,8 @@ CREATE TABLE "SCHEMA".ivc (
 );
 
 
-ALTER TABLE "SCHEMA".ivc OWNER TO postgres;
-
 --
--- Name: modules; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: modules; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".modules (
@@ -301,10 +521,8 @@ CREATE TABLE "SCHEMA".modules (
 );
 
 
-ALTER TABLE "SCHEMA".modules OWNER TO postgres;
-
 --
--- Name: municipios; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: municipios; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".municipios (
@@ -316,10 +534,8 @@ CREATE TABLE "SCHEMA".municipios (
 );
 
 
-ALTER TABLE "SCHEMA".municipios OWNER TO postgres;
-
 --
--- Name: notifications; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: notifications; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".notifications (
@@ -334,10 +550,8 @@ CREATE TABLE "SCHEMA".notifications (
 );
 
 
-ALTER TABLE "SCHEMA".notifications OWNER TO postgres;
-
 --
--- Name: organizaciones; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: organizaciones; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".organizaciones (
@@ -348,10 +562,8 @@ CREATE TABLE "SCHEMA".organizaciones (
 );
 
 
-ALTER TABLE "SCHEMA".organizaciones OWNER TO postgres;
-
 --
--- Name: permissions; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: permissions; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".permissions (
@@ -368,10 +580,8 @@ CREATE TABLE "SCHEMA".permissions (
 );
 
 
-ALTER TABLE "SCHEMA".permissions OWNER TO postgres;
-
 --
--- Name: salida_eapb; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".salida_eapb (
@@ -382,10 +592,8 @@ CREATE TABLE "SCHEMA".salida_eapb (
 );
 
 
-ALTER TABLE "SCHEMA".salida_eapb OWNER TO postgres;
-
 --
--- Name: salidas; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: salidas; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".salidas (
@@ -415,10 +623,8 @@ CREATE TABLE "SCHEMA".salidas (
 );
 
 
-ALTER TABLE "SCHEMA".salidas OWNER TO postgres;
-
 --
--- Name: solicitudes_union; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: solicitudes_union; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".solicitudes_union (
@@ -434,10 +640,8 @@ CREATE TABLE "SCHEMA".solicitudes_union (
 );
 
 
-ALTER TABLE "SCHEMA".solicitudes_union OWNER TO postgres;
-
 --
--- Name: subdirecciones; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: subdirecciones; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".subdirecciones (
@@ -449,10 +653,8 @@ CREATE TABLE "SCHEMA".subdirecciones (
 );
 
 
-ALTER TABLE "SCHEMA".subdirecciones OWNER TO postgres;
-
 --
--- Name: user_types; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: user_types; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".user_types (
@@ -465,10 +667,8 @@ CREATE TABLE "SCHEMA".user_types (
 );
 
 
-ALTER TABLE "SCHEMA".user_types OWNER TO postgres;
-
 --
--- Name: users; Type: TABLE; Schema: SCHEMA; Owner: postgres
+-- Name: users; Type: TABLE; Schema: SCHEMA; Owner: -
 --
 
 CREATE TABLE "SCHEMA".users (
@@ -489,10 +689,8 @@ CREATE TABLE "SCHEMA".users (
 );
 
 
-ALTER TABLE "SCHEMA".users OWNER TO postgres;
-
 --
--- Name: _SalidasAreasParticipantes; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _SalidasAreasParticipantes; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."_SalidasAreasParticipantes" (
@@ -501,10 +699,8 @@ CREATE TABLE public."_SalidasAreasParticipantes" (
 );
 
 
-ALTER TABLE public."_SalidasAreasParticipantes" OWNER TO postgres;
-
 --
--- Name: _SalidasEntidades; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _SalidasEntidades; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."_SalidasEntidades" (
@@ -513,10 +709,8 @@ CREATE TABLE public."_SalidasEntidades" (
 );
 
 
-ALTER TABLE public."_SalidasEntidades" OWNER TO postgres;
-
 --
--- Name: _SalidasIdsn; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _SalidasIdsn; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."_SalidasIdsn" (
@@ -525,10 +719,8 @@ CREATE TABLE public."_SalidasIdsn" (
 );
 
 
-ALTER TABLE public."_SalidasIdsn" OWNER TO postgres;
-
 --
--- Name: _SalidasMunicipios; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _SalidasMunicipios; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."_SalidasMunicipios" (
@@ -537,10 +729,8 @@ CREATE TABLE public."_SalidasMunicipios" (
 );
 
 
-ALTER TABLE public."_SalidasMunicipios" OWNER TO postgres;
-
 --
--- Name: _SalidasOrganizaciones; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _SalidasOrganizaciones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."_SalidasOrganizaciones" (
@@ -549,10 +739,8 @@ CREATE TABLE public."_SalidasOrganizaciones" (
 );
 
 
-ALTER TABLE public."_SalidasOrganizaciones" OWNER TO postgres;
-
 --
--- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public._prisma_migrations (
@@ -567,10 +755,8 @@ CREATE TABLE public._prisma_migrations (
 );
 
 
-ALTER TABLE public._prisma_migrations OWNER TO postgres;
-
 --
--- Name: areas; Type: TABLE; Schema: public; Owner: postgres
+-- Name: areas; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.areas (
@@ -582,10 +768,8 @@ CREATE TABLE public.areas (
 );
 
 
-ALTER TABLE public.areas OWNER TO postgres;
-
 --
--- Name: articulaciones; Type: TABLE; Schema: public; Owner: postgres
+-- Name: articulaciones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.articulaciones (
@@ -611,10 +795,64 @@ CREATE TABLE public.articulaciones (
 );
 
 
-ALTER TABLE public.articulaciones OWNER TO postgres;
+--
+-- Name: asesoria_asistentes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.asesoria_asistentes (
+    id text NOT NULL,
+    asesoria_id text NOT NULL,
+    identificacion text NOT NULL,
+    nombre text NOT NULL,
+    apellido text NOT NULL,
+    cargo text,
+    email text,
+    movil text
+);
+
 
 --
--- Name: eapb; Type: TABLE; Schema: public; Owner: postgres
+-- Name: asesoria_compromisos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.asesoria_compromisos (
+    id text NOT NULL,
+    asesoria_id text NOT NULL,
+    compromiso text NOT NULL,
+    responsable text NOT NULL,
+    fecha timestamp(3) without time zone,
+    observaciones text
+);
+
+
+--
+-- Name: asesorias; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.asesorias (
+    id text NOT NULL,
+    codigo text NOT NULL,
+    fecha timestamp(3) without time zone NOT NULL,
+    hora text NOT NULL,
+    medio text NOT NULL,
+    institucion text NOT NULL,
+    municipio_procedencia_id text,
+    municipio_otro text,
+    lugar text NOT NULL,
+    temas_tratados text NOT NULL,
+    material_entregado text NOT NULL,
+    duracion_minutos integer NOT NULL,
+    estado text DEFAULT 'registrada'::text NOT NULL,
+    fecha_registro timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    registrador_id text NOT NULL,
+    area_id text NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL
+);
+
+
+--
+-- Name: eapb; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.eapb (
@@ -625,10 +863,8 @@ CREATE TABLE public.eapb (
 );
 
 
-ALTER TABLE public.eapb OWNER TO postgres;
-
 --
--- Name: eapb_actores; Type: TABLE; Schema: public; Owner: postgres
+-- Name: eapb_actores; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.eapb_actores (
@@ -639,10 +875,8 @@ CREATE TABLE public.eapb_actores (
 );
 
 
-ALTER TABLE public.eapb_actores OWNER TO postgres;
-
 --
--- Name: entidades; Type: TABLE; Schema: public; Owner: postgres
+-- Name: entidades; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.entidades (
@@ -653,10 +887,8 @@ CREATE TABLE public.entidades (
 );
 
 
-ALTER TABLE public.entidades OWNER TO postgres;
-
 --
--- Name: idsn; Type: TABLE; Schema: public; Owner: postgres
+-- Name: idsn; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.idsn (
@@ -667,10 +899,8 @@ CREATE TABLE public.idsn (
 );
 
 
-ALTER TABLE public.idsn OWNER TO postgres;
-
 --
--- Name: ips; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ips; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ips (
@@ -681,10 +911,8 @@ CREATE TABLE public.ips (
 );
 
 
-ALTER TABLE public.ips OWNER TO postgres;
-
 --
--- Name: ips_actores; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ips_actores; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ips_actores (
@@ -695,10 +923,8 @@ CREATE TABLE public.ips_actores (
 );
 
 
-ALTER TABLE public.ips_actores OWNER TO postgres;
-
 --
--- Name: ivc; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ivc; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ivc (
@@ -724,10 +950,8 @@ CREATE TABLE public.ivc (
 );
 
 
-ALTER TABLE public.ivc OWNER TO postgres;
-
 --
--- Name: modules; Type: TABLE; Schema: public; Owner: postgres
+-- Name: modules; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.modules (
@@ -744,10 +968,8 @@ CREATE TABLE public.modules (
 );
 
 
-ALTER TABLE public.modules OWNER TO postgres;
-
 --
--- Name: municipios; Type: TABLE; Schema: public; Owner: postgres
+-- Name: municipios; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.municipios (
@@ -759,10 +981,8 @@ CREATE TABLE public.municipios (
 );
 
 
-ALTER TABLE public.municipios OWNER TO postgres;
-
 --
--- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.notifications (
@@ -777,10 +997,8 @@ CREATE TABLE public.notifications (
 );
 
 
-ALTER TABLE public.notifications OWNER TO postgres;
-
 --
--- Name: organizaciones; Type: TABLE; Schema: public; Owner: postgres
+-- Name: organizaciones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.organizaciones (
@@ -791,10 +1009,8 @@ CREATE TABLE public.organizaciones (
 );
 
 
-ALTER TABLE public.organizaciones OWNER TO postgres;
-
 --
--- Name: permissions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.permissions (
@@ -811,10 +1027,8 @@ CREATE TABLE public.permissions (
 );
 
 
-ALTER TABLE public.permissions OWNER TO postgres;
-
 --
--- Name: salida_eapb; Type: TABLE; Schema: public; Owner: postgres
+-- Name: salida_eapb; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.salida_eapb (
@@ -825,10 +1039,8 @@ CREATE TABLE public.salida_eapb (
 );
 
 
-ALTER TABLE public.salida_eapb OWNER TO postgres;
-
 --
--- Name: salida_ips; Type: TABLE; Schema: public; Owner: postgres
+-- Name: salida_ips; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.salida_ips (
@@ -839,10 +1051,8 @@ CREATE TABLE public.salida_ips (
 );
 
 
-ALTER TABLE public.salida_ips OWNER TO postgres;
-
 --
--- Name: salidas; Type: TABLE; Schema: public; Owner: postgres
+-- Name: salidas; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.salidas (
@@ -868,14 +1078,91 @@ CREATE TABLE public.salidas (
     transporte_medio text,
     transporte_responsables text,
     instituciones_convocadas integer DEFAULT 0,
-    municipios_convocados text
+    municipios_convocados text,
+    "seguimiento_capacitacionesId" text
 );
 
 
-ALTER TABLE public.salidas OWNER TO postgres;
+--
+-- Name: seguimiento_acompanamiento; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.seguimiento_acompanamiento (
+    id text NOT NULL,
+    salida_id text NOT NULL,
+    se_realizo boolean NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL,
+    acta_numero text,
+    asistentes jsonb,
+    compromisos jsonb,
+    conclusiones text,
+    desarrollo text,
+    fecha_reunion timestamp(3) without time zone,
+    hora_final text,
+    hora_inicial text,
+    institucion text,
+    lugar text,
+    material_entregado text,
+    municipio text,
+    nombre_reunion text,
+    orden_del_dia jsonb,
+    proxima_fecha timestamp(3) without time zone,
+    proxima_hora text,
+    proxima_lugar text,
+    se_programo boolean DEFAULT false NOT NULL
+);
+
 
 --
--- Name: solicitudes_union; Type: TABLE; Schema: public; Owner: postgres
+-- Name: seguimiento_articulacion_iv; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.seguimiento_articulacion_iv (
+    id text NOT NULL,
+    salida_id text NOT NULL,
+    se_realizo_vsp boolean NOT NULL,
+    observaciones text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL
+);
+
+
+--
+-- Name: seguimiento_capacitaciones; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.seguimiento_capacitaciones (
+    id text NOT NULL,
+    salida_id text NOT NULL,
+    se_realizo boolean NOT NULL,
+    num_instituciones_asistieron integer,
+    num_total_asistentes integer,
+    evaluacion_satisfaccion double precision,
+    observaciones text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    update_at timestamp(3) without time zone NOT NULL
+);
+
+
+--
+-- Name: seguimiento_ivc; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.seguimiento_ivc (
+    id text NOT NULL,
+    salida_id text NOT NULL,
+    se_realizo boolean NOT NULL,
+    num_autocomisorio integer,
+    fecha_autocomisorio timestamp(3) without time zone,
+    observaciones text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL
+);
+
+
+--
+-- Name: solicitudes_union; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.solicitudes_union (
@@ -891,10 +1178,8 @@ CREATE TABLE public.solicitudes_union (
 );
 
 
-ALTER TABLE public.solicitudes_union OWNER TO postgres;
-
 --
--- Name: subdirecciones; Type: TABLE; Schema: public; Owner: postgres
+-- Name: subdirecciones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.subdirecciones (
@@ -906,10 +1191,8 @@ CREATE TABLE public.subdirecciones (
 );
 
 
-ALTER TABLE public.subdirecciones OWNER TO postgres;
-
 --
--- Name: user_types; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_types; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_types (
@@ -922,10 +1205,8 @@ CREATE TABLE public.user_types (
 );
 
 
-ALTER TABLE public.user_types OWNER TO postgres;
-
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -946,10 +1227,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
-
 --
--- Name: ventana_programacion; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ventana_programacion; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ventana_programacion (
@@ -962,10 +1241,8 @@ CREATE TABLE public.ventana_programacion (
 );
 
 
-ALTER TABLE public.ventana_programacion OWNER TO postgres;
-
 --
--- Data for Name: _SalidasAreasParticipantes; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasAreasParticipantes; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasAreasParticipantes" ("A", "B") FROM stdin;
@@ -973,7 +1250,7 @@ COPY "SCHEMA"."_SalidasAreasParticipantes" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasEntidades; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasEntidades; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasEntidades" ("A", "B") FROM stdin;
@@ -981,7 +1258,7 @@ COPY "SCHEMA"."_SalidasEntidades" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasIdsn; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasIdsn; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasIdsn" ("A", "B") FROM stdin;
@@ -989,7 +1266,7 @@ COPY "SCHEMA"."_SalidasIdsn" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasIps; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasIps; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasIps" ("A", "B") FROM stdin;
@@ -997,7 +1274,7 @@ COPY "SCHEMA"."_SalidasIps" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasMunicipios; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasMunicipios; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasMunicipios" ("A", "B") FROM stdin;
@@ -1005,7 +1282,7 @@ COPY "SCHEMA"."_SalidasMunicipios" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasOrganizaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _SalidasOrganizaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"."_SalidasOrganizaciones" ("A", "B") FROM stdin;
@@ -1013,7 +1290,7 @@ COPY "SCHEMA"."_SalidasOrganizaciones" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA"._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
@@ -1035,7 +1312,7 @@ c976c440-b0da-4843-917f-b5e4ab6de028	cf9462bcdc273d08e7a2f0288a3c373755c57043845
 
 
 --
--- Data for Name: areas; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: areas; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".areas (id, name, subdireccion_id, created_at, updated_at) FROM stdin;
@@ -1043,7 +1320,7 @@ COPY "SCHEMA".areas (id, name, subdireccion_id, created_at, updated_at) FROM std
 
 
 --
--- Data for Name: articulaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: articulaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".articulaciones (id, codigo, tipo_programacion, tema, fecha_inicio, fecha_final, jornada, instituciones_convocadas, transporte_medio, transporte_num_instituciones, lugar_evento_id, responsable_articulacion, estado, observaciones, fecha_solicitud, solicitante_id, area_id, created_at, updated_at) FROM stdin;
@@ -1051,7 +1328,7 @@ COPY "SCHEMA".articulaciones (id, codigo, tipo_programacion, tema, fecha_inicio,
 
 
 --
--- Data for Name: eapb; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: eapb; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".eapb (id, name, created_at, updated_at) FROM stdin;
@@ -1059,7 +1336,7 @@ COPY "SCHEMA".eapb (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: eapb_actores; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: eapb_actores; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".eapb_actores (id, name, created_at, updated_at) FROM stdin;
@@ -1067,7 +1344,7 @@ COPY "SCHEMA".eapb_actores (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: entidades; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: entidades; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".entidades (id, name, created_at, updated_at) FROM stdin;
@@ -1075,7 +1352,7 @@ COPY "SCHEMA".entidades (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: idsn; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: idsn; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".idsn (id, name, created_at, updated_at) FROM stdin;
@@ -1083,7 +1360,7 @@ COPY "SCHEMA".idsn (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: ips; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: ips; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".ips (id, name, nit, municipio_id, created_at, updated_at) FROM stdin;
@@ -1091,7 +1368,7 @@ COPY "SCHEMA".ips (id, name, nit, municipio_id, created_at, updated_at) FROM std
 
 
 --
--- Data for Name: ivc; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: ivc; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".ivc (id, codigo, tipo_programacion, tema, fecha_inicio, fecha_final, jornada, instituciones_convocadas, transporte_medio, transporte_num_instituciones, lugar_evento_id, responsable_articulacion, estado, observaciones, fecha_solicitud, solicitante_id, area_id, created_at, updated_at) FROM stdin;
@@ -1099,7 +1376,7 @@ COPY "SCHEMA".ivc (id, codigo, tipo_programacion, tema, fecha_inicio, fecha_fina
 
 
 --
--- Data for Name: modules; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: modules; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".modules (id, name, description, icon, path, "order", is_active, created_at, updated_at, parent_id) FROM stdin;
@@ -1107,7 +1384,7 @@ COPY "SCHEMA".modules (id, name, description, icon, path, "order", is_active, cr
 
 
 --
--- Data for Name: municipios; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: municipios; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".municipios (id, name, code, created_at, updated_at) FROM stdin;
@@ -1115,7 +1392,7 @@ COPY "SCHEMA".municipios (id, name, code, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: notifications; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: notifications; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".notifications (id, user_id, type, title, message, read, link, created_at) FROM stdin;
@@ -1123,7 +1400,7 @@ COPY "SCHEMA".notifications (id, user_id, type, title, message, read, link, crea
 
 
 --
--- Data for Name: organizaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: organizaciones; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".organizaciones (id, name, created_at, updated_at) FROM stdin;
@@ -1131,7 +1408,7 @@ COPY "SCHEMA".organizaciones (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: permissions; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: permissions; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".permissions (id, user_type_id, module_id, can_view, can_create, can_edit, can_delete, can_approve, created_at, updated_at) FROM stdin;
@@ -1139,7 +1416,7 @@ COPY "SCHEMA".permissions (id, user_type_id, module_id, can_view, can_create, ca
 
 
 --
--- Data for Name: salida_eapb; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: salida_eapb; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".salida_eapb (id, salida_id, eapb_id, actor_id) FROM stdin;
@@ -1147,7 +1424,7 @@ COPY "SCHEMA".salida_eapb (id, salida_id, eapb_id, actor_id) FROM stdin;
 
 
 --
--- Data for Name: salidas; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: salidas; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".salidas (id, codigo, tipo_salida, subtipo_salida, tema, descripcion, fecha_inicio, fecha_final, jornada, fecha_solicitud, fecha_aprobacion, estado, observaciones, solicitante_id, aprobador_id, area_id, created_at, updated_at, lugar_evento_id, transporte_medio, transporte_responsables, instituciones_convocadas, municipios_convocados) FROM stdin;
@@ -1155,7 +1432,7 @@ COPY "SCHEMA".salidas (id, codigo, tipo_salida, subtipo_salida, tema, descripcio
 
 
 --
--- Data for Name: solicitudes_union; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: solicitudes_union; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".solicitudes_union (id, salida_id, solicitante_id, area_solicitante_id, mensaje, estado, respuesta, created_at, updated_at) FROM stdin;
@@ -1163,7 +1440,7 @@ COPY "SCHEMA".solicitudes_union (id, salida_id, solicitante_id, area_solicitante
 
 
 --
--- Data for Name: subdirecciones; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: subdirecciones; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".subdirecciones (id, name, description, created_at, updated_at) FROM stdin;
@@ -1171,7 +1448,7 @@ COPY "SCHEMA".subdirecciones (id, name, description, created_at, updated_at) FRO
 
 
 --
--- Data for Name: user_types; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: user_types; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".user_types (id, name, description, created_at, updated_at, level) FROM stdin;
@@ -1179,7 +1456,7 @@ COPY "SCHEMA".user_types (id, name, description, created_at, updated_at, level) 
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: SCHEMA; Owner: postgres
+-- Data for Name: users; Type: TABLE DATA; Schema: SCHEMA; Owner: -
 --
 
 COPY "SCHEMA".users (id, username, password, user_type_id, names, last_name, num_id, area_id, charge, email, is_active, created_at, updated_at, subdireccion_id) FROM stdin;
@@ -1187,7 +1464,7 @@ COPY "SCHEMA".users (id, username, password, user_type_id, names, last_name, num
 
 
 --
--- Data for Name: _SalidasAreasParticipantes; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _SalidasAreasParticipantes; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public."_SalidasAreasParticipantes" ("A", "B") FROM stdin;
@@ -1195,7 +1472,7 @@ COPY public."_SalidasAreasParticipantes" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasEntidades; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _SalidasEntidades; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public."_SalidasEntidades" ("A", "B") FROM stdin;
@@ -1203,7 +1480,7 @@ COPY public."_SalidasEntidades" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasIdsn; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _SalidasIdsn; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public."_SalidasIdsn" ("A", "B") FROM stdin;
@@ -1211,15 +1488,81 @@ COPY public."_SalidasIdsn" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _SalidasMunicipios; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _SalidasMunicipios; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public."_SalidasMunicipios" ("A", "B") FROM stdin;
+cmnorjks000003sn9tlt6sc9o	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjks700013sn9r3zuo7dx	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksa00023sn9c07gvm5a	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksc00033sn973b158iw	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksd00043sn9xs5uw888	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksf00053sn9pkodgkrn	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksh00063sn96xatwi66	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksi00073sn9r1tb28fd	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksj00083sn9hmpmr5xx	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksk00093sn9v11m4v6e	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksl000a3sn9ou0a81l1	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksn000b3sn92gfvs6ky	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkso000c3sn9uon8irqi	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksp000d3sn9hlpxu4by	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksr000e3sn9egn506p1	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkss000f3sn9bzkvonts	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkst000g3sn9hqpakmaf	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkst000h3sn9fmodx8ki	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksu000i3sn9o94axjum	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksv000j3sn94ul8akkr	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksw000k3sn9ckfdhamt	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksx000l3sn97kb1s1ls	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksx000m3sn9jwsalt9w	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksy000n3sn9cjtny9ue	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjksy000o3sn9kdncgzc6	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt0000p3sn9f8hw7y6k	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt1000q3sn9g6y2qe1t	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt2000r3sn9l6vyve3d	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt3000s3sn9u4y8n9yq	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt4000t3sn90oh3w327	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt5000u3sn9n391fr9y	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt5000v3sn92y4nmo5j	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt7000w3sn9e81mm3zd	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt7000x3sn9e2dwhm3z	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt8000y3sn9nriofmyz	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkt9000z3sn9ofahaxp5	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkta00103sn9e4hke80e	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktb00113sn9mk17cwy3	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktb00123sn9d0x2nc20	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktc00133sn9ww26lc97	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktd00143sn9tm0qzmlz	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkte00153sn92dxymfn3	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkte00163sn96uk9xara	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktf00173sn9yknclndg	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkth00183sn933k3uid2	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkti00193sn9gpsq22q0	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktj001a3sn98ifgmc0c	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktj001b3sn9akag5hfl	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktk001c3sn9yiye30r5	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktl001d3sn96t7oghae	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktm001e3sn9wufvo7fw	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktn001f3sn9jxwgoekv	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkto001g3sn9ha4y5em1	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktp001h3sn9k1ajgjuw	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktq001i3sn9eplisjcb	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktr001j3sn9y91rav0y	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktt001k3sn9xcw5br19	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktu001l3sn9b9ss8nwr	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktv001m3sn9bkf46lu8	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktx001n3sn9qudtbr8z	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktx001o3sn9ljlrdpfe	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkty001p3sn9kd1po1b6	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjktz001q3sn9l1xxycoc	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjku0001r3sn9zihb8zuk	cmobnzzwd0000ugn9o8fmrqdm
+cmnorjkss000f3sn9bzkvonts	cmp5q3h7l0000zsn9wpx3dcyi
+cmnorjksi00073sn9r1tb28fd	cmp5wo1kz0001vwn900u0ps85
 \.
 
 
 --
--- Data for Name: _SalidasOrganizaciones; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _SalidasOrganizaciones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public."_SalidasOrganizaciones" ("A", "B") FROM stdin;
@@ -1227,7 +1570,7 @@ COPY public."_SalidasOrganizaciones" ("A", "B") FROM stdin;
 
 
 --
--- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
@@ -1252,13 +1595,14 @@ d90bde62-337d-43dd-9f09-5ec0428b8382	1275ef3ebd322289414f418ce2446ac4b91baa56364
 962036c3-119e-4834-85a1-f84250923683	fc75e68b9beddb8e9412c2a547ff681f1161ce5ba0af4c0a62805e4a0ca768a0	\N	20260408170000_multi_actors_per_ips	A migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve\n\nMigration name: 20260408170000_multi_actors_per_ips\n\nDatabase error code: 42P07\n\nDatabase error:\nERROR: la relación «salida_ips_salida_id_ips_id_actor_id_key» ya existe\n\nDbError { severity: "ERROR", parsed_severity: Some(Error), code: SqlState(E42P07), message: "la relación «salida_ips_salida_id_ips_id_actor_id_key» ya existe", detail: None, hint: None, position: None, where_: None, schema: None, table: None, column: None, datatype: None, constraint: None, file: Some("index.c"), line: Some(902), routine: Some("index_create") }\n\n   0: sql_schema_connector::apply_migration::apply_script\n           with migration_name="20260408170000_multi_actors_per_ips"\n             at schema-engine\\connectors\\sql-schema-connector\\src\\apply_migration.rs:113\n   1: schema_commands::commands::apply_migrations::Applying migration\n           with migration_name="20260408170000_multi_actors_per_ips"\n             at schema-engine\\commands\\src\\commands\\apply_migrations.rs:95\n   2: schema_core::state::ApplyMigrations\n             at schema-engine\\core\\src\\state.rs:255	2026-04-08 16:17:48.73839-05	2026-04-08 16:16:46.58784-05	0
 a58e7fbd-62a1-4524-afa8-40f80bcc9f4e	fc75e68b9beddb8e9412c2a547ff681f1161ce5ba0af4c0a62805e4a0ca768a0	2026-04-08 16:17:48.742879-05	20260408170000_multi_actors_per_ips		\N	2026-04-08 16:17:48.742879-05	0
 33b64a70-9a5b-46d6-9d5a-779bfa7a0ec0	99d3875ca75a567f79c6d178862beb59297ea8bb0407959868f0392b33666fb8	2026-04-08 16:33:16.153801-05	20260408173000_reset_eapb_actores	\N	\N	2026-04-08 16:33:16.138841-05	1
+1fd0f88c-7545-41d7-9892-aba5e5782b0b	7755c951c27a98d0e06871c1fe9ce8d17965927602f4e626aada06c0e42019b6	2026-04-26 00:01:53.213991-05	0_baseline		\N	2026-04-26 00:01:53.213991-05	0
 b8496627-31cc-4ad1-9799-ffea7baf3d3b	6088ca83a9aef5f8e526baeca2f6ed1629b805031094e1ecfa9379cbceb961e2	2026-04-08 16:37:33.937341-05	20260408174000_reset_organizaciones	\N	\N	2026-04-08 16:37:33.9174-05	1
 c1aea1e8-5891-4fe5-823a-9f7db26a03fc	71d542a2d2655d6f6466e98dbc72940eace21a34af419e234104ab15b293b2ad	2026-04-08 16:38:14.030764-05	20260408175000_add_idsn_auxiliar	\N	\N	2026-04-08 16:38:14.019934-05	1
 \.
 
 
 --
--- Data for Name: areas; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: areas; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.areas (id, name, subdireccion_id, created_at, updated_at) FROM stdin;
@@ -1325,16 +1669,52 @@ cmnqahoc7001vdon9iphnqk40	Seguridad y salud en el trabajo	cmnqa1byz0005don9rzivt
 
 
 --
--- Data for Name: articulaciones; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: articulaciones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.articulaciones (id, codigo, tipo_programacion, tema, fecha_inicio, fecha_final, jornada, instituciones_convocadas, transporte_medio, transporte_num_instituciones, lugar_evento_id, responsable_articulacion, estado, observaciones, fecha_solicitud, solicitante_id, area_id, created_at, updated_at) FROM stdin;
 cmnrpd4yl0001vgn927z0hkv1	ART-20260409-SIS01	Articulación Intersectorial	Ejemplo Articulación 	2026-03-11 17:00:00	2026-05-01 17:00:00	Completa	PASTO	Pasajero	10	cmnorjks000003sn9tlt6sc9o	D	pendiente	\N	2026-04-09 16:39:53.942	cmnqiexkc0001dgn9jfrmkycr	cmnqa6jhs0009don9uu73xd22	2026-04-09 16:39:53.942	2026-04-09 16:39:53.942
+cmnruuxlp000bq8n9pgh2ktij	ART-20260409-SIS02	Articulación Intersectorial	gfgdghg	2026-04-03 17:00:00	2026-04-16 17:00:00	Completa	Udenar, fndkjnfdf	No Aplica	2	cmnorjks000003sn9tlt6sc9o	fdfdf	pendiente	\N	2026-04-09 19:13:42.3	cmnqiexkc0001dgn9jfrmkycr	cmnqa6jhs0009don9uu73xd22	2026-04-09 19:13:42.3	2026-04-09 19:13:42.3
+cmo7nldvr000gz4n9jc1gqpv2	ART-20260420-SIS01	Articulación Intersectorial	refsgd	2026-04-20 17:00:00	2026-04-22 17:00:00	Completa	ICBF, UDENAR	No Aplica	2	cmnorjkt7000w3sn9e81mm3zd	Santiago	pendiente	\N	2026-04-20 20:34:38.342	cmnqiexkc0001dgn9jfrmkycr	cmnqa6jhs0009don9uu73xd22	2026-04-20 20:34:38.342	2026-04-20 20:34:38.342
 \.
 
 
 --
--- Data for Name: eapb; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: asesoria_asistentes; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.asesoria_asistentes (id, asesoria_id, identificacion, nombre, apellido, cargo, email, movil) FROM stdin;
+cmok7y8wc0001lsn9r79fasa0	cmok7y8vf0000lsn9btu2jnwz	1080691332	Santiago	Jojoa	Contratista	santiago.jojoan@gmail.com	3134369494
+cmolpt87a0001d8n99affwx46	cmolpt86p0000d8n9w5fr8wkw	1235664343	GUSTAVO	CUELLAR	PROFESIONALÑ	santiaga@gmail.com	313436949464
+cmolpt87a0002d8n998e64y7q	cmolpt86p0000d8n9w5fr8wkw	1235664311	GUSTAVOAAAA	CUELLARAAAA	PROFESIONALÑ	santiaga1@gmail.com	313412949464
+cmp5wrkrj0006vwn9kyomm6zf	cmp5wrkr20005vwn93r77kq3a	13214343	cds	fsfsf			
+\.
+
+
+--
+-- Data for Name: asesoria_compromisos; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.asesoria_compromisos (id, asesoria_id, compromiso, responsable, fecha, observaciones) FROM stdin;
+cmok7y8wh0002lsn9p6r33oqt	cmok7y8vf0000lsn9btu2jnwz	Ejemplo Compromiso	Santiago Jojoa	2026-05-01 17:00:00	Ejemplo
+cmolpt87f0003d8n9ot9i40nv	cmolpt86p0000d8n9w5fr8wkw	DSFFSFSF	DFFSFAFAFAF	2026-05-02 17:00:00	FAFAFAFAFA
+cmolpt87f0004d8n9623jbd0w	cmolpt86p0000d8n9w5fr8wkw	FAFFVAFA	FDAFARWAF	2026-05-02 17:00:00	FAFAFAFAFA
+\.
+
+
+--
+-- Data for Name: asesorias; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.asesorias (id, codigo, fecha, hora, medio, institucion, municipio_procedencia_id, municipio_otro, lugar, temas_tratados, material_entregado, duracion_minutos, estado, fecha_registro, registrador_id, area_id, created_at, updated_at) FROM stdin;
+cmok7y8vf0000lsn9btu2jnwz	ASE-20260429-SIS01	2026-04-29 17:00:00	12:37	Email	DLS	cmnorjkt7000w3sn9e81mm3zd	\N	IDSN	Sendlknf dfkdfklmf 	Magnético	120	registrada	2026-04-29 15:37:44.795	cmnqiexkc0001dgn9jfrmkycr	cmnqa6jhs0009don9uu73xd22	2026-04-29 15:37:44.795	2026-04-29 15:37:44.795
+cmolpt86p0000d8n9w5fr8wkw	ASE-20260430-SIS01	2026-04-29 17:00:00	14:42	Presencial	IDSN	cmnorjks000003sn9tlt6sc9o	\N	IDSN - AUDITORIO	Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sodales ligula sit amet consectetur dignissim. Nulla fermentum risus dolor, ut eleifend est porttitor eu. Fusce tristique suscipit metus, ut molestie lorem. Nunc nec enim nisi. Mauris convallis egestas nisl, pretium lacinia sem eleifend ac. Nulla fringilla scelerisque ipsum, vitae semper quam hendrerit vitae. Nulla in risus a lacus aliquet ullamcorper vel vitae mauris. Nulla facilisi. Proin vitae augue non nunc lacinia malesuada a sit amet nulla. Aenean sollicitudin nunc felis, sit amet malesuada nibh dignissim vel. Vestibulum nec dolor non urna hendrerit maximus non suscipit nulla.  Ut id urna eros. Praesent aliquet leo in placerat pretium. Praesent scelerisque molestie turpis, et pulvinar neque auctor ac. Donec nec libero quis mi sagittis suscipit. Donec dignissim, urna a iaculis vestibulum, dui magna porta mi, lobortis rhoncus augue felis quis purus. Quisque laoreet bibendum tortor id placerat. Morbi congue nisi malesuada congue dignissim. Phasellus et eros nisi. Integer suscipit est et ipsum blandit, in laoreet quam rutrum. Cras at imperdiet tellus, at imperdiet sem.  In hac habitasse platea dictumst. Suspendisse dapibus ornare massa at aliquam. Morbi purus neque, euismod a luctus vitae, ultrices quis sem. Phasellus non mauris lobortis, faucibus neque vel, mattis velit. Donec magna est, cursus ut neque sed, tincidunt commodo est. Sed consequat luctus ligula, id fringilla libero euismod vel. Mauris est risus, semper id odio nec, ornare dapibus metus. Morbi vel bibendum tellus. Nullam nec maximus massa. Mauris lacinia dui mauris, et sagittis quam lobortis vestibulum. Maecenas sollicitudin diam sit amet nisi scelerisque facilisis. Phasellus massa velit, condimentum viverra mi non, sagittis viverra sapien. Sed accumsan enim in lorem sodales, at eleifend felis euismod.  Nam a elit vitae lorem fermentum hendrerit. Fusce porta turpis eu diam bibendum vestibulum. Nunc eu risus sit amet est efficitur pharetra. Integer tincidunt ante a nisl ultrices pellentesque. Nunc venenatis sagittis sem, quis scelerisque felis. Praesent volutpat ante ut massa condimentum, et tincidunt purus luctus. Nullam laoreet vehicula consectetur. Ut felis nulla, elementum id tellus eget, varius tristique eros. Aenean vel condimentum lorem. Morbi consequat lacus nec nisi finibus, in ultrices justo convallis. In sed velit eros. Ut id ullamcorper tortor. Nulla facilisi.	Magnético	190	registrada	2026-04-30 16:45:29.891	cmnqiexkc0001dgn9jfrmkycr	cmnqa6jhs0009don9uu73xd22	2026-04-30 16:45:29.891	2026-04-30 16:45:29.891
+cmp5wrkr20005vwn93r77kq3a	ASE-20260514-ASE01	2026-05-22 17:00:00	14:59	Telefónico	DLS	cmnorjkst000h3sn9fmodx8ki	\N	adadadda	fsfsfs	Ninguno	180	registrada	2026-05-14 19:55:33.708	cmnqibmw60000dgn9e0b71jqj	cmnqaelip001ddon90eh50dfx	2026-05-14 19:55:33.708	2026-05-14 19:55:33.708
+\.
+
+
+--
+-- Data for Name: eapb; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.eapb (id, name, created_at, updated_at) FROM stdin;
@@ -1346,7 +1726,7 @@ cmnoqkuzp0023xkn99pyt93dj	Nueva EPS	2026-04-07 14:50:35.365	2026-04-07 14:50:35.
 
 
 --
--- Data for Name: eapb_actores; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: eapb_actores; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.eapb_actores (id, name, created_at, updated_at) FROM stdin;
@@ -1357,7 +1737,7 @@ fd8fbf70-a00b-4685-b5c3-bf9fc4c1c385	Gerente o delegado	2026-04-08 16:33:16.147	
 
 
 --
--- Data for Name: entidades; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: entidades; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.entidades (id, name, created_at, updated_at) FROM stdin;
@@ -1373,7 +1753,7 @@ f0044728-8d04-4a1e-82d2-560e25470d71	Alcalde	2026-04-08 16:23:47.179	2026-04-08 
 
 
 --
--- Data for Name: idsn; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: idsn; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.idsn (id, name, created_at, updated_at) FROM stdin;
@@ -1382,7 +1762,7 @@ COPY public.idsn (id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: ips; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ips; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.ips (id, created_at, updated_at, type) FROM stdin;
@@ -1395,7 +1775,7 @@ cmnq8vpdx00047wn9399jat4i	2026-04-08 16:10:40.581	2026-04-08 16:10:40.581	Regime
 
 
 --
--- Data for Name: ips_actores; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ips_actores; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.ips_actores (id, name, created_at, updated_at) FROM stdin;
@@ -1422,7 +1802,7 @@ cmnq8vpeu000n7wn96jpkffcm	Cor. Seg Paciente	2026-04-08 16:10:40.614	2026-04-08 1
 
 
 --
--- Data for Name: ivc; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ivc; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.ivc (id, codigo, tipo_programacion, tema, fecha_inicio, fecha_final, jornada, instituciones_convocadas, transporte_medio, transporte_num_instituciones, lugar_evento_id, responsable_articulacion, estado, observaciones, fecha_solicitud, solicitante_id, area_id, created_at, updated_at) FROM stdin;
@@ -1431,7 +1811,7 @@ cmnrp8p2o0000vgn9xmwax0xk	IVC-00001	IVC	Ejemplo IVC	2026-04-01 00:00:00	2026-04-
 
 
 --
--- Data for Name: modules; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: modules; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.modules (id, name, description, icon, path, "order", is_active, created_at, updated_at, parent_id) FROM stdin;
@@ -1439,6 +1819,8 @@ cmnoqktz80007xkn9ywwx4gy0	areas	Gestión de Áreas	layers	/areas	5	t	2026-04-07 
 cmnoqktz80005xkn9l54urwjb	usuarios	Gestión de Usuarios	person_add	/users	6	t	2026-04-07 14:50:34.052	2026-04-07 14:50:34.052	\N
 cmnoqktzd000bxkn9d9kmhv1j	solicitar_ivc	IVC	verified_user	/solicitar-ivc	8	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
 cmnoqktzd000axkn9hes8ls8x	solicitar_articulacion	Articulación	hub	/solicitar-articulacion	7	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
+cmnt1jw5s00009gn9h9ed2wk8	calendario_salidas	Calendario de Programaciones	calendar_month	/calendario-salidas	5	t	2026-04-10 15:08:50.703	2026-04-10 15:08:50.703	\N
+cmoj1w3s70000awn92w5p9clc	programar_asesoria	Programar Asesoría	support_agent	/programar-asesoria	30	t	2026-04-28 20:00:21.03	2026-04-28 20:00:21.03	\N
 cmnoqktz80006xkn9ki738gk3	subdirecciones	Gestión de Subdirecciones	domain	/subdirecciones	4	t	2026-04-07 14:50:34.052	2026-04-07 14:50:34.052	\N
 cmnoqktzd000fxkn95q9b37df	calendario_ivc	Calendario IVC	event	/calendario-ivc	12	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
 cmnoqktzb0008xkn9cdw74m1k	solicitar_salida	Solicitar Programación	add_box	/solicitar-salida	2	t	2026-04-07 14:50:34.055	2026-04-07 14:50:34.055	\N
@@ -1451,7 +1833,7 @@ cmnoqktzd000dxkn9tzbj691v	calendario_articulaciones	Calendario Articulaciones	ev
 
 
 --
--- Data for Name: municipios; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: municipios; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.municipios (id, name, code, created_at, updated_at) FROM stdin;
@@ -1523,19 +1905,43 @@ cmnorjku0001r3sn9zihb8zuk	YACUANQUER	52885	2026-04-07 15:17:35.16	2026-04-07 15:
 
 
 --
--- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, link, created_at) FROM stdin;
 cmnrptfy3000cvgn974zqv6rs	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS01: "Ejemplo Programacion"	t	/gestionar-salida	2026-04-09 16:52:34.682
 cmnrpubwh000dvgn9mrxkokdn	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260409-SIS01 fue aprobada.	t	/gestionar-salida	2026-04-09 16:53:16.097
-cmnrrmnie0007zkn98xkvqqox	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS02: "Ejemplo Articulación "	f	/gestionar-salida	2026-04-09 17:43:17.126
 cmnrrmnie0006zkn90rkuzl6p	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS02: "Ejemplo Articulación "	t	/gestionar-salida	2026-04-09 17:43:17.126
+cmnrrmnie0007zkn98xkvqqox	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS02: "Ejemplo Articulación "	t	/gestionar-salida	2026-04-09 17:43:17.126
+cmnrutl5z000aq8n9v9kkkyrl	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS01: "grgrgrgr"	t	/gestionar-salida	2026-04-09 19:12:39.526
+cmnrutl5z0009q8n9hm4th7di	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260409-SIS01: "grgrgrgr"	t	/gestionar-salida	2026-04-09 19:12:39.526
+cmnruwo78000cq8n9ucw29t3k	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260409-SIS01 fue aprobada.	t	/gestionar-salida	2026-04-09 19:15:03.427
+cmnxmy0w80006u8n9nuor49fg	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260413-SIS02: "Ej"	t	/gestionar-salida	2026-04-13 20:18:46.663
+cmnxf4z1a0003u8n9pzbngysi	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260413-SIS01: "sdsdsds"	t	/gestionar-salida	2026-04-13 16:40:13.917
+cmnxf4z1a0002u8n9p045w4nl	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260413-SIS01: "sdsdsds"	t	/gestionar-salida	2026-04-13 16:40:13.917
+cmnxmy0w80005u8n9w7ao2war	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260413-SIS02: "Ej"	t	/gestionar-salida	2026-04-13 20:18:46.663
+cmo7ned3c000ez4n93f3x2gs3	cmnqibmw60000dgn9e0b71jqj	union_pendiente	Nueva Solicitud de Unión	Ejemplo Ejemplo (Discapacidad) solicita unirse a la programación 20260420-SIS01.	t	/gestionar-salida	2026-04-20 20:29:10.727
+cmo7ngf8r000fz4n9kzsqedb1	cmo7nbt98000bz4n9lf1vdt5w	union_aceptada	✅ Solicitud de Unión Aceptada	Tu solicitud para unirte a la programación 20260420-SIS01 fue aceptada.	f	/gestionar-salida	2026-04-20 20:30:46.827
+cmo7n4vnd0008z4n9pvmfikqu	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260420-SIS01: "Ejemplo Reunion"	t	/gestionar-salida	2026-04-20 20:21:48.217
+cmo7ned3c000dz4n98dh0fszg	cmnq9l4590000don9we0a68oo	union_pendiente	Nueva Solicitud de Unión	Ejemplo Ejemplo (Discapacidad) solicita unirse a la programación 20260420-SIS01.	t	/gestionar-salida	2026-04-20 20:29:10.727
+cmobo000k0001ugn96xbs3ejw	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260423-SIS01: "DSDSDS"	t	/gestionar-salida	2026-04-23 15:57:04.914
+cmnxmyugz0007u8n9zcbjw543	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260413-SIS02 fue aprobada.	t	/gestionar-salida	2026-04-13 20:19:24.994
+cmnxmywiw0008u8n9x2jc3d30	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260413-SIS01 fue aprobada.	t	/gestionar-salida	2026-04-13 20:19:27.656
+cmo7nahbd000az4n9oi0qsnng	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260420-SIS01 fue aprobada.	t	/gestionar-salida	2026-04-20 20:26:09.577
+cmobo53uv0003ugn9b1kxysws	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260423-SIS01 fue aprobada.	t	/gestionar-salida	2026-04-23 16:01:03.175
+cmo7n4vnd0009z4n9sggrgywy	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260420-SIS01: "Ejemplo Reunion"	t	/gestionar-salida	2026-04-20 20:21:48.217
+cmobo000k0002ugn9z1ek8h6x	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260423-SIS01: "DSDSDS"	t	/gestionar-salida	2026-04-23 15:57:04.914
+cmp5q3hd00002zsn9q8u2h1ap	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260514-SIS01: "xz<xcsfdfdd"	f	/gestionar-salida	2026-05-14 16:48:51.874
+cmp5wmblr0000vwn9tynmc0bv	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260514-SIS01 fue aprobada.	f	/gestionar-salida	2026-05-14 19:51:28.575
+cmp5wo1ng0003vwn9ynzji0m5	cmnqibmw60000dgn9e0b71jqj	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260514-SIS02: "cdfdf"	f	/gestionar-salida	2026-05-14 19:52:48.987
+cmp5wodc20004vwn9ko6114az	cmnqiexkc0001dgn9jfrmkycr	salida_aprobada	✅ Programación Aprobada	Tu programación 20260514-SIS02 fue aprobada.	f	/gestionar-salida	2026-05-14 19:53:04.13
+cmp5q3hd00001zsn96k4mjtnc	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260514-SIS01: "xz<xcsfdfdd"	t	/gestionar-salida	2026-05-14 16:48:51.874
+cmp5wo1ng0002vwn9m5vgyn0d	cmnq9l4590000don9we0a68oo	salida_pendiente	Nueva Solicitud de Programación	Sebastian solicitó la programación 20260514-SIS02: "cdfdf"	t	/gestionar-salida	2026-05-14 19:52:48.987
 \.
 
 
 --
--- Data for Name: organizaciones; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: organizaciones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.organizaciones (id, name, created_at, updated_at) FROM stdin;
@@ -1553,7 +1959,7 @@ adc772f0-7a2d-4bb1-be1b-d1b17250aeef	Comites	2026-04-08 16:37:33.931	2026-04-08 
 
 
 --
--- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.permissions (id, user_type_id, module_id, can_view, can_create, can_edit, can_delete, can_approve, created_at, updated_at) FROM stdin;
@@ -1594,11 +2000,19 @@ cmnoqkuch001dxkn97z7k30mo	cmnoqktvt0002xkn9vm3m04in	cmnoqktzd000dxkn9tzbj691v	t	
 cmnoqkucn001exkn9aq5ad958	cmnoqktvt0002xkn9vm3m04in	cmnoqktzd000exkn9p0nw58a2	t	t	t	t	f	2026-04-07 14:50:34.533	2026-04-07 14:50:34.533
 cmnoqkucw001fxkn9xuhupz7i	cmnoqktvt0002xkn9vm3m04in	cmnoqktzd000fxkn95q9b37df	t	t	t	t	f	2026-04-07 14:50:34.542	2026-04-07 14:50:34.542
 cmnoqkud4001gxkn9ufbkew50	cmnoqktvt0003xkn9gj90un8x	cmnoqktz60004xkn9soczfy3s	t	f	f	f	f	2026-04-07 14:50:34.55	2026-04-07 14:50:34.55
+cmnt1jw9400019gn950d63oyn	cmnoqktvt0003xkn9gj90un8x	cmnt1jw5s00009gn9h9ed2wk8	t	f	f	f	f	2026-04-10 15:08:50.816	2026-04-10 15:08:50.816
+cmnt1jw9b00029gn9posra2mu	cmnoqktvt0001xkn9rn0klx0g	cmnt1jw5s00009gn9h9ed2wk8	t	f	f	f	f	2026-04-10 15:08:50.83	2026-04-10 15:08:50.83
+cmnt1jw9e00039gn997819qx2	cmnoqktvt0002xkn9vm3m04in	cmnt1jw5s00009gn9h9ed2wk8	t	f	f	f	f	2026-04-10 15:08:50.834	2026-04-10 15:08:50.834
+cmnt1jw9i00049gn9gmpxzckc	cmnoqktvt0000xkn9ge22j55w	cmnt1jw5s00009gn9h9ed2wk8	t	f	f	f	f	2026-04-10 15:08:50.837	2026-04-10 15:08:50.837
+cmoj1w4080001awn96a6btmo2	cmnoqktvt0003xkn9gj90un8x	cmoj1w3s70000awn92w5p9clc	t	t	f	f	f	2026-04-28 20:00:21.303	2026-04-28 20:00:21.303
+cmoj1w40o0002awn94191cd6s	cmnoqktvt0001xkn9rn0klx0g	cmoj1w3s70000awn92w5p9clc	t	t	f	f	f	2026-04-28 20:00:21.333	2026-04-28 20:00:21.333
+cmoj1w40x0003awn9cqjl09ws	cmnoqktvt0002xkn9vm3m04in	cmoj1w3s70000awn92w5p9clc	t	t	f	f	f	2026-04-28 20:00:21.342	2026-04-28 20:00:21.342
+cmoj1w41d0004awn9fgwm9e35	cmnoqktvt0000xkn9ge22j55w	cmoj1w3s70000awn92w5p9clc	t	t	t	t	t	2026-04-28 20:00:21.358	2026-04-28 20:00:21.358
 \.
 
 
 --
--- Data for Name: salida_eapb; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: salida_eapb; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.salida_eapb (id, salida_id, eapb_id, actor_id) FROM stdin;
@@ -1606,7 +2020,7 @@ COPY public.salida_eapb (id, salida_id, eapb_id, actor_id) FROM stdin;
 
 
 --
--- Data for Name: salida_ips; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: salida_ips; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.salida_ips (id, salida_id, ips_id, actor_id) FROM stdin;
@@ -1614,15 +2028,52 @@ COPY public.salida_ips (id, salida_id, ips_id, actor_id) FROM stdin;
 
 
 --
--- Data for Name: salidas; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: salidas; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.salidas (id, codigo, tipo_salida, subtipo_salida, tema, descripcion, fecha_inicio, fecha_final, jornada, fecha_solicitud, fecha_aprobacion, estado, observaciones, solicitante_id, aprobador_id, area_id, created_at, updated_at, lugar_evento_id, transporte_medio, transporte_responsables, instituciones_convocadas, municipios_convocados) FROM stdin;
+COPY public.salidas (id, codigo, tipo_salida, subtipo_salida, tema, descripcion, fecha_inicio, fecha_final, jornada, fecha_solicitud, fecha_aprobacion, estado, observaciones, solicitante_id, aprobador_id, area_id, created_at, updated_at, lugar_evento_id, transporte_medio, transporte_responsables, instituciones_convocadas, municipios_convocados, "seguimiento_capacitacionesId") FROM stdin;
+cmobnzzwd0000ugn9o8fmrqdm	20260423-SIS01	Presencial	IVC, Inspección y Vigilancia SP (IV)	DSDSDS	DSDSDS	2026-04-24 17:00:00	2026-04-23 17:00:00	Tarde	2026-04-23 15:57:04.738	2026-04-23 16:01:03.06	aprobada		cmnqiexkc0001dgn9jfrmkycr	cmnq9l4590000don9we0a68oo	cmnqa6jhs0009don9uu73xd22	2026-04-23 15:57:04.738	2026-04-23 16:01:03.141	cmnorjks000003sn9tlt6sc9o	Pasajero	A	10	PASTO, ALBAN, ALDANA, ANCUYA, ARBOLEDA, BARBACOAS, BELEN, BUESACO, COLON, CONSACA, CONTADERO, CORDOBA, CUASPUD, CUMBAL, CUMBITARA, CHACHAGUI, EL CHARCO, EL PEÑOL, EL ROSARIO, EL TABLON DE GOMEZ, EL TAMBO, FUNES, GUACHUCAL, GUAITARILLA, GUALMATAN, ILES, IMUES, IPIALES, LA CRUZ, LA FLORIDA, LA LLANADA, LA TOLA, LA UNION, LEIVA, LINARES, LOS ANDES, MAGUI, MALLAMA, MOSQUERA, NARIÑO, OLAYA HERRERA, OSPINA, FRANCISCO PIZARRO, POLICARPA, POTOSI, PROVIDENCIA, PUERRES, PUPIALES, RICAURTE, ROBERTO PAYAN, SAMANIEGO, SANDONA, SAN BERNARDO, SAN LORENZO, SAN PABLO, SAN PEDRO DE CARTAGO, SANTA BARBARA, SANTACRUZ, SAPUYES, TAMINANGO, TANGUA, TUMACO, TUQUERRES, YACUANQUER	\N
+cmp5q3h7l0000zsn9wpx3dcyi	20260514-SIS01	Presencial	Acompañamiento	xz<xcsfdfdd		2026-05-15 17:00:00	2026-05-15 17:00:00	Tarde	2026-05-14 16:48:51.667	2026-05-14 19:51:28.482	aprobada		cmnqiexkc0001dgn9jfrmkycr	cmnq9l4590000don9we0a68oo	cmnqa6jhs0009don9uu73xd22	2026-05-14 16:48:51.667	2026-05-14 19:51:28.536	cmnorjks000003sn9tlt6sc9o	Pasajero	q	10	CHACHAGUI	\N
+cmp5wo1kz0001vwn900u0ps85	20260514-SIS02	Presencial	Capacitación	cdfdf	fddfd	2026-05-14 17:00:00	2026-05-30 17:00:00	Completa	2026-05-14 19:52:48.885	2026-05-14 19:53:04.115	aprobada		cmnqiexkc0001dgn9jfrmkycr	cmnq9l4590000don9we0a68oo	cmnqa6jhs0009don9uu73xd22	2026-05-14 19:52:48.885	2026-05-14 19:53:04.118	cmnorjksl000a3sn9ou0a81l1	No Aplica	a	0	BUESACO	\N
 \.
 
 
 --
--- Data for Name: solicitudes_union; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: seguimiento_acompanamiento; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.seguimiento_acompanamiento (id, salida_id, se_realizo, created_at, updated_at, acta_numero, asistentes, compromisos, conclusiones, desarrollo, fecha_reunion, hora_final, hora_inicial, institucion, lugar, material_entregado, municipio, nombre_reunion, orden_del_dia, proxima_fecha, proxima_hora, proxima_lugar, se_programo) FROM stdin;
+cmpczq1et0000skn95xw0p9gg	cmp5q3h7l0000zsn9wpx3dcyi	t	2026-05-19 18:52:44.069	2026-05-20 19:49:41.345	1	[{"cargo": "NKNDKF", "email": "Santigo@gmail.com", "movil": "3134369494", "nombre": "Santigo", "apellido": "Jojoa", "identificacion": "12345678"}, {"cargo": "FDMFLDSMLF", "email": "FMLDMFS@GMAIL.CO", "movil": "3132512021", "nombre": "ESTEBAN", "apellido": "SFLLSMF", "identificacion": "115151531"}]	[{"fecha": "2026-05-30", "compromiso": "hyhfjhf", "responsable": "gdgdgd", "observaciones": "gdgdgdgdgdgdgdgdg"}]	Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus vel commodo arcu. Sed gravida faucibus tincidunt. Nulla laoreet, lacus eget auctor sollicitudin, urna justo eleifend sem, sit amet dapibus nisi nisi vel odio. Mauris volutpat gravida sapien at tempus. Etiam interdum, neque non varius sodales, ligula lorem faucibus ipsum, ut faucibus nulla velit at nibh. Sed quis massa at lectus accumsan efficitur. Sed viverra purus ut libero finibus, et laoreet mi pretium. Quisque consectetur quam ut dui convallis, eget gravida ex lobortis. Donec elementum quam vel tristique ultricies. Sed et massa ac nunc mattis euismod vel eu ante. In vestibulum lacus dignissim odio malesuada, in pretium lectus faucibus. Pellentesque sit amet fermentum mi. Curabitur lobortis, mauris nec consequat bibendum, nibh neque consectetur odio, a porttitor tortor erat id ipsum.\n\nPraesent quis pretium turpis. Nulla eu nisi pharetra ligula cursus fringilla. Praesent scelerisque commodo nulla. Aliquam id pulvinar lacus, a consectetur magna. Mauris hendrerit viverra sem, vel suscipit lectus dignissim vitae. Ut consectetur vehicula ex sed tempor. Pellentesque non commodo nibh, non volutpat nulla. Maecenas sit amet dignissim neque. Nunc cursus iaculis pellentesque. Mauris at nisi et arcu aliquam consequat. Pellentesque neque ipsum, ultrices eget tempus sit amet, fringilla ut justo. Cras aliquam egestas libero. Fusce nec aliquet leo.\n\nCras blandit egestas lacus eget sollicitudin. Aenean lorem nibh, imperdiet vitae magna eu, vehicula auctor nunc. Pellentesque ultricies porttitor lacus luctus elementum. Etiam vel augue molestie, pretium dui sit amet, semper sapien. Etiam varius arcu quis molestie sagittis. Vivamus eleifend, metus vitae maximus pulvinar, orci risus condimentum tellus, luctus eleifend lectus purus vel neque. Duis elit neque, tempor a nunc sed, mattis euismod libero.\n\nUt viverra dapibus ipsum vitae efficitur. Cras vel ex et justo placerat iaculis in ut elit. Nullam non ex quis ipsum interdum fringilla et in dui. Phasellus sit amet tellus diam. Praesent eu magna mauris. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut ornare sed tellus id suscipit. Aliquam pretium lacinia tristique. Fusce et dapibus est. Nullam viverra risus accumsan, aliquet nulla non, auctor ipsum. Etiam faucibus ligula nunc, ut congue ligula malesuada ac. Suspendisse nec orci molestie, pharetra magna vitae, hendrerit enim. Phasellus scelerisque sit amet sem quis sodales. Proin in ex quis enim efficitur mattis. In faucibus dictum lorem eu pellentesque. Aliquam non lectus fermentum felis ultrices consequat nec quis sem.	Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus vel commodo arcu. Sed gravida faucibus tincidunt. Nulla laoreet, lacus eget auctor sollicitudin, urna justo eleifend sem, sit amet dapibus nisi nisi vel odio. Mauris volutpat gravida sapien at tempus. Etiam interdum, neque non varius sodales, ligula lorem faucibus ipsum, ut faucibus nulla velit at nibh. Sed quis massa at lectus accumsan efficitur. Sed viverra purus ut libero finibus, et laoreet mi pretium. Quisque consectetur quam ut dui convallis, eget gravida ex lobortis. Donec elementum quam vel tristique ultricies. Sed et massa ac nunc mattis euismod vel eu ante. In vestibulum lacus dignissim odio malesuada, in pretium lectus faucibus. Pellentesque sit amet fermentum mi. Curabitur lobortis, mauris nec consequat bibendum, nibh neque consectetur odio, a porttitor tortor erat id ipsum.\n\nPraesent quis pretium turpis. Nulla eu nisi pharetra ligula cursus fringilla. Praesent scelerisque commodo nulla. Aliquam id pulvinar lacus, a consectetur magna. Mauris hendrerit viverra sem, vel suscipit lectus dignissim vitae. Ut consectetur vehicula ex sed tempor. Pellentesque non commodo nibh, non volutpat nulla. Maecenas sit amet dignissim neque. Nunc cursus iaculis pellentesque. Mauris at nisi et arcu aliquam consequat. Pellentesque neque ipsum, ultrices eget tempus sit amet, fringilla ut justo. Cras aliquam egestas libero. Fusce nec aliquet leo.\n\nCras blandit egestas lacus eget sollicitudin. Aenean lorem nibh, imperdiet vitae magna eu, vehicula auctor nunc. Pellentesque ultricies porttitor lacus luctus elementum. Etiam vel augue molestie, pretium dui sit amet, semper sapien. Etiam varius arcu quis molestie sagittis. Vivamus eleifend, metus vitae maximus pulvinar, orci risus condimentum tellus, luctus eleifend lectus purus vel neque. Duis elit neque, tempor a nunc sed, mattis euismod libero.\n\nUt viverra dapibus ipsum vitae efficitur. Cras vel ex et justo placerat iaculis in ut elit. Nullam non ex quis ipsum interdum fringilla et in dui. Phasellus sit amet tellus diam. Praesent eu magna mauris. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut ornare sed tellus id suscipit. Aliquam pretium lacinia tristique. Fusce et dapibus est. Nullam viverra risus accumsan, aliquet nulla non, auctor ipsum. Etiam faucibus ligula nunc, ut congue ligula malesuada ac. Suspendisse nec orci molestie, pharetra magna vitae, hendrerit enim. Phasellus scelerisque sit amet sem quis sodales. Proin in ex quis enim efficitur mattis. In faucibus dictum lorem eu pellentesque. Aliquam non lectus fermentum felis ultrices consequat nec quis sem.	2026-03-03 00:00:00	22:00	17:05	DLS	Ejemplo	Impreso	PASTO	Ejemplo	[{"tematica": "dddfdf", "responsable": "dfdfdfd"}, {"tematica": "hfhdhd", "responsable": "hdhdhdh"}]	2026-05-29 00:00:00	14:52	fdfdfd	t
+\.
+
+
+--
+-- Data for Name: seguimiento_articulacion_iv; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.seguimiento_articulacion_iv (id, salida_id, se_realizo_vsp, observaciones, created_at, updated_at) FROM stdin;
+cmp5x149q0007vwn9gqa9eauq	cmobnzzwd0000ugn9o8fmrqdm	t	0	2026-05-14 20:02:58.91	2026-05-14 20:03:02.418
+\.
+
+
+--
+-- Data for Name: seguimiento_capacitaciones; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.seguimiento_capacitaciones (id, salida_id, se_realizo, num_instituciones_asistieron, num_total_asistentes, evaluacion_satisfaccion, observaciones, created_at, update_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: seguimiento_ivc; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.seguimiento_ivc (id, salida_id, se_realizo, num_autocomisorio, fecha_autocomisorio, observaciones, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: solicitudes_union; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.solicitudes_union (id, salida_id, solicitante_id, area_solicitante_id, mensaje, estado, respuesta, created_at, updated_at) FROM stdin;
@@ -1630,7 +2081,7 @@ COPY public.solicitudes_union (id, salida_id, solicitante_id, area_solicitante_i
 
 
 --
--- Data for Name: subdirecciones; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: subdirecciones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.subdirecciones (id, name, description, created_at, updated_at) FROM stdin;
@@ -1646,7 +2097,7 @@ cmnqa1roj0008don9b8f9fmt1	Control Interno Disciplinario		2026-04-08 16:43:23.106
 
 
 --
--- Data for Name: user_types; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: user_types; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.user_types (id, name, description, created_at, updated_at, level) FROM stdin;
@@ -1658,18 +2109,19 @@ cmnoqktvt0000xkn9ge22j55w	superadmin	Super Administrador - Acceso completo	2026-
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.users (id, username, password, user_type_id, names, last_name, num_id, area_id, charge, email, is_active, created_at, updated_at, subdireccion_id) FROM stdin;
 cmnq9l4590000don9we0a68oo	superadminsivat	$2b$10$mFsYyH.4NTzGOSRh19HRueahy1jvE2zfde8wN0nPekm.BmiphZ9om	cmnoqktvt0000xkn9ge22j55w	SUPERADMIN	SIVAT	891280001	\N		superadmin@sivat.com	t	2026-04-08 16:30:26.108	2026-04-08 16:30:26.108	\N
 cmnqibmw60000dgn9e0b71jqj	santiagojojoa	$2b$10$Y474ashPk2Gt7DQV0pbxZuDzy6PkgLFl9aoaok7sh8ylBfaMfhOtS	cmnoqktvt0001xkn9rn0klx0g	Santiago	Jojoa	1080691332	\N		santiago.jojoan@gmail.com	t	2026-04-08 20:35:00.389	2026-04-08 20:35:00.389	cmnq9rg5j0001don9j8v4fe4l
 cmnqiexkc0001dgn9jfrmkycr	sebastianm	$2b$10$Htt84s5zjHZF2o8rwFGEU.v0L1U6fPFVfsWcFr8.U7/.eXBd7KNEO	cmnoqktvt0002xkn9vm3m04in	Sebastian	Montenegro	123456	cmnqa6jhs0009don9uu73xd22		sebastian@idsn.com	t	2026-04-08 20:37:34.188	2026-04-08 20:37:34.188	\N
+cmo7nbt98000bz4n9lf1vdt5w	ejemplo	$2b$10$2UVQ5EibfO2q.MjOdAjNuu6IG1d2WsFD7W6g.h/iCHSmhbvvvA4lK	cmnoqktvt0002xkn9vm3m04in	Ejemplo	Ejemplo	1232521516	cmnqad7ly0014don9r76i47kl	e	ejemplo@e.com	t	2026-04-20 20:27:11.708	2026-04-20 20:27:11.708	\N
 \.
 
 
 --
--- Data for Name: ventana_programacion; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ventana_programacion; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.ventana_programacion (id, fecha_inicio, fecha_fin, activo, created_at, updated_at) FROM stdin;
@@ -1685,11 +2137,15 @@ cmnrr9ydp0001zkn9vbm66r15	2026-04-09 17:35:00	2026-04-30 17:32:00	f	2026-04-09 1
 cmnrrcptp0002zkn9lihdnvvu	2026-04-09 22:06:00	2026-04-30 22:32:00	f	2026-04-09 17:35:33.565	2026-04-09 17:35:47.649
 cmnrrd0pv0003zkn9ou2awq4s	2026-04-09 17:36:00	2026-05-01 03:32:00	f	2026-04-09 17:35:47.683	2026-04-09 17:39:26.417
 cmnrri5qz0004zkn9hmxwjlxi	2026-04-09 17:41:00	2026-05-01 08:32:00	f	2026-04-09 17:39:47.483	2026-04-09 18:44:27.006
+cmnruqpnd0000q8n9dy8rv45u	2026-04-09 19:11:00	2026-04-14 19:10:00	f	2026-04-09 19:10:25.369	2026-04-09 19:17:49.319
+cmnrv0k5o000dq8n9i4qegx9n	2026-04-10 00:11:00	2026-04-15 00:10:00	f	2026-04-09 19:18:04.812	2026-04-09 19:18:23.938
+cmnrv0yy3000eq8n982l6vx12	2026-04-09 19:18:00	2026-04-15 05:10:00	f	2026-04-09 19:18:23.979	2026-04-09 19:19:09.1
+cmnxdymuj0000u8n9vcbykzc8	2026-04-13 16:08:00	2026-04-25 16:07:00	t	2026-04-13 16:07:18.57	2026-04-13 16:07:18.57
 \.
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
@@ -1697,7 +2153,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
@@ -1705,7 +2161,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
@@ -1713,7 +2169,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
 
 
 --
--- Name: _SalidasIps _SalidasIps_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIps _SalidasIps_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
@@ -1721,7 +2177,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
@@ -1729,7 +2185,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_AB_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
@@ -1737,7 +2193,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
 
 
 --
--- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"._prisma_migrations
@@ -1745,7 +2201,7 @@ ALTER TABLE ONLY "SCHEMA"._prisma_migrations
 
 
 --
--- Name: areas areas_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: areas areas_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".areas
@@ -1753,7 +2209,7 @@ ALTER TABLE ONLY "SCHEMA".areas
 
 
 --
--- Name: articulaciones articulaciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones articulaciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".articulaciones
@@ -1761,7 +2217,7 @@ ALTER TABLE ONLY "SCHEMA".articulaciones
 
 
 --
--- Name: eapb_actores eapb_actores_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: eapb_actores eapb_actores_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".eapb_actores
@@ -1769,7 +2225,7 @@ ALTER TABLE ONLY "SCHEMA".eapb_actores
 
 
 --
--- Name: eapb eapb_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: eapb eapb_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".eapb
@@ -1777,7 +2233,7 @@ ALTER TABLE ONLY "SCHEMA".eapb
 
 
 --
--- Name: entidades entidades_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: entidades entidades_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".entidades
@@ -1785,7 +2241,7 @@ ALTER TABLE ONLY "SCHEMA".entidades
 
 
 --
--- Name: idsn idsn_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: idsn idsn_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".idsn
@@ -1793,7 +2249,7 @@ ALTER TABLE ONLY "SCHEMA".idsn
 
 
 --
--- Name: ips ips_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ips ips_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ips
@@ -1801,7 +2257,7 @@ ALTER TABLE ONLY "SCHEMA".ips
 
 
 --
--- Name: ivc ivc_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ivc ivc_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ivc
@@ -1809,7 +2265,7 @@ ALTER TABLE ONLY "SCHEMA".ivc
 
 
 --
--- Name: modules modules_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: modules modules_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".modules
@@ -1817,7 +2273,7 @@ ALTER TABLE ONLY "SCHEMA".modules
 
 
 --
--- Name: municipios municipios_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: municipios municipios_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".municipios
@@ -1825,7 +2281,7 @@ ALTER TABLE ONLY "SCHEMA".municipios
 
 
 --
--- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".notifications
@@ -1833,7 +2289,7 @@ ALTER TABLE ONLY "SCHEMA".notifications
 
 
 --
--- Name: organizaciones organizaciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: organizaciones organizaciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".organizaciones
@@ -1841,7 +2297,7 @@ ALTER TABLE ONLY "SCHEMA".organizaciones
 
 
 --
--- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".permissions
@@ -1849,7 +2305,7 @@ ALTER TABLE ONLY "SCHEMA".permissions
 
 
 --
--- Name: salida_eapb salida_eapb_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb salida_eapb_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salida_eapb
@@ -1857,7 +2313,7 @@ ALTER TABLE ONLY "SCHEMA".salida_eapb
 
 
 --
--- Name: salidas salidas_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salidas salidas_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salidas
@@ -1865,7 +2321,7 @@ ALTER TABLE ONLY "SCHEMA".salidas
 
 
 --
--- Name: solicitudes_union solicitudes_union_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".solicitudes_union
@@ -1873,7 +2329,7 @@ ALTER TABLE ONLY "SCHEMA".solicitudes_union
 
 
 --
--- Name: subdirecciones subdirecciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: subdirecciones subdirecciones_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".subdirecciones
@@ -1881,7 +2337,7 @@ ALTER TABLE ONLY "SCHEMA".subdirecciones
 
 
 --
--- Name: user_types user_types_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: user_types user_types_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".user_types
@@ -1889,7 +2345,7 @@ ALTER TABLE ONLY "SCHEMA".user_types
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".users
@@ -1897,7 +2353,7 @@ ALTER TABLE ONLY "SCHEMA".users
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasAreasParticipantes"
@@ -1905,7 +2361,7 @@ ALTER TABLE ONLY public."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasEntidades"
@@ -1913,7 +2369,7 @@ ALTER TABLE ONLY public."_SalidasEntidades"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasIdsn"
@@ -1921,7 +2377,7 @@ ALTER TABLE ONLY public."_SalidasIdsn"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasMunicipios"
@@ -1929,7 +2385,7 @@ ALTER TABLE ONLY public."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_AB_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasOrganizaciones"
@@ -1937,7 +2393,7 @@ ALTER TABLE ONLY public."_SalidasOrganizaciones"
 
 
 --
--- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public._prisma_migrations
@@ -1945,7 +2401,7 @@ ALTER TABLE ONLY public._prisma_migrations
 
 
 --
--- Name: areas areas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: areas areas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.areas
@@ -1953,7 +2409,7 @@ ALTER TABLE ONLY public.areas
 
 
 --
--- Name: articulaciones articulaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: articulaciones articulaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.articulaciones
@@ -1961,7 +2417,31 @@ ALTER TABLE ONLY public.articulaciones
 
 
 --
--- Name: eapb_actores eapb_actores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: asesoria_asistentes asesoria_asistentes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesoria_asistentes
+    ADD CONSTRAINT asesoria_asistentes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: asesoria_compromisos asesoria_compromisos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesoria_compromisos
+    ADD CONSTRAINT asesoria_compromisos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: asesorias asesorias_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesorias
+    ADD CONSTRAINT asesorias_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: eapb_actores eapb_actores_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.eapb_actores
@@ -1969,7 +2449,7 @@ ALTER TABLE ONLY public.eapb_actores
 
 
 --
--- Name: eapb eapb_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: eapb eapb_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.eapb
@@ -1977,7 +2457,7 @@ ALTER TABLE ONLY public.eapb
 
 
 --
--- Name: entidades entidades_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: entidades entidades_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.entidades
@@ -1985,7 +2465,7 @@ ALTER TABLE ONLY public.entidades
 
 
 --
--- Name: idsn idsn_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idsn idsn_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.idsn
@@ -1993,7 +2473,7 @@ ALTER TABLE ONLY public.idsn
 
 
 --
--- Name: ips_actores ips_actores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ips_actores ips_actores_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ips_actores
@@ -2001,7 +2481,7 @@ ALTER TABLE ONLY public.ips_actores
 
 
 --
--- Name: ips ips_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ips ips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ips
@@ -2009,7 +2489,7 @@ ALTER TABLE ONLY public.ips
 
 
 --
--- Name: ivc ivc_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ivc ivc_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ivc
@@ -2017,7 +2497,7 @@ ALTER TABLE ONLY public.ivc
 
 
 --
--- Name: modules modules_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: modules modules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.modules
@@ -2025,7 +2505,7 @@ ALTER TABLE ONLY public.modules
 
 
 --
--- Name: municipios municipios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: municipios municipios_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.municipios
@@ -2033,7 +2513,7 @@ ALTER TABLE ONLY public.municipios
 
 
 --
--- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -2041,7 +2521,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: organizaciones organizaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: organizaciones organizaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.organizaciones
@@ -2049,7 +2529,7 @@ ALTER TABLE ONLY public.organizaciones
 
 
 --
--- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions
@@ -2057,7 +2537,7 @@ ALTER TABLE ONLY public.permissions
 
 
 --
--- Name: salida_eapb salida_eapb_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_eapb salida_eapb_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_eapb
@@ -2065,7 +2545,7 @@ ALTER TABLE ONLY public.salida_eapb
 
 
 --
--- Name: salida_ips salida_ips_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_ips salida_ips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_ips
@@ -2073,7 +2553,7 @@ ALTER TABLE ONLY public.salida_ips
 
 
 --
--- Name: salidas salidas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salidas salidas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salidas
@@ -2081,7 +2561,39 @@ ALTER TABLE ONLY public.salidas
 
 
 --
--- Name: solicitudes_union solicitudes_union_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seguimiento_acompanamiento seguimiento_acompanamiento_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_acompanamiento
+    ADD CONSTRAINT seguimiento_acompanamiento_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: seguimiento_articulacion_iv seguimiento_articulacion_iv_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_articulacion_iv
+    ADD CONSTRAINT seguimiento_articulacion_iv_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: seguimiento_capacitaciones seguimiento_capacitaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_capacitaciones
+    ADD CONSTRAINT seguimiento_capacitaciones_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: seguimiento_ivc seguimiento_ivc_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_ivc
+    ADD CONSTRAINT seguimiento_ivc_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solicitudes_union solicitudes_union_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solicitudes_union
@@ -2089,7 +2601,7 @@ ALTER TABLE ONLY public.solicitudes_union
 
 
 --
--- Name: subdirecciones subdirecciones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subdirecciones subdirecciones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subdirecciones
@@ -2097,7 +2609,7 @@ ALTER TABLE ONLY public.subdirecciones
 
 
 --
--- Name: user_types user_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_types user_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_types
@@ -2105,7 +2617,7 @@ ALTER TABLE ONLY public.user_types
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -2113,7 +2625,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: ventana_programacion ventana_programacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ventana_programacion ventana_programacion_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ventana_programacion
@@ -2121,301 +2633,336 @@ ALTER TABLE ONLY public.ventana_programacion
 
 
 --
--- Name: _SalidasAreasParticipantes_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasAreasParticipantes_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasAreasParticipantes_B_index" ON "SCHEMA"."_SalidasAreasParticipantes" USING btree ("B");
 
 
 --
--- Name: _SalidasEntidades_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasEntidades_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasEntidades_B_index" ON "SCHEMA"."_SalidasEntidades" USING btree ("B");
 
 
 --
--- Name: _SalidasIdsn_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIdsn_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasIdsn_B_index" ON "SCHEMA"."_SalidasIdsn" USING btree ("B");
 
 
 --
--- Name: _SalidasIps_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIps_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasIps_B_index" ON "SCHEMA"."_SalidasIps" USING btree ("B");
 
 
 --
--- Name: _SalidasMunicipios_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasMunicipios_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasMunicipios_B_index" ON "SCHEMA"."_SalidasMunicipios" USING btree ("B");
 
 
 --
--- Name: _SalidasOrganizaciones_B_index; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasOrganizaciones_B_index; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE INDEX "_SalidasOrganizaciones_B_index" ON "SCHEMA"."_SalidasOrganizaciones" USING btree ("B");
 
 
 --
--- Name: areas_name_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: areas_name_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX areas_name_key ON "SCHEMA".areas USING btree (name);
 
 
 --
--- Name: articulaciones_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX articulaciones_codigo_key ON "SCHEMA".articulaciones USING btree (codigo);
 
 
 --
--- Name: eapb_actores_name_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: eapb_actores_name_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX eapb_actores_name_key ON "SCHEMA".eapb_actores USING btree (name);
 
 
 --
--- Name: ivc_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: ivc_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX ivc_codigo_key ON "SCHEMA".ivc USING btree (codigo);
 
 
 --
--- Name: modules_name_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: modules_name_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX modules_name_key ON "SCHEMA".modules USING btree (name);
 
 
 --
--- Name: municipios_code_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: municipios_code_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX municipios_code_key ON "SCHEMA".municipios USING btree (code);
 
 
 --
--- Name: permissions_user_type_id_module_id_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: permissions_user_type_id_module_id_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX permissions_user_type_id_module_id_key ON "SCHEMA".permissions USING btree (user_type_id, module_id);
 
 
 --
--- Name: salida_eapb_salida_id_eapb_id_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb_salida_id_eapb_id_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX salida_eapb_salida_id_eapb_id_key ON "SCHEMA".salida_eapb USING btree (salida_id, eapb_id);
 
 
 --
--- Name: salidas_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: salidas_codigo_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX salidas_codigo_key ON "SCHEMA".salidas USING btree (codigo);
 
 
 --
--- Name: subdirecciones_name_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: subdirecciones_name_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX subdirecciones_name_key ON "SCHEMA".subdirecciones USING btree (name);
 
 
 --
--- Name: user_types_name_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: user_types_name_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX user_types_name_key ON "SCHEMA".user_types USING btree (name);
 
 
 --
--- Name: users_email_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: users_email_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX users_email_key ON "SCHEMA".users USING btree (email);
 
 
 --
--- Name: users_num_id_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: users_num_id_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX users_num_id_key ON "SCHEMA".users USING btree (num_id);
 
 
 --
--- Name: users_username_key; Type: INDEX; Schema: SCHEMA; Owner: postgres
+-- Name: users_username_key; Type: INDEX; Schema: SCHEMA; Owner: -
 --
 
 CREATE UNIQUE INDEX users_username_key ON "SCHEMA".users USING btree (username);
 
 
 --
--- Name: _SalidasAreasParticipantes_B_index; Type: INDEX; Schema: public; Owner: postgres
+-- Name: _SalidasAreasParticipantes_B_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "_SalidasAreasParticipantes_B_index" ON public."_SalidasAreasParticipantes" USING btree ("B");
 
 
 --
--- Name: _SalidasEntidades_B_index; Type: INDEX; Schema: public; Owner: postgres
+-- Name: _SalidasEntidades_B_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "_SalidasEntidades_B_index" ON public."_SalidasEntidades" USING btree ("B");
 
 
 --
--- Name: _SalidasIdsn_B_index; Type: INDEX; Schema: public; Owner: postgres
+-- Name: _SalidasIdsn_B_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "_SalidasIdsn_B_index" ON public."_SalidasIdsn" USING btree ("B");
 
 
 --
--- Name: _SalidasMunicipios_B_index; Type: INDEX; Schema: public; Owner: postgres
+-- Name: _SalidasMunicipios_B_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "_SalidasMunicipios_B_index" ON public."_SalidasMunicipios" USING btree ("B");
 
 
 --
--- Name: _SalidasOrganizaciones_B_index; Type: INDEX; Schema: public; Owner: postgres
+-- Name: _SalidasOrganizaciones_B_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "_SalidasOrganizaciones_B_index" ON public."_SalidasOrganizaciones" USING btree ("B");
 
 
 --
--- Name: areas_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: areas_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX areas_name_key ON public.areas USING btree (name);
 
 
 --
--- Name: articulaciones_codigo_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: articulaciones_codigo_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX articulaciones_codigo_key ON public.articulaciones USING btree (codigo);
 
 
 --
--- Name: eapb_actores_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: asesorias_codigo_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX asesorias_codigo_key ON public.asesorias USING btree (codigo);
+
+
+--
+-- Name: eapb_actores_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX eapb_actores_name_key ON public.eapb_actores USING btree (name);
 
 
 --
--- Name: ips_actores_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ips_actores_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ips_actores_name_key ON public.ips_actores USING btree (name);
 
 
 --
--- Name: ips_type_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ips_type_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ips_type_key ON public.ips USING btree (type);
 
 
 --
--- Name: ivc_codigo_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ivc_codigo_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ivc_codigo_key ON public.ivc USING btree (codigo);
 
 
 --
--- Name: modules_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: modules_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX modules_name_key ON public.modules USING btree (name);
 
 
 --
--- Name: municipios_code_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: municipios_code_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX municipios_code_key ON public.municipios USING btree (code);
 
 
 --
--- Name: permissions_user_type_id_module_id_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: permissions_user_type_id_module_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX permissions_user_type_id_module_id_key ON public.permissions USING btree (user_type_id, module_id);
 
 
 --
--- Name: salida_eapb_salida_id_eapb_id_actor_id_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: salida_eapb_salida_id_eapb_id_actor_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX salida_eapb_salida_id_eapb_id_actor_id_key ON public.salida_eapb USING btree (salida_id, eapb_id, actor_id);
 
 
 --
--- Name: salida_ips_salida_id_ips_id_actor_id_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: salida_ips_salida_id_ips_id_actor_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX salida_ips_salida_id_ips_id_actor_id_key ON public.salida_ips USING btree (salida_id, ips_id, actor_id);
 
 
 --
--- Name: salidas_codigo_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: salidas_codigo_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX salidas_codigo_key ON public.salidas USING btree (codigo);
 
 
 --
--- Name: subdirecciones_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: seguimiento_acompanamiento_salida_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX seguimiento_acompanamiento_salida_id_key ON public.seguimiento_acompanamiento USING btree (salida_id);
+
+
+--
+-- Name: seguimiento_articulacion_iv_salida_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX seguimiento_articulacion_iv_salida_id_key ON public.seguimiento_articulacion_iv USING btree (salida_id);
+
+
+--
+-- Name: seguimiento_capacitaciones_salida_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX seguimiento_capacitaciones_salida_id_key ON public.seguimiento_capacitaciones USING btree (salida_id);
+
+
+--
+-- Name: seguimiento_ivc_salida_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX seguimiento_ivc_salida_id_key ON public.seguimiento_ivc USING btree (salida_id);
+
+
+--
+-- Name: subdirecciones_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX subdirecciones_name_key ON public.subdirecciones USING btree (name);
 
 
 --
--- Name: user_types_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: user_types_name_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX user_types_name_key ON public.user_types USING btree (name);
 
 
 --
--- Name: users_email_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: users_email_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email);
 
 
 --
--- Name: users_num_id_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: users_num_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX users_num_id_key ON public.users USING btree (num_id);
 
 
 --
--- Name: users_username_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: users_username_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username);
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
@@ -2423,7 +2970,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
@@ -2431,7 +2978,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
@@ -2439,7 +2986,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
@@ -2447,7 +2994,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasEntidades"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
@@ -2455,7 +3002,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
@@ -2463,7 +3010,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIdsn"
 
 
 --
--- Name: _SalidasIps _SalidasIps_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIps _SalidasIps_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
@@ -2471,7 +3018,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
 
 
 --
--- Name: _SalidasIps _SalidasIps_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasIps _SalidasIps_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
@@ -2479,7 +3026,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasIps"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
@@ -2487,7 +3034,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
@@ -2495,7 +3042,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_A_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
@@ -2503,7 +3050,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_B_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
@@ -2511,7 +3058,7 @@ ALTER TABLE ONLY "SCHEMA"."_SalidasOrganizaciones"
 
 
 --
--- Name: areas areas_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: areas areas_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".areas
@@ -2519,7 +3066,7 @@ ALTER TABLE ONLY "SCHEMA".areas
 
 
 --
--- Name: articulaciones articulaciones_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones articulaciones_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".articulaciones
@@ -2527,7 +3074,7 @@ ALTER TABLE ONLY "SCHEMA".articulaciones
 
 
 --
--- Name: articulaciones articulaciones_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones articulaciones_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".articulaciones
@@ -2535,7 +3082,7 @@ ALTER TABLE ONLY "SCHEMA".articulaciones
 
 
 --
--- Name: articulaciones articulaciones_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: articulaciones articulaciones_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".articulaciones
@@ -2543,7 +3090,7 @@ ALTER TABLE ONLY "SCHEMA".articulaciones
 
 
 --
--- Name: ips ips_municipio_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ips ips_municipio_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ips
@@ -2551,7 +3098,7 @@ ALTER TABLE ONLY "SCHEMA".ips
 
 
 --
--- Name: ivc ivc_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ivc ivc_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ivc
@@ -2559,7 +3106,7 @@ ALTER TABLE ONLY "SCHEMA".ivc
 
 
 --
--- Name: ivc ivc_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ivc ivc_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ivc
@@ -2567,7 +3114,7 @@ ALTER TABLE ONLY "SCHEMA".ivc
 
 
 --
--- Name: ivc ivc_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: ivc ivc_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".ivc
@@ -2575,7 +3122,7 @@ ALTER TABLE ONLY "SCHEMA".ivc
 
 
 --
--- Name: modules modules_parent_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: modules modules_parent_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".modules
@@ -2583,7 +3130,7 @@ ALTER TABLE ONLY "SCHEMA".modules
 
 
 --
--- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".notifications
@@ -2591,7 +3138,7 @@ ALTER TABLE ONLY "SCHEMA".notifications
 
 
 --
--- Name: permissions permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: permissions permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".permissions
@@ -2599,7 +3146,7 @@ ALTER TABLE ONLY "SCHEMA".permissions
 
 
 --
--- Name: permissions permissions_user_type_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: permissions permissions_user_type_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".permissions
@@ -2607,7 +3154,7 @@ ALTER TABLE ONLY "SCHEMA".permissions
 
 
 --
--- Name: salida_eapb salida_eapb_actor_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb salida_eapb_actor_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salida_eapb
@@ -2615,7 +3162,7 @@ ALTER TABLE ONLY "SCHEMA".salida_eapb
 
 
 --
--- Name: salida_eapb salida_eapb_eapb_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb salida_eapb_eapb_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salida_eapb
@@ -2623,7 +3170,7 @@ ALTER TABLE ONLY "SCHEMA".salida_eapb
 
 
 --
--- Name: salida_eapb salida_eapb_salida_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salida_eapb salida_eapb_salida_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salida_eapb
@@ -2631,7 +3178,7 @@ ALTER TABLE ONLY "SCHEMA".salida_eapb
 
 
 --
--- Name: salidas salidas_aprobador_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salidas salidas_aprobador_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salidas
@@ -2639,7 +3186,7 @@ ALTER TABLE ONLY "SCHEMA".salidas
 
 
 --
--- Name: salidas salidas_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salidas salidas_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salidas
@@ -2647,7 +3194,7 @@ ALTER TABLE ONLY "SCHEMA".salidas
 
 
 --
--- Name: salidas salidas_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salidas salidas_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salidas
@@ -2655,7 +3202,7 @@ ALTER TABLE ONLY "SCHEMA".salidas
 
 
 --
--- Name: salidas salidas_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: salidas salidas_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".salidas
@@ -2663,7 +3210,7 @@ ALTER TABLE ONLY "SCHEMA".salidas
 
 
 --
--- Name: solicitudes_union solicitudes_union_area_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_area_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".solicitudes_union
@@ -2671,7 +3218,7 @@ ALTER TABLE ONLY "SCHEMA".solicitudes_union
 
 
 --
--- Name: solicitudes_union solicitudes_union_salida_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_salida_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".solicitudes_union
@@ -2679,7 +3226,7 @@ ALTER TABLE ONLY "SCHEMA".solicitudes_union
 
 
 --
--- Name: solicitudes_union solicitudes_union_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".solicitudes_union
@@ -2687,7 +3234,7 @@ ALTER TABLE ONLY "SCHEMA".solicitudes_union
 
 
 --
--- Name: users users_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: users users_area_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".users
@@ -2695,7 +3242,7 @@ ALTER TABLE ONLY "SCHEMA".users
 
 
 --
--- Name: users users_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: users users_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".users
@@ -2703,7 +3250,7 @@ ALTER TABLE ONLY "SCHEMA".users
 
 
 --
--- Name: users users_user_type_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: postgres
+-- Name: users users_user_type_id_fkey; Type: FK CONSTRAINT; Schema: SCHEMA; Owner: -
 --
 
 ALTER TABLE ONLY "SCHEMA".users
@@ -2711,7 +3258,7 @@ ALTER TABLE ONLY "SCHEMA".users
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasAreasParticipantes"
@@ -2719,7 +3266,7 @@ ALTER TABLE ONLY public."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasAreasParticipantes _SalidasAreasParticipantes_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasAreasParticipantes"
@@ -2727,7 +3274,7 @@ ALTER TABLE ONLY public."_SalidasAreasParticipantes"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasEntidades"
@@ -2735,7 +3282,7 @@ ALTER TABLE ONLY public."_SalidasEntidades"
 
 
 --
--- Name: _SalidasEntidades _SalidasEntidades_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasEntidades _SalidasEntidades_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasEntidades"
@@ -2743,7 +3290,7 @@ ALTER TABLE ONLY public."_SalidasEntidades"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasIdsn"
@@ -2751,7 +3298,7 @@ ALTER TABLE ONLY public."_SalidasIdsn"
 
 
 --
--- Name: _SalidasIdsn _SalidasIdsn_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasIdsn _SalidasIdsn_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasIdsn"
@@ -2759,7 +3306,7 @@ ALTER TABLE ONLY public."_SalidasIdsn"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasMunicipios"
@@ -2767,7 +3314,7 @@ ALTER TABLE ONLY public."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasMunicipios _SalidasMunicipios_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasMunicipios _SalidasMunicipios_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasMunicipios"
@@ -2775,7 +3322,7 @@ ALTER TABLE ONLY public."_SalidasMunicipios"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_A_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasOrganizaciones"
@@ -2783,7 +3330,7 @@ ALTER TABLE ONLY public."_SalidasOrganizaciones"
 
 
 --
--- Name: _SalidasOrganizaciones _SalidasOrganizaciones_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _SalidasOrganizaciones _SalidasOrganizaciones_B_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."_SalidasOrganizaciones"
@@ -2791,7 +3338,7 @@ ALTER TABLE ONLY public."_SalidasOrganizaciones"
 
 
 --
--- Name: areas areas_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: areas areas_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.areas
@@ -2799,7 +3346,7 @@ ALTER TABLE ONLY public.areas
 
 
 --
--- Name: articulaciones articulaciones_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: articulaciones articulaciones_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.articulaciones
@@ -2807,7 +3354,7 @@ ALTER TABLE ONLY public.articulaciones
 
 
 --
--- Name: articulaciones articulaciones_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: articulaciones articulaciones_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.articulaciones
@@ -2815,7 +3362,7 @@ ALTER TABLE ONLY public.articulaciones
 
 
 --
--- Name: articulaciones articulaciones_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: articulaciones articulaciones_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.articulaciones
@@ -2823,7 +3370,47 @@ ALTER TABLE ONLY public.articulaciones
 
 
 --
--- Name: ivc ivc_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: asesoria_asistentes asesoria_asistentes_asesoria_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesoria_asistentes
+    ADD CONSTRAINT asesoria_asistentes_asesoria_id_fkey FOREIGN KEY (asesoria_id) REFERENCES public.asesorias(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: asesoria_compromisos asesoria_compromisos_asesoria_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesoria_compromisos
+    ADD CONSTRAINT asesoria_compromisos_asesoria_id_fkey FOREIGN KEY (asesoria_id) REFERENCES public.asesorias(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: asesorias asesorias_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesorias
+    ADD CONSTRAINT asesorias_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: asesorias asesorias_municipio_procedencia_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesorias
+    ADD CONSTRAINT asesorias_municipio_procedencia_id_fkey FOREIGN KEY (municipio_procedencia_id) REFERENCES public.municipios(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: asesorias asesorias_registrador_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asesorias
+    ADD CONSTRAINT asesorias_registrador_id_fkey FOREIGN KEY (registrador_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: ivc ivc_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ivc
@@ -2831,7 +3418,7 @@ ALTER TABLE ONLY public.ivc
 
 
 --
--- Name: ivc ivc_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ivc ivc_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ivc
@@ -2839,7 +3426,7 @@ ALTER TABLE ONLY public.ivc
 
 
 --
--- Name: ivc ivc_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ivc ivc_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ivc
@@ -2847,7 +3434,7 @@ ALTER TABLE ONLY public.ivc
 
 
 --
--- Name: modules modules_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: modules modules_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.modules
@@ -2855,7 +3442,7 @@ ALTER TABLE ONLY public.modules
 
 
 --
--- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -2863,7 +3450,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: permissions permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: permissions permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions
@@ -2871,7 +3458,7 @@ ALTER TABLE ONLY public.permissions
 
 
 --
--- Name: permissions permissions_user_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: permissions permissions_user_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions
@@ -2879,7 +3466,7 @@ ALTER TABLE ONLY public.permissions
 
 
 --
--- Name: salida_eapb salida_eapb_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_eapb salida_eapb_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_eapb
@@ -2887,7 +3474,7 @@ ALTER TABLE ONLY public.salida_eapb
 
 
 --
--- Name: salida_eapb salida_eapb_eapb_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_eapb salida_eapb_eapb_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_eapb
@@ -2895,7 +3482,7 @@ ALTER TABLE ONLY public.salida_eapb
 
 
 --
--- Name: salida_eapb salida_eapb_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_eapb salida_eapb_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_eapb
@@ -2903,7 +3490,7 @@ ALTER TABLE ONLY public.salida_eapb
 
 
 --
--- Name: salida_ips salida_ips_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_ips salida_ips_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_ips
@@ -2911,7 +3498,7 @@ ALTER TABLE ONLY public.salida_ips
 
 
 --
--- Name: salida_ips salida_ips_ips_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_ips salida_ips_ips_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_ips
@@ -2919,7 +3506,7 @@ ALTER TABLE ONLY public.salida_ips
 
 
 --
--- Name: salida_ips salida_ips_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salida_ips salida_ips_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salida_ips
@@ -2927,7 +3514,7 @@ ALTER TABLE ONLY public.salida_ips
 
 
 --
--- Name: salidas salidas_aprobador_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salidas salidas_aprobador_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salidas
@@ -2935,7 +3522,7 @@ ALTER TABLE ONLY public.salidas
 
 
 --
--- Name: salidas salidas_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salidas salidas_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salidas
@@ -2943,7 +3530,7 @@ ALTER TABLE ONLY public.salidas
 
 
 --
--- Name: salidas salidas_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salidas salidas_lugar_evento_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salidas
@@ -2951,7 +3538,7 @@ ALTER TABLE ONLY public.salidas
 
 
 --
--- Name: salidas salidas_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: salidas salidas_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.salidas
@@ -2959,7 +3546,39 @@ ALTER TABLE ONLY public.salidas
 
 
 --
--- Name: solicitudes_union solicitudes_union_area_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seguimiento_acompanamiento seguimiento_acompanamiento_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_acompanamiento
+    ADD CONSTRAINT seguimiento_acompanamiento_salida_id_fkey FOREIGN KEY (salida_id) REFERENCES public.salidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: seguimiento_articulacion_iv seguimiento_articulacion_iv_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_articulacion_iv
+    ADD CONSTRAINT seguimiento_articulacion_iv_salida_id_fkey FOREIGN KEY (salida_id) REFERENCES public.salidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: seguimiento_capacitaciones seguimiento_capacitaciones_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_capacitaciones
+    ADD CONSTRAINT seguimiento_capacitaciones_salida_id_fkey FOREIGN KEY (salida_id) REFERENCES public.salidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: seguimiento_ivc seguimiento_ivc_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.seguimiento_ivc
+    ADD CONSTRAINT seguimiento_ivc_salida_id_fkey FOREIGN KEY (salida_id) REFERENCES public.salidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: solicitudes_union solicitudes_union_area_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solicitudes_union
@@ -2967,7 +3586,7 @@ ALTER TABLE ONLY public.solicitudes_union
 
 
 --
--- Name: solicitudes_union solicitudes_union_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_salida_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solicitudes_union
@@ -2975,7 +3594,7 @@ ALTER TABLE ONLY public.solicitudes_union
 
 
 --
--- Name: solicitudes_union solicitudes_union_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: solicitudes_union solicitudes_union_solicitante_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solicitudes_union
@@ -2983,7 +3602,7 @@ ALTER TABLE ONLY public.solicitudes_union
 
 
 --
--- Name: users users_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -2991,7 +3610,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_subdireccion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -2999,7 +3618,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_user_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_user_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -3007,15 +3626,8 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2pI8ihkp6y7Gc2ffUzfjrDL8eWaVNcbCYLuZt6UVvcADbxIujI466WUMcwBTf8e
+\unrestrict cyOKnhd9UZZTC843xl0UDYLKzp2WWC8kqJAvFZceA9VWun1SEBk2GedTWG3c5S6
 
