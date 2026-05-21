@@ -137,7 +137,7 @@ export default function ProgramarAsesoria() {
                             <span className="material-symbols-outlined text-primary">support_agent</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-zinc-900">Programar Asesoría</h1>
+                            <h1 className="text-2xl font-bold text-zinc-900">Asesoría</h1>
                             <p className="text-sm text-zinc-500">Registre los datos de la asesoría realizada o a realizar</p>
                         </div>
                     </div>

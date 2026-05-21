@@ -114,14 +114,13 @@ export default function SolicitarSalida() {
         { id: 'Inspección y Vigilancia SP (IV)', name: 'Inspección y Vigilancia SP (IV)' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
         { id: 'Capacitación', name: 'Desarrollo de Capacidades' },
-        { id: 'IVC', name: 'IVC' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
 
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades' || s.name === 'IVC');
+            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades');
         }
         return subtiposItems;
     };
@@ -131,7 +130,7 @@ export default function SolicitarSalida() {
     // Effect to clear/validate subtypes when Type changes
     useEffect(() => {
         if (formData.tipoSalida === 'Virtual') {
-            const allowedVirtual = ['Desarrollo de Capacidades', 'IVC'];
+            const allowedVirtual = ['Desarrollo de Capacidades'];
             const hasInvalidSubtypes = selectedSubtipos.some(s => !allowedVirtual.includes(s.name));
             if (hasInvalidSubtypes) {
                 setSelectedSubtipos([]);

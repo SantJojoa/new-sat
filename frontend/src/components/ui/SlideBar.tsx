@@ -20,6 +20,7 @@ export default function SlideBar() {
 
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [bellOpen, setBellOpen] = useState(false);
+    const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set(['Inicio']));
     const bellRef = useRef<HTMLDivElement>(null);
 
     const unreadCount = notifications.filter(n => !n.read).length;
@@ -215,6 +216,32 @@ export default function SlideBar() {
     // Order of categories to display
     const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
+    const isItemActive = (href: string) => location.pathname === href || location.pathname.startsWith(`${href}/`);
+
+    useEffect(() => {
+        setOpenCategories(prev => {
+            const next = new Set(prev);
+            next.add('Inicio');
+            for (const category of categoryOrder) {
+                const items = groupedItems[category];
+                if (items?.some(item => isItemActive(item.href))) {
+                    next.add(category);
+                }
+            }
+            return next;
+        });
+    }, [location.pathname]);
+
+    const toggleCategory = (category: string) => {
+        setOpenCategories(prev => {
+            const next = new Set(prev);
+            if (next.has(category)) next.delete(category);
+            else next.add(category);
+            next.add('Inicio');
+            return next;
+        });
+    };
+
     return (
         <div className="w-72 bg-white border-r border-zinc-200 flex flex-col shrink-0 h-screen overflow-hidden">
             <div className="p-6 flex flex-col h-full">
@@ -234,17 +261,27 @@ export default function SlideBar() {
                     {categoryOrder.map(category => {
                         const items = groupedItems[category];
                         if (!items || items.length === 0) return null;
+                        const isOpen = openCategories.has(category);
+                        const hasActiveItem = items.some(item => isItemActive(item.href));
 
                         return (
                             <div key={category}>
                                 {category !== 'Inicio' && (
-                                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2 px-3">
-                                        {category}
-                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleCategory(category)}
+                                        aria-expanded={isOpen}
+                                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${hasActiveItem ? 'text-primary bg-primary/5' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'}`}
+                                    >
+                                        <span className="flex-1 text-left">{category}</span>
+                                        <span className={`material-symbols-outlined text-[18px] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                                            expand_more
+                                        </span>
+                                    </button>
                                 )}
-                                <div className="flex flex-col gap-1">
+                                <div className={`flex-col gap-1 ${category === 'Inicio' || isOpen ? 'flex mt-1' : 'hidden'}`}>
                                     {items.map((item) => {
-                                        const isActive = location.pathname.startsWith(item.href);
+                                        const isActive = isItemActive(item.href);
                                         return (
                                             <Link
                                                 key={item.id}
