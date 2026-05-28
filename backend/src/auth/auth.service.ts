@@ -11,6 +11,24 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
+    private buildAuthUser(user: any) {
+        const subdireccion = user.subdirecciones ?? user.areas?.subdirecciones ?? null;
+
+        return {
+            id: user.id,
+            username: user.username,
+            names: user.names,
+            last_name: user.last_name,
+            email: user.email,
+            user_type_id: user.user_type_id,
+            area_id: user.area_id,
+            subdireccion_id: user.subdireccion_id ?? user.areas?.subdireccion_id,
+            user_type: user.user_types,
+            area: user.areas,
+            subdireccion,
+        };
+    }
+
     async validateUser(username: string, password: string): Promise<any> {
         const user = await this.usersService.findByUsername(username);
 
@@ -46,19 +64,7 @@ export class AuthService {
 
         return {
             access_token: this.jwtService.sign(payload),
-            user: {
-                id: user.id,
-                username: user.username,
-                names: user.names,
-                last_name: user.last_name,
-                email: user.email,
-                user_type_id: user.user_type_id,
-                area_id: user.area_id,
-                subdireccion_id: user.subdireccion_id,
-                user_type: user.user_types,
-                area: user.areas,
-                subdireccion: user.subdirecciones,
-            }
+            user: this.buildAuthUser(user)
         }
     }
 

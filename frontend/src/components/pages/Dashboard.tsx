@@ -123,7 +123,7 @@ export default function Dashboard() {
                                 Hola, <span className="text-primary">{user?.names?.split(' ')[0]}</span>
                             </h1>
                             <p className="text-zinc-600 mt-2 max-w-2xl text-lg">
-                                Subdireccion: {user?.subdireccion?.name || 'N/A'} - {user?.area?.name || 'N/A'}
+                                <span className="font-bold">Subdireccion:</span> {user?.subdireccion?.name || 'N/A'} - <span className="font-bold">Area:</span> {user?.area?.name || 'N/A'}
                             </p>
                         </div>
                     </div>

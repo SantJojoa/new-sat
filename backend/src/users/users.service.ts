@@ -8,6 +8,23 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
     constructor(private prisma: PrismaService) { }
 
+    private readonly userInclude = {
+        areas: {
+            include: {
+                subdirecciones: true
+            }
+        },
+        subdirecciones: true,
+        user_types: {
+            include: {
+                permissions: {
+                    include: {
+                        modules: true
+                    }
+                }
+            }
+        }
+    };
 
     async create(createUserDto: CreateUserDto) {
 
@@ -40,6 +57,17 @@ export class UsersService {
             throw new BadRequestException('Debe seleccionar una subdirección');
         }
 
+        const area = normalizedAreaId
+            ? await this.prisma.areas.findUnique({
+                where: { id: normalizedAreaId },
+                select: { subdireccion_id: true }
+            })
+            : null;
+
+        if (normalizedAreaId && !area) {
+            throw new BadRequestException('Área no encontrada');
+        }
+
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
         const user = await this.prisma.users.create({
@@ -47,7 +75,9 @@ export class UsersService {
                 ...createUserDto,
                 password: hashedPassword,
                 area_id: normalizedAreaId,
-                subdireccion_id: userType.name === 'admin_subdireccion' ? normalizedSubdireccionId : null,
+                subdireccion_id: userType.name === 'admin_subdireccion'
+                    ? normalizedSubdireccionId
+                    : (area?.subdireccion_id ?? null),
             },
         });
 
@@ -62,15 +92,7 @@ export class UsersService {
 
     async findAll() {
         const users = await this.prisma.users.findMany({
-            include: {
-                areas: {
-                    include: {
-                        subdirecciones: true
-                    }
-                },
-                subdirecciones: true,
-                user_types: true
-            },
+            include: this.userInclude,
         });
 
         return users.map(user => {
@@ -84,19 +106,7 @@ export class UsersService {
             where: {
                 id
             },
-            include: {
-                areas: true,
-                subdirecciones: true,
-                user_types: {
-                    include: {
-                        permissions: {
-                            include: {
-                                modules: true
-                            }
-                        }
-                    }
-                }
-            },
+            include: this.userInclude,
         });
 
         if (!user) {
@@ -113,19 +123,7 @@ export class UsersService {
             where: {
                 username
             },
-            include: {
-                areas: true,
-                subdirecciones: true,
-                user_types: {
-                    include: {
-                        permissions: {
-                            include: {
-                                modules: true
-                            }
-                        }
-                    }
-                }
-            },
+            include: this.userInclude,
         });
     }
 
@@ -134,19 +132,7 @@ export class UsersService {
             where: {
                 email
             },
-            include: {
-                areas: true,
-                subdirecciones: true,
-                user_types: {
-                    include: {
-                        permissions: {
-                            include: {
-                                modules: true
-                            }
-                        }
-                    }
-                }
-            },
+            include: this.userInclude,
         });
     }
 
@@ -178,6 +164,18 @@ export class UsersService {
             }
         }
 
+        const targetAreaId = normalizedUpdateAreaId !== undefined ? normalizedUpdateAreaId : existing.area_id;
+        const area = targetAreaId
+            ? await this.prisma.areas.findUnique({
+                where: { id: targetAreaId },
+                select: { subdireccion_id: true }
+            })
+            : null;
+
+        if (targetAreaId && !area) {
+            throw new BadRequestException('Área no encontrada');
+        }
+
         const user = await this.prisma.users.update({
             where: {
                 id
@@ -187,7 +185,7 @@ export class UsersService {
                 area_id: normalizedUpdateAreaId,
                 subdireccion_id: userType.name === 'admin_subdireccion'
                     ? (normalizedUpdateSubId ?? existing.subdireccion_id)
-                    : null,
+                    : (area?.subdireccion_id ?? null),
             },
         });
 

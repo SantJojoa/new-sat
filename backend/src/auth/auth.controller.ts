@@ -25,7 +25,14 @@ export class AuthController {
     @Post('profile')
     @UseGuards(JwtAuthGuard)
     async getProfile(@Request() req) {
-        const user = await this.usersService.findOne(req.user.userId);
-        return user;
+        const user = await this.usersService.findOne(req.user.id);
+        const subdireccion = user.subdirecciones ?? user.areas?.subdirecciones ?? null;
+
+        return {
+            ...user,
+            subdireccion_id: user.subdireccion_id ?? user.areas?.subdireccion_id,
+            area: user.areas,
+            subdireccion,
+        };
     }
 }
