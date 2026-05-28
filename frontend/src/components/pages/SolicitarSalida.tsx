@@ -1034,7 +1034,7 @@ export default function SolicitarSalida() {
                                         <div className="flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Entidades
+                                                    Entidades Territoriales
                                                 </label>
                                                 <button
                                                     type="button"
@@ -1049,7 +1049,7 @@ export default function SolicitarSalida() {
                                                 <ChipList
                                                     items={selectedEntidades}
                                                     onRemove={(item) => removeChip(item, setSelectedEntidades, selectedEntidades)}
-                                                    emptyText="No hay entidades seleccionadas"
+                                                    emptyText="No hay entidades territoriales seleccionadas"
                                                 />
                                             </div>
                                         </div>
@@ -1352,7 +1352,7 @@ export default function SolicitarSalida() {
             <MultiSelectModal
                 isOpen={activeModal === 'entidades'}
                 onClose={() => setActiveModal(null)}
-                title="Seleccionar Entidades"
+                title="Seleccionar Entidades Territoriales"
                 items={entidadesData}
                 selectedItems={selectedEntidades}
                 onSave={setSelectedEntidades}
