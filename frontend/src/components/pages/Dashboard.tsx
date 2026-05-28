@@ -123,8 +123,7 @@ export default function Dashboard() {
                                 Hola, <span className="text-primary">{user?.names?.split(' ')[0]}</span>
                             </h1>
                             <p className="text-zinc-600 mt-2 max-w-2xl text-lg">
-                                Bienvenido al Sistema de Inspeccion, Vigilancia, Asistencia y Capacitacion.
-                                Selecciona un modulo para comenzar.
+                                Subdireccion: {user?.subdireccion?.name || 'N/A'} - {user?.area?.name || 'N/A'}
                             </p>
                         </div>
                     </div>

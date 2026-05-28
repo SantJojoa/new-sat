@@ -4,13 +4,24 @@ import { useLocation, Link, useNavigate } from "react-router-dom"
 import { Bell, CheckCheck, Trash2, X } from "lucide-react"
 import { notificationsService, type AppNotification } from "../../services/notificationsService"
 
-const TYPE_STYLES: Record<string, { dot: string; icon: string }> = {
-    salida_pendiente: { dot: 'bg-yellow-400', icon: '📋' },
-    salida_aprobada: { dot: 'bg-green-500', icon: '✅' },
-    salida_rechazada: { dot: 'bg-red-500', icon: '❌' },
-    union_pendiente: { dot: 'bg-blue-400', icon: '👥' },
-    union_aceptada: { dot: 'bg-green-500', icon: '🤝' },
-    union_rechazada: { dot: 'bg-red-500', icon: '🚫' },
+
+const getNotificationStyle = (type: string) => {
+    switch (type) {
+        case 'salida_pendiente':
+            return { dot: 'bg-amber-400', icon: 'assignment', iconWrap: 'bg-amber-100 text-amber-700' };
+        case 'salida_aprobada':
+            return { dot: 'bg-emerald-500', icon: 'check_circle', iconWrap: 'bg-emerald-100 text-emerald-700' };
+        case 'salida_rechazada':
+            return { dot: 'bg-red-500', icon: 'cancel', iconWrap: 'bg-red-100 text-red-700' };
+        case 'union_pendiente':
+            return { dot: 'bg-blue-400', icon: 'group_add', iconWrap: 'bg-blue-100 text-blue-700' };
+        case 'union_aceptada':
+            return { dot: 'bg-emerald-500', icon: 'handshake', iconWrap: 'bg-emerald-100 text-emerald-700' };
+        case 'union_rechazada':
+            return { dot: 'bg-red-500', icon: 'block', iconWrap: 'bg-red-100 text-red-700' };
+        default:
+            return { dot: 'bg-zinc-400', icon: 'notifications', iconWrap: 'bg-zinc-100 text-zinc-600' };
+    }
 };
 
 export default function SlideBar() {
@@ -146,7 +157,7 @@ export default function SlideBar() {
         {
             id: 'programar-asesoria-module',
             name: 'programar_asesoria',
-            label: 'Programar Asesoría',
+            label: 'Registrar Asesoría',
             icon: 'support_agent',
             href: '/programar-asesoria'
         },
@@ -311,66 +322,74 @@ export default function SlideBar() {
                     <div ref={bellRef} className="relative px-3">
                         <button
                             onClick={handleBellOpen}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${bellOpen ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100'}`}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all relative border ${bellOpen ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' : 'text-zinc-600 border-transparent hover:bg-zinc-100 hover:text-zinc-900'}`}
                         >
-                            <div className="relative shrink-0">
+                            <div className={`relative shrink-0 size-8 rounded-lg flex items-center justify-center ${bellOpen ? 'bg-white text-primary' : 'bg-zinc-100 text-zinc-500'}`}>
                                 <Bell size={20} />
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+                                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none ring-2 ring-white">
                                         {unreadCount > 9 ? '9+' : unreadCount}
                                     </span>
                                 )}
                             </div>
-                            <span className="text-sm font-medium">Notificaciones</span>
+                            <span className="text-sm font-semibold">Notificaciones</span>
                             {unreadCount > 0 && (
-                                <span className="ml-auto bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount} nuevas</span>
+                                <span className="ml-auto bg-red-50 text-red-700 border border-red-100 text-[10px] font-bold px-2 py-0.5 rounded-full">{unreadCount} nuevas</span>
                             )}
                         </button>
 
                         {/* Dropdown panel */}
                         {bellOpen && (
-                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-2xl border border-zinc-200 overflow-hidden z-50 max-h-96 flex flex-col">
-                                <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between shrink-0">
-                                    <span className="font-bold text-zinc-900 text-sm">Notificaciones</span>
-                                    <div className="flex items-center gap-1">
+                            <div className="absolute bottom-full left-0 right-0 mb-3 bg-white rounded-xl shadow-2xl border border-zinc-200 overflow-hidden z-50 max-h-[28rem] flex flex-col">
+                                <div className="px-4 py-3 border-b border-zinc-100 bg-zinc-50/80 flex items-start justify-between gap-3 shrink-0">
+                                    <div>
+                                        <span className="font-black text-zinc-900 text-sm">Notificaciones</span>
+                                        <p className="text-[11px] text-zinc-500 mt-0.5">{unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al dia'}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
                                         {unreadCount > 0 && (
-                                            <button onClick={handleMarkAllRead} className="text-xs text-primary hover:underline flex items-center gap-1 px-2 py-1 rounded hover:bg-primary/5 transition-colors">
+                                            <button onClick={handleMarkAllRead} className="text-xs text-primary flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-primary/10 transition-colors font-semibold">
                                                 <CheckCheck size={13} /> Marcar leídas
                                             </button>
                                         )}
-                                        <button onClick={() => setBellOpen(false)} className="p-1 rounded hover:bg-zinc-100 text-zinc-400 transition-colors">
+                                        <button onClick={() => setBellOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-200/70 text-zinc-400 hover:text-zinc-700 transition-colors">
                                             <X size={14} />
                                         </button>
                                     </div>
                                 </div>
-                                <div className="overflow-y-auto flex-1">
+                                <div className="overflow-y-auto flex-1 p-2 bg-white">
                                     {notifications.length === 0 ? (
-                                        <div className="px-4 py-8 text-center text-zinc-400 text-sm">
-                                            <Bell size={24} className="mx-auto mb-2 opacity-30" />
-                                            Sin notificaciones
+                                        <div className="px-4 py-10 text-center text-zinc-400 text-sm">
+                                            <div className="mx-auto mb-3 size-12 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">
+                                                <Bell size={22} />
+                                            </div>
+                                            <p className="font-semibold text-zinc-600">Sin notificaciones</p>
+                                            <p className="text-xs text-zinc-400 mt-1">Cuando haya novedades apareceran aqui.</p>
                                         </div>
                                     ) : (
                                         notifications.map(n => {
-                                            const style = TYPE_STYLES[n.type] || { dot: 'bg-zinc-400', icon: '🔔' };
+                                            const style = getNotificationStyle(n.type);
                                             return (
                                                 <div
                                                     key={n.id}
-                                                    className={`w-full border-b border-zinc-50 ${!n.read ? 'bg-blue-50/40' : ''}`}
+                                                    className={`w-full rounded-lg border mb-2 last:mb-0 transition-colors ${!n.read ? 'bg-blue-50/60 border-blue-100' : 'bg-white border-zinc-100 hover:bg-zinc-50'}`}
                                                 >
-                                                    <div className="px-4 py-3 flex gap-3 items-start">
+                                                    <div className="px-3 py-3 flex gap-3 items-start">
                                                         <button
                                                             onClick={() => handleNotificationClick(n)}
-                                                            className="flex-1 min-w-0 text-left hover:bg-zinc-50 transition-colors rounded-md p-1 -m-1"
+                                                            className="flex-1 min-w-0 text-left"
                                                         >
                                                             <div className="flex items-start gap-3">
-                                                                <span className="text-base shrink-0 mt-0.5">{style.icon}</span>
+                                                                <span className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${style.iconWrap}`}>
+                                                                    <span className="material-symbols-outlined text-[20px]">{style.icon}</span>
+                                                                </span>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-2">
-                                                                        <p className={`text-xs font-bold truncate ${!n.read ? 'text-zinc-900' : 'text-zinc-600'}`}>{n.title}</p>
+                                                                        <p className={`text-xs font-bold truncate ${!n.read ? 'text-zinc-900' : 'text-zinc-700'}`}>{n.title}</p>
                                                                         {!n.read && <span className={`shrink-0 size-2 rounded-full ${style.dot}`} />}
                                                                     </div>
-                                                                    <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
-                                                                    <p className="text-[10px] text-zinc-400 mt-1">
+                                                                    <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">{n.message}</p>
+                                                                    <p className="text-[10px] text-zinc-400 mt-2 font-medium">
                                                                         {new Date(n.created_at).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                                                     </p>
                                                                 </div>
@@ -380,7 +399,7 @@ export default function SlideBar() {
                                                         {n.read && (
                                                             <button
                                                                 onClick={() => handleDeleteRead(n.id)}
-                                                                className="shrink-0 mt-0.5 p-1.5 rounded text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                                className="shrink-0 mt-0.5 p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                                                 aria-label="Borrar notificación leída"
                                                                 title="Borrar notificación"
                                                             >

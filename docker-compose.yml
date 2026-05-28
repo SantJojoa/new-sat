@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - ./docker/db/init:/docker-entrypoint-initdb.d
-    healthcheck:
+    healthcheck:k
       test: [ "CMD-SHELL", "pg_isready -U postgres -d new_sat_bd" ]
       interval: 10s
       timeout: 5s
