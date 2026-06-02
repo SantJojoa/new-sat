@@ -1,13 +1,15 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { canAccessModule } from '../../utils/userAccess'
 
 interface ProtectedRouteProps {
     children: React.ReactNode
     allowedRoles?: string[] // Changed from requiredRole (ID) to allowedRoles (names)
+    moduleName?: string
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles, moduleName }: ProtectedRouteProps) {
     const { isAuthenticated, user, isLoading } = useAuth()
     const location = useLocation()
 
@@ -34,6 +36,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             // If already on dashboard (prevent loop), usually irrelevant as dashboard is allowed for all logged in
             return <Navigate to="/dashboard" replace />
         }
+    }
+
+    if (moduleName && !canAccessModule(moduleName, user)) {
+        return <Navigate to="/dashboard" replace />
     }
 
     return <>{children}</>

@@ -29,6 +29,8 @@ export interface UserType {
 export interface AreaSummary {
     id: string;
     name: string;
+    subdireccion_id?: string;
+    subdirecciones?: AreaSummary;
 }
 
 export interface AuthUser {

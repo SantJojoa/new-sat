@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth"
 import { useLocation, Link, useNavigate } from "react-router-dom"
 import { Bell, CheckCheck, Trash2, X } from "lucide-react"
 import { notificationsService, type AppNotification } from "../../services/notificationsService"
+import { canAccessModule } from "../../utils/userAccess"
 
 
 const getNotificationStyle = (type: string) => {
@@ -92,7 +93,7 @@ export default function SlideBar() {
             if (restrictedModules.includes(p.modules.name)) {
                 return user?.user_type?.name === 'superadmin';
             }
-            return true;
+            return canAccessModule(p.modules.name, user);
         })
         ?.sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0))
         ?.map(p => ({
@@ -179,7 +180,7 @@ export default function SlideBar() {
 
     const allCombinedNavItems = [...allNavItems];
     for (const extra of extraNavItems) {
-        if (!allCombinedNavItems.some(item => item.name === extra.name)) {
+        if (canAccessModule(extra.name, user) && !allCombinedNavItems.some(item => item.name === extra.name)) {
             allCombinedNavItems.push(extra);
         }
     }

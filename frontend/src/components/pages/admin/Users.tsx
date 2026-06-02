@@ -11,6 +11,7 @@ interface UserType {
 interface Area {
     id: string;
     name: string;
+    subdireccion_id: string;
     subdirecciones?: Subdireccion;
 }
 
@@ -87,14 +88,8 @@ export default function Users() {
         e.preventDefault();
         try {
             const payload: Partial<typeof formData> = { ...formData };
-            const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
-            const selectedRoleName = selectedUserType?.name;
-
-            if (selectedRoleName !== 'admin_subdireccion') {
-                delete payload.subdireccion_id;
-                if (selectedRoleName !== 'lider') {
-                    delete payload.area_id;
-                }
+            if (selectedRoleName === 'admin_subdireccion') {
+                delete payload.area_id;
             }
 
             if (editingId) {
@@ -147,7 +142,7 @@ export default function Users() {
                 email: user.email,
                 user_type_id: user.user_type_id,
                 area_id: user.area_id || '',
-                subdireccion_id: user.subdireccion_id || '',
+                subdireccion_id: user.subdireccion_id || user.areas?.subdireccion_id || user.areas?.subdirecciones?.id || '',
                 charge: user.charge || '',
             });
             setEditingId(user.id);
@@ -182,8 +177,11 @@ export default function Users() {
 
     const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
     const selectedRoleName = selectedUserType?.name;
-    const showsSubdireccion = selectedRoleName === 'admin_subdireccion';
-    const isSuperAdmin = selectedRoleName === 'superadmin';
+    const isSubdirector = selectedRoleName === 'admin_subdireccion';
+    const showsSubdireccion = true;
+    const filteredAreas = formData.subdireccion_id
+        ? areas.filter(area => area.subdireccion_id === formData.subdireccion_id)
+        : [];
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -256,9 +254,7 @@ export default function Users() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-zinc-600">
-                                                    {user.user_types?.name === 'admin_subdireccion'
-                                                        ? (user.subdirecciones?.name || 'N/A')
-                                                        : (user.areas?.subdirecciones?.name || 'N/A')}
+                                                    {user.subdirecciones?.name || user.areas?.subdirecciones?.name || 'N/A'}
                                                 </td>
                                                 <td className="px-6 py-4 text-zinc-600">
                                                     {user.user_types?.name === 'admin_subdireccion'
@@ -352,7 +348,7 @@ export default function Users() {
                                             <select
                                                 required
                                                 value={formData.subdireccion_id}
-                                                onChange={(e) => setFormData({ ...formData, subdireccion_id: e.target.value })}
+                                                onChange={(e) => setFormData({ ...formData, subdireccion_id: e.target.value, area_id: '' })}
                                                 className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
                                             >
                                                 <option value="">Seleccione subdirecciÃ³n...</option>
@@ -424,19 +420,11 @@ export default function Users() {
                                                         user_type_id: nextId,
                                                         area_id: '',
                                                     }));
-                                                } else if (nextType?.name === 'lider') {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        user_type_id: nextId,
-                                                        subdireccion_id: '',
-                                                    }));
                                                 } else {
                                                     setFormData(prev => ({
                                                         ...prev,
                                                         user_type_id: nextId,
                                                         area_id: '',
-                                                        subdireccion_id: '',
-                                                        charge: '',
                                                     }));
                                                 }
                                             }}
@@ -448,22 +436,24 @@ export default function Users() {
                                             ))}
                                         </select>
                                     </div>
-                                    {!isSuperAdmin && (
+                                    {!isSubdirector && (
                                         <div>
                                             <label className="block text-sm font-semibold text-zinc-700 mb-1">Área</label>
                                             <select
+                                                required
+                                                disabled={!formData.subdireccion_id}
                                                 value={formData.area_id}
                                                 onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}
-                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white disabled:bg-zinc-100 disabled:text-zinc-400"
                                             >
-                                                <option value="">N/A (Sin área)</option>
-                                                {areas.map(area => (
+                                                <option value="">{formData.subdireccion_id ? 'Seleccione área...' : 'Seleccione primero una subdirección'}</option>
+                                                {filteredAreas.map(area => (
                                                     <option key={area.id} value={area.id}>{area.name}</option>
                                                 ))}
                                             </select>
                                         </div>
                                     )}
-                                    {!isSuperAdmin && (
+                                    {!isSubdirector && (
                                         <div>
                                             <label className="block text-sm font-semibold text-zinc-700 mb-1">Cargo</label>
                                             <input

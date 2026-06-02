@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { useAuth } from "../../hooks/useAuth"
 import SlideBar from "../ui/SlideBar"
 import type { DashboardModulePermission } from "../../types/salidas";
+import { canAccessModule } from "../../utils/userAccess";
 
 export default function Dashboard() {
     const { user } = useAuth();
@@ -17,7 +18,7 @@ export default function Dashboard() {
             if (restrictedModules.includes(permission.modules.name)) {
                 return user?.user_type?.name === 'superadmin';
             }
-            return true;
+            return canAccessModule(permission.modules.name, user);
         })
         .sort((a, b) => (a.modules.order || 0) - (b.modules.order || 0)) || [];
 
@@ -95,7 +96,7 @@ export default function Dashboard() {
 
     const dedupedModules = [...allowedModules, ...extraModules].reduce<DashboardModulePermission[]>((acc, permission) => {
         const typedPermission = permission as DashboardModulePermission;
-        if (!acc.some((current) => current.modules.name === typedPermission.modules.name)) {
+        if (canAccessModule(typedPermission.modules.name, user) && !acc.some((current) => current.modules.name === typedPermission.modules.name)) {
             acc.push(typedPermission);
         }
         return acc;

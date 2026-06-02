@@ -27,7 +27,6 @@ export class UsersService {
     };
 
     async create(createUserDto: CreateUserDto) {
-
         const existingUser = await this.prisma.users.findFirst({
             where: {
                 OR: [
@@ -36,7 +35,7 @@ export class UsersService {
                     { num_id: createUserDto.num_id }
                 ]
             }
-        })
+        });
 
         if (existingUser) {
             throw new ConflictException('User already exists');
@@ -53,8 +52,12 @@ export class UsersService {
             throw new BadRequestException('Tipo de usuario no encontrado');
         }
 
-        if (userType.name === 'admin_subdireccion' && !normalizedSubdireccionId) {
+        if (!normalizedSubdireccionId) {
             throw new BadRequestException('Debe seleccionar una subdirección');
+        }
+
+        if (userType.name !== 'admin_subdireccion' && !normalizedAreaId) {
+            throw new BadRequestException('Debe seleccionar un área');
         }
 
         const area = normalizedAreaId
@@ -68,16 +71,18 @@ export class UsersService {
             throw new BadRequestException('Área no encontrada');
         }
 
+        if (area && area.subdireccion_id !== normalizedSubdireccionId) {
+            throw new BadRequestException('El área no pertenece a la subdirección seleccionada');
+        }
+
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
         const user = await this.prisma.users.create({
             data: {
                 ...createUserDto,
                 password: hashedPassword,
-                area_id: normalizedAreaId,
-                subdireccion_id: userType.name === 'admin_subdireccion'
-                    ? normalizedSubdireccionId
-                    : (area?.subdireccion_id ?? null),
+                area_id: userType.name === 'admin_subdireccion' ? null : normalizedAreaId,
+                subdireccion_id: normalizedSubdireccionId,
             },
         });
 
@@ -136,9 +141,7 @@ export class UsersService {
         });
     }
 
-
     async update(id: string, updateUserDto: UpdateUserDto) {
-
         const existing = await this.findOne(id);
 
         if (updateUserDto.password) {
@@ -157,14 +160,17 @@ export class UsersService {
             throw new BadRequestException('Tipo de usuario no encontrado');
         }
 
-        if (userType.name === 'admin_subdireccion') {
-            const subId = normalizedUpdateSubId ?? existing.subdireccion_id;
-            if (!subId) {
-                throw new BadRequestException('Debe seleccionar una subdirección');
-            }
+        const targetSubdireccionId = normalizedUpdateSubId !== undefined ? normalizedUpdateSubId : existing.subdireccion_id;
+        const targetAreaId = normalizedUpdateAreaId !== undefined ? normalizedUpdateAreaId : existing.area_id;
+
+        if (!targetSubdireccionId) {
+            throw new BadRequestException('Debe seleccionar una subdirección');
         }
 
-        const targetAreaId = normalizedUpdateAreaId !== undefined ? normalizedUpdateAreaId : existing.area_id;
+        if (userType.name !== 'admin_subdireccion' && !targetAreaId) {
+            throw new BadRequestException('Debe seleccionar un área');
+        }
+
         const area = targetAreaId
             ? await this.prisma.areas.findUnique({
                 where: { id: targetAreaId },
@@ -176,16 +182,18 @@ export class UsersService {
             throw new BadRequestException('Área no encontrada');
         }
 
+        if (area && area.subdireccion_id !== targetSubdireccionId) {
+            throw new BadRequestException('El área no pertenece a la subdirección seleccionada');
+        }
+
         const user = await this.prisma.users.update({
             where: {
                 id
             },
             data: {
                 ...updateUserDto,
-                area_id: normalizedUpdateAreaId,
-                subdireccion_id: userType.name === 'admin_subdireccion'
-                    ? (normalizedUpdateSubId ?? existing.subdireccion_id)
-                    : (area?.subdireccion_id ?? null),
+                area_id: userType.name === 'admin_subdireccion' ? null : targetAreaId,
+                subdireccion_id: targetSubdireccionId,
             },
         });
 
@@ -203,6 +211,7 @@ export class UsersService {
             },
         });
     }
+
     async deactivate(id: string) {
         await this.findOne(id);
 

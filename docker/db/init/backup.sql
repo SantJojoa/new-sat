@@ -1820,7 +1820,7 @@ cmnoqktz80005xkn9l54urwjb	usuarios	Gestión de Usuarios	person_add	/users	6	t	20
 cmnoqktzd000bxkn9d9kmhv1j	solicitar_ivc	IVC	verified_user	/solicitar-ivc	8	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
 cmnoqktzd000axkn9hes8ls8x	solicitar_articulacion	Articulación	hub	/solicitar-articulacion	7	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
 cmnt1jw5s00009gn9h9ed2wk8	calendario_salidas	Calendario de Programaciones	calendar_month	/calendario-salidas	5	t	2026-04-10 15:08:50.703	2026-04-10 15:08:50.703	\N
-cmoj1w3s70000awn92w5p9clc	programar_asesoria	Programar Asesoría	support_agent	/programar-asesoria	30	t	2026-04-28 20:00:21.03	2026-04-28 20:00:21.03	\N
+cmoj1w3s70000awn92w5p9clc	datos_asesoria	Datos Asesoría	support_agent	/datos-asesoria	30	t	2026-04-28 20:00:21.03	2026-04-28 20:00:21.03	\N
 cmnoqktz80006xkn9ki738gk3	subdirecciones	Gestión de Subdirecciones	domain	/subdirecciones	4	t	2026-04-07 14:50:34.052	2026-04-07 14:50:34.052	\N
 cmnoqktzd000fxkn95q9b37df	calendario_ivc	Calendario IVC	event	/calendario-ivc	12	t	2026-04-07 14:50:34.057	2026-04-07 14:50:34.057	\N
 cmnoqktzb0008xkn9cdw74m1k	solicitar_salida	Solicitar Programación	add_box	/solicitar-salida	2	t	2026-04-07 14:50:34.055	2026-04-07 14:50:34.055	\N

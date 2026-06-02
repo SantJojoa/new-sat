@@ -87,7 +87,7 @@ function App() {
                         } />
 
                         <Route path="solicitar-ivc" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="solicitar_ivc">
                                 <SolicitarIvc />
                             </ProtectedRoute>
                         } />
@@ -105,13 +105,13 @@ function App() {
                         } />
 
                         <Route path="gestionar-ivc" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="gestionar_ivc">
                                 <GestionarIvc />
                             </ProtectedRoute>
                         } />
 
                         <Route path="calendario-ivc" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="calendario_ivc">
                                 <CalendarioIvc />
                             </ProtectedRoute>
                         } />
@@ -123,7 +123,7 @@ function App() {
                         } />
 
                         <Route path="reportes-ivc" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="reportes_ivc">
                                 <ReportesIvc />
                             </ProtectedRoute>
                         } />
@@ -171,13 +171,13 @@ function App() {
                         } />
 
                         <Route path="seguimiento-ivc" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="seguimiento_ivc">
                                 <SeguimientoIVC />
                             </ProtectedRoute>
                         } />
 
                         <Route path="seguimiento-articulacion-iv" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="seguimiento_articulacion_iv">
                                 <SeguimientoArticulacionIV />
                             </ProtectedRoute>
                         } />

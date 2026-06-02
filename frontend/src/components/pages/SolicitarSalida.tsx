@@ -11,6 +11,7 @@ import type { CreateSalidaPayload, EapbSelection, IpsSelection, IpsCatalogoItem,
 import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 import { ventanaProgramacionService, type VentanaStatus } from "../../services/ventanaProgramacionService"
 import { io } from "socket.io-client"
+import { canUseInspeccionVigilanciaSp } from "../../utils/userAccess"
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -116,13 +117,18 @@ export default function SolicitarSalida() {
         { id: 'Capacitación', name: 'Desarrollo de Capacidades' },
     ];
     const [selectedSubtipos, setSelectedSubtipos] = useState<CatalogoItem[]>([]);
+    const canSelectInspeccionVigilanciaSp = canUseInspeccionVigilanciaSp(user);
 
     // Filter subtypes based on Tipo de Salida
     const getAvailableSubtypes = () => {
+        const allowedByUser = canSelectInspeccionVigilanciaSp
+            ? subtiposItems
+            : subtiposItems.filter(s => s.id !== 'InspecciÃ³n y Vigilancia SP (IV)');
+
         if (formData.tipoSalida === 'Virtual') {
-            return subtiposItems.filter(s => s.name === 'Desarrollo de Capacidades');
+            return allowedByUser.filter(s => s.name === 'Desarrollo de Capacidades');
         }
-        return subtiposItems;
+        return allowedByUser;
     };
 
     // 'Presencial y Virtual' allows all subtypes (same as Presencial)
@@ -137,6 +143,12 @@ export default function SolicitarSalida() {
             }
         }
     }, [formData.tipoSalida, selectedSubtipos]);
+
+    useEffect(() => {
+        if (!canSelectInspeccionVigilanciaSp && selectedSubtipos.some(s => s.id === 'InspecciÃ³n y Vigilancia SP (IV)')) {
+            setSelectedSubtipos(prev => prev.filter(s => s.id !== 'InspecciÃ³n y Vigilancia SP (IV)'));
+        }
+    }, [canSelectInspeccionVigilanciaSp, selectedSubtipos]);
 
     // Catalog Data State
     const [municipiosData, setMunicipiosData] = useState<CatalogoItem[]>([]);
