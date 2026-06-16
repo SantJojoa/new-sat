@@ -19,6 +19,8 @@ COPY . .
 RUN pnpm exec prisma generate
 RUN pnpm build
 
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["pnpm", "run", "start:prod"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
