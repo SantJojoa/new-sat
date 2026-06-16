@@ -8,6 +8,8 @@ RUN corepack enable && corepack prepare pnpm@10.28.2 --activate && pnpm install 
 
 COPY . .
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 RUN pnpm build
 

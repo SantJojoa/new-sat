@@ -33,7 +33,10 @@ services:
       - SUPERADMIN_NUM_ID=${SUPERADMIN_NUM_ID}
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
     container_name: react_frontend
     ports:
       - "80:80"
