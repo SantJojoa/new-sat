@@ -45,12 +45,10 @@ export default function GestionarIvc() {
     const [filterSubdireccion, setFilterSubdireccion] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
-    const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [detailRecord, setDetailRecord] = useState<IvcRecord | null>(null);
     const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string }>({ type: null, title: '', message: '' });
 
-    const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
     const [editRecord, setEditRecord] = useState<IvcRecord | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<IvcRecord | null>(null);
@@ -64,7 +62,6 @@ export default function GestionarIvc() {
         try {
             const data = await ivcService.getAll(viewAll);
             setRecords(data);
-            setUniqueAreas(Array.from(new Set(data.map(r => r.areas?.name).filter(Boolean))) as string[]);
             setUniqueSubdirecciones(Array.from(new Set(data.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
         } catch (error) {
             console.error('Error fetching IVC:', error);

@@ -237,7 +237,6 @@ export default function SeguimientoIVC() {
     const [filterYear, setFilterYear] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
-    const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [uniqueMunicipios, setUniqueMunicipios] = useState<string[]>([]);
     const [uniqueYears, setUniqueYears] = useState<number[]>([]);
@@ -255,7 +254,6 @@ export default function SeguimientoIVC() {
                 r.subtipo_salida.split(', ').some(s => s.trim() === 'IVC')
             );
             setRecords(ivcRecords);
-            setUniqueAreas(Array.from(new Set(ivcRecords.map(r => r.areas?.name).filter(Boolean))) as string[]);
             setUniqueSubdirecciones(Array.from(new Set(ivcRecords.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
             setUniqueMunicipios(Array.from(new Set(ivcRecords.map(r => r.lugar_evento?.name).filter(Boolean))) as string[]);
             setUniqueYears(Array.from(new Set(ivcRecords.map(r => new Date(r.fecha_inicio).getFullYear()))).sort((a, b) => b - a));

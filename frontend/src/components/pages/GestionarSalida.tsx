@@ -31,7 +31,6 @@ export default function GestionarSalida() {
     const [filterMonth, setFilterMonth] = useState('');
     const [filterYear, setFilterYear] = useState('');
 
-    const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [uniqueTipos, setUniqueTipos] = useState<string[]>([]);
     const [uniqueSubtipos, setUniqueSubtipos] = useState<string[]>([]);
@@ -186,13 +185,11 @@ export default function GestionarSalida() {
             setSalidas(data);
 
             // Extract unique values for filters
-            const areas = Array.from(new Set(data.map((s) => s.areas?.name).filter(Boolean))) as string[];
             const subdirecciones = Array.from(new Set(data.map((s) => s.areas?.subdirecciones?.name).filter(Boolean))) as string[];
             const tipos = Array.from(new Set(data.map((s) => s.tipo_salida).filter(Boolean))) as string[];
             const subtipos = Array.from(new Set(data.map((s) => s.subtipo_salida).filter(Boolean))) as string[];
             const municipios = Array.from(new Set(data.map((s) => s.lugar_evento?.name).filter(Boolean))) as string[];
 
-            setUniqueAreas(areas);
             setUniqueSubdirecciones(subdirecciones);
             setUniqueTipos(tipos);
             setUniqueSubtipos(subtipos);

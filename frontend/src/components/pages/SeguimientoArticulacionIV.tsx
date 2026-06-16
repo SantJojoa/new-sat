@@ -195,7 +195,6 @@ export default function SeguimientoArticulacionIV() {
     const [filterYear, setFilterYear] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
-    const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [uniqueMunicipios, setUniqueMunicipios] = useState<string[]>([]);
     const [uniqueYears, setUniqueYears] = useState<number[]>([]);
@@ -213,7 +212,6 @@ export default function SeguimientoArticulacionIV() {
                 r.subtipo_salida.split(', ').some(s => s.trim() === 'Inspección y Vigilancia SP (IV)')
             );
             setRecords(filtered);
-            setUniqueAreas(Array.from(new Set(filtered.map(r => r.areas?.name).filter(Boolean))) as string[]);
             setUniqueSubdirecciones(Array.from(new Set(filtered.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
             setUniqueMunicipios(Array.from(new Set(filtered.map(r => r.lugar_evento?.name).filter(Boolean))) as string[]);
             setUniqueYears(Array.from(new Set(filtered.map(r => new Date(r.fecha_inicio).getFullYear()))).sort((a, b) => b - a));

@@ -41,12 +41,10 @@ export default function GestionarAsesoria() {
     const [filterSubdireccion, setFilterSubdireccion] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
-    const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
     const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [detailRecord, setDetailRecord] = useState<AsesoriaRecord | null>(null);
     const [generatingId, setGeneratingId] = useState<string | null>(null);
 
-    const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
     const [editRecord, setEditRecord] = useState<AsesoriaRecord | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<AsesoriaRecord | null>(null);
@@ -75,7 +73,6 @@ export default function GestionarAsesoria() {
         try {
             const data = await asesoriasService.getAsesorias(viewAll);
             setRecords(data);
-            setUniqueAreas(Array.from(new Set(data.map(r => r.areas?.name).filter(Boolean))) as string[]);
             setUniqueSubdirecciones(Array.from(new Set(data.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
         } catch (error) {
             console.error('Error fetching asesorias:', error);
