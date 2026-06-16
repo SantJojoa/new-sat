@@ -86,7 +86,9 @@ export class AsesoriasService {
 
         let where: any = {};
 
-        if (!viewAll) {
+        const effectiveViewAll = viewAll && userType.name === 'superadmin';
+
+        if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = user.subdireccion_id || (user.area_id
                     ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
@@ -102,7 +104,7 @@ export class AsesoriasService {
             where,
             include: {
                 registrador: { select: { id: true, names: true, email: true } },
-                areas: { select: { id: true, name: true } },
+                areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } },
                 municipio_procedencia: true,
                 asistentes: true,
                 compromisos: true,

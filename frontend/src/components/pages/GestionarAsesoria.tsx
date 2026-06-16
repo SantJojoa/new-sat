@@ -38,9 +38,11 @@ export default function GestionarAsesoria() {
     const [viewAll, setViewAll] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterArea, setFilterArea] = useState('');
+    const [filterSubdireccion, setFilterSubdireccion] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
     const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
+    const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
     const [detailRecord, setDetailRecord] = useState<AsesoriaRecord | null>(null);
     const [generatingId, setGeneratingId] = useState<string | null>(null);
 
@@ -74,6 +76,7 @@ export default function GestionarAsesoria() {
             const data = await asesoriasService.getAsesorias(viewAll);
             setRecords(data);
             setUniqueAreas(Array.from(new Set(data.map(r => r.areas?.name).filter(Boolean))) as string[]);
+            setUniqueSubdirecciones(Array.from(new Set(data.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
         } catch (error) {
             console.error('Error fetching asesorias:', error);
         } finally {
@@ -111,25 +114,32 @@ export default function GestionarAsesoria() {
             || r.temas_tratados.toLowerCase().includes(term)
             || r.registrador?.names?.toLowerCase().includes(term) || false;
         const matchArea = !filterArea || r.areas?.name === filterArea;
+        const matchSubdireccion = !filterSubdireccion || r.areas?.subdirecciones?.name === filterSubdireccion;
         const matchStart = !filterDateStart || new Date(r.fecha) >= new Date(filterDateStart);
         const matchEnd = !filterDateEnd || new Date(r.fecha) <= new Date(filterDateEnd);
-        return matchSearch && matchArea && matchStart && matchEnd;
+        return matchSearch && matchArea && matchSubdireccion && matchStart && matchEnd;
     });
 
-    const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, dateStart: filterDateStart, dateEnd: filterDateEnd };
+    const areaOptionsForFilter = filterSubdireccion
+        ? Array.from(new Set(records.filter(r => r.areas?.subdirecciones?.name === filterSubdireccion).map(r => r.areas?.name).filter(Boolean))) as string[]
+        : [];
+
+    const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, subdireccion: filterSubdireccion, dateStart: filterDateStart, dateEnd: filterDateEnd };
     const filterFields: FilterField[] = [
         { type: 'search', key: 'search', placeholder: 'Código, institución, tema o registrador...' },
-        ...(isAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: uniqueAreas }] : []),
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones }] : []),
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: areaOptionsForFilter, disabled: !filterSubdireccion, disabledTitle: 'Seleccione primero una subdirección' }] : []),
         { type: 'date', key: 'dateStart', title: 'Fecha Inicio' },
         { type: 'date', key: 'dateEnd', title: 'Fecha Final' },
     ];
     const handleFilterChange = (key: string, value: string) => {
         if (key === 'search') setSearchTerm(value);
         else if (key === 'area') setFilterArea(value);
+        else if (key === 'subdireccion') { setFilterSubdireccion(value); setFilterArea(''); }
         else if (key === 'dateStart') setFilterDateStart(value);
         else if (key === 'dateEnd') setFilterDateEnd(value);
     };
-    const handleResetFilters = () => { setSearchTerm(''); setFilterArea(''); setFilterDateStart(''); setFilterDateEnd(''); };
+    const handleResetFilters = () => { setSearchTerm(''); setFilterArea(''); setFilterSubdireccion(''); setFilterDateStart(''); setFilterDateEnd(''); };
 
     const handleOpenEdit = (r: AsesoriaRecord) => {
         setEditForm({
@@ -198,7 +208,7 @@ export default function GestionarAsesoria() {
                         </h1>
                         <p className="text-zinc-500 mt-2">Listado de asesorías registradas en la subdirección y área.</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
-                            {isAdmin && (
+                            {isSuperAdmin && (
                                 <button
                                     onClick={() => setViewAll(prev => !prev)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll ? 'bg-primary text-white border-primary' : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'}`}

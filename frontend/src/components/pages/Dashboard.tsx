@@ -84,7 +84,7 @@ export default function Dashboard() {
         },
         {
             id: 'programar-asesoria-module',
-            modules: { id: 'programar-asesoria-module', name: 'programar_asesoria', description: 'Programar Asesoría', icon: 'support_agent', path: '/programar-asesoria', is_active: true, order: 105 },
+            modules: { id: 'programar-asesoria-module', name: 'programar_asesoria', description: 'Datos Asesoria', icon: 'support_agent', path: '/programar-asesoria', is_active: true, order: 105 },
             can_view: true
         },
         {

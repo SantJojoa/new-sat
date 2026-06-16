@@ -33,13 +33,14 @@ export interface ArticulacionRecord {
     solicitante_id: string;
     area_id: string;
     solicitante: { id: string; names: string; email: string };
-    areas: { id: string; name: string };
+    areas: { id: string; name: string; subdirecciones?: { id: string; name: string } };
     created_at: string;
     updated_at: string;
 }
 
 export interface ArticulacionCatalogosResponse {
     municipios: { id: string; name: string }[];
-    areas: { id: string; name: string }[];
+    areas: { id: string; name: string; subdireccion_id?: string; subdirecciones?: { id: string; name: string } }[];
     lideres: { id: string; name: string }[];
+    subdirecciones?: { id: string; name: string }[];
 }

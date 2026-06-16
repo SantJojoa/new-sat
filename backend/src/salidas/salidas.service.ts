@@ -218,7 +218,8 @@ export class SalidasService {
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
 
         let where: any = {};
-        if (!viewAll) {
+        const effectiveViewAll = viewAll && userType.name === 'superadmin';
+        if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = await this.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
@@ -383,8 +384,10 @@ export class SalidasService {
             this.prisma.eapb_actores.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.organizaciones.findMany({ orderBy: { name: 'asc' } }),
             this.prisma.idsn.findMany({ orderBy: { name: 'asc' } }),
-            this.prisma.areas.findMany({ orderBy: { name: 'asc' } })
+            this.prisma.areas.findMany({ orderBy: { name: 'asc' }, include: { subdirecciones: { select: { id: true, name: true } } } })
         ]);
+
+        const subdirecciones = await this.prisma.subdirecciones.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } });
 
         let lideres: { id: string, name: string, area_id?: string }[] | undefined;
 
@@ -407,14 +410,17 @@ export class SalidasService {
             }
         }
 
-        return { municipios, ips, ipsActores, entidades, eapb, eapbActores, organizaciones, idsn, areas, ...(lideres ? { lideres } : {}) };
+        return { municipios, ips, ipsActores, entidades, eapb, eapbActores, organizaciones, idsn, areas, subdirecciones, ...(lideres ? { lideres } : {}) };
     }
 
-    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
+    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) {
         const where: any = {};
         if (areaId) where.area_id = areaId;
         if (estado) where.estado = estado;
         if (jornada) where.jornada = jornada;
+        if (subdireccionId) where.areas = { subdireccion_id: subdireccionId };
+        if (tipo) where.tipo_salida = tipo;
+        if (subtipo) where.subtipo_salida = { contains: subtipo };
 
         if (startDate && endDate) {
             where.fecha_inicio = { gte: new Date(`${startDate}T00:00:00`), lte: new Date(`${endDate}T23:59:59.999`) };
@@ -449,6 +455,32 @@ export class SalidasService {
             }),
         ]);
 
+        const porTipo = Object.entries(
+            items.reduce((acc: Record<string, number>, item: any) => {
+                const key = item.tipo_salida || 'Sin tipo';
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {})
+        ).map(([name, count]) => ({ name, count }));
+
+        const porSubtipo = Object.entries(
+            items.reduce((acc: Record<string, number>, item: any) => {
+                const subtipos = (item.subtipo_salida || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+                for (const s of subtipos) {
+                    acc[s] = (acc[s] || 0) + 1;
+                }
+                return acc;
+            }, {})
+        ).map(([name, count]) => ({ name, count }));
+
+        const porSubdireccion = Object.entries(
+            items.reduce((acc: Record<string, number>, item: any) => {
+                const key = item.areas?.subdirecciones?.name || 'Sin subdirección';
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {})
+        ).map(([name, count]) => ({ name, count }));
+
         return {
             estados: byEstado.map(e => ({ name: e.estado, count: e._count._all })),
             topSolicitantes: bySolicitante.map(s => {
@@ -459,6 +491,9 @@ export class SalidasService {
                 const i = areaInfo.find(area => area.id === a.area_id);
                 return { name: i ? i.name : 'Desconocido', count: a._count._all };
             }),
+            porTipo,
+            porSubtipo,
+            porSubdireccion,
             total: byEstado.reduce((acc, curr) => acc + curr._count._all, 0),
             items
         };
@@ -466,8 +501,8 @@ export class SalidasService {
 
     // ── PDF Export ────────────────────────────────────────────────────────────
 
-    async exportEstadisticasPdf(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
-        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada);
+    async exportEstadisticasPdf(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada, subdireccionId, tipo, subtipo);
         const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
 
         return this.pdfReport.generate(data, {
@@ -476,8 +511,8 @@ export class SalidasService {
         });
     }
 
-    async exportEstadisticasExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) {
-        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada);
+    async exportEstadisticasExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, jornada, subdireccionId, tipo, subtipo);
         const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
 
         return this.excelReport.generate(data, {

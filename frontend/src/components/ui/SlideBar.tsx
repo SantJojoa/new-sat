@@ -158,7 +158,7 @@ export default function SlideBar() {
         {
             id: 'programar-asesoria-module',
             name: 'programar_asesoria',
-            label: 'Registrar Asesoría',
+            label: 'Datos Asesoria',
             icon: 'support_agent',
             href: '/programar-asesoria'
         },

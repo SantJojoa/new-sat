@@ -43,8 +43,9 @@ export class ArticulacionesController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
     ) {
-        return this.articulacionesService.getEstadisticas(req.user, startDate, endDate, areaId, estado);
+        return this.articulacionesService.getEstadisticas(req.user, startDate, endDate, areaId, estado, subdireccionId);
     }
 
     @Get('estadisticas/excel')
@@ -57,8 +58,9 @@ export class ArticulacionesController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
     ) {
-        const { buffer, filename } = await this.articulacionesService.exportExcel(req.user, startDate, endDate, areaId, estado);
+        const { buffer, filename } = await this.articulacionesService.exportExcel(req.user, startDate, endDate, areaId, estado, subdireccionId);
         res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${filename}"` });
         return new StreamableFile(buffer);
     }
@@ -73,8 +75,9 @@ export class ArticulacionesController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
     ) {
-        const { buffer, filename } = await this.articulacionesService.exportPdf(req.user, startDate, endDate, areaId, estado);
+        const { buffer, filename } = await this.articulacionesService.exportPdf(req.user, startDate, endDate, areaId, estado, subdireccionId);
         res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${filename}"` });
         return new StreamableFile(buffer);
     }

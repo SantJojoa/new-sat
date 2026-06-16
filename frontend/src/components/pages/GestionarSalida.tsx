@@ -76,6 +76,7 @@ export default function GestionarSalida() {
     const [joinRequestsTab, setJoinRequestsTab] = useState(false);
 
     const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
+    const isSuperAdmin = user?.user_type?.name === 'superadmin';
 
     const fetchJoinRequests = useCallback(async () => {
         if (!isAdmin) return;
@@ -364,11 +365,15 @@ export default function GestionarSalida() {
         return matchesSearch && matchesArea && matchesSubdireccion && matchesTipo && matchesSubtipo && matchesMunicipio && matchesDate && matchesMonth && matchesYear;
     });
 
+    const areaOptionsForFilter = filterSubdireccion
+        ? Array.from(new Set(salidas.filter(s => s.areas?.subdirecciones?.name === filterSubdireccion).map(s => s.areas?.name).filter(Boolean))) as string[]
+        : [];
+
     const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, subdireccion: filterSubdireccion, tipo: filterTipo, subtipo: filterSubtipo, municipio: filterMunicipio, month: filterMonth, year: filterYear, dateStart: filterDateStart, dateEnd: filterDateEnd };
     const filterFields: FilterField[] = [
         { type: 'search', key: 'search', placeholder: 'Código o solicitante...' },
-        { type: 'select', key: 'area', emptyLabel: 'Todas las Áreas', options: uniqueAreas },
-        { type: 'select', key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones },
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones }] : []),
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: areaOptionsForFilter, disabled: !filterSubdireccion, disabledTitle: 'Seleccione primero una subdirección' }] : []),
         { type: 'select', key: 'tipo', emptyLabel: 'Todos los Tipos', options: uniqueTipos },
         { type: 'select', key: 'subtipo', emptyLabel: 'Todos los Subtipos', options: uniqueSubtipos },
         { type: 'select', key: 'municipio', emptyLabel: 'Todos los Municipios', options: uniqueMunicipios, icon: 'pin' },
@@ -380,7 +385,7 @@ export default function GestionarSalida() {
     const handleFilterChange = (key: string, value: string) => {
         if (key === 'search') setSearchTerm(value);
         else if (key === 'area') setFilterArea(value);
-        else if (key === 'subdireccion') setFilterSubdireccion(value);
+        else if (key === 'subdireccion') { setFilterSubdireccion(value); setFilterArea(''); }
         else if (key === 'tipo') setFilterTipo(value);
         else if (key === 'subtipo') setFilterSubtipo(value);
         else if (key === 'municipio') setFilterMunicipio(value);
@@ -464,16 +469,18 @@ export default function GestionarSalida() {
                         <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><Layers className="text-primary" size={32} />Gestionar Programaciones</h1>
                         <p className="text-zinc-500 mt-2">Revise, edite y gestione las solicitudes de programaciones.</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
-                            <button
-                                onClick={() => setViewAll(!viewAll)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll
-                                    ? 'bg-primary text-white border-primary shadow-sm'
-                                    : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'
-                                    }`}
-                            >
-                                <RefreshCcw size={16} className={loading && viewAll ? "animate-spin" : ""} />
-                                {viewAll ? 'Viendo Todas las Áreas' : 'Ver Todas las Áreas'}
-                            </button>
+                            {isSuperAdmin && (
+                                <button
+                                    onClick={() => setViewAll(!viewAll)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll
+                                        ? 'bg-primary text-white border-primary shadow-sm'
+                                        : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'
+                                        }`}
+                                >
+                                    <RefreshCcw size={16} className={loading && viewAll ? "animate-spin" : ""} />
+                                    {viewAll ? 'Viendo Todas las Áreas' : 'Ver Todas las Áreas'}
+                                </button>
+                            )}
                             {isAdmin && (
                                 <button
                                     onClick={() => { setJoinRequestsTab(true); void fetchJoinRequests(); }}

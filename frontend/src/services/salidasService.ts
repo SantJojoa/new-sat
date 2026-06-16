@@ -50,25 +50,31 @@ export const salidasService = {
         return response.data;
     },
 
-    getEstadisticas: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string): Promise<EstadisticasData> => {
+    getEstadisticas: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string): Promise<EstadisticasData> => {
         const params: Record<string, number | string> = {};
         if (startDate) params.startDate = startDate;
         if (endDate) params.endDate = endDate;
         if (areaId) params.area_id = areaId;
         if (estado) params.estado = estado;
         if (jornada) params.jornada = jornada;
+        if (subdireccionId) params.subdireccion_id = subdireccionId;
+        if (tipo) params.tipo = tipo;
+        if (subtipo) params.subtipo = subtipo;
 
         const response = await api.get<EstadisticasData>('/salidas/estadisticas', { params });
         return response.data;
     },
 
-    downloadEstadisticasPdf: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) => {
+    downloadEstadisticasPdf: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) => {
         const params: Record<string, number | string> = {};
         if (startDate) params.startDate = startDate;
         if (endDate) params.endDate = endDate;
         if (areaId) params.area_id = areaId;
         if (estado) params.estado = estado;
         if (jornada) params.jornada = jornada;
+        if (subdireccionId) params.subdireccion_id = subdireccionId;
+        if (tipo) params.tipo = tipo;
+        if (subtipo) params.subtipo = subtipo;
 
         const response = await api.get('/salidas/estadisticas/pdf', {
             params,
@@ -85,13 +91,16 @@ export const salidasService = {
         return { blob: response.data as Blob, filename };
     },
 
-    downloadEstadisticasExcel: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string) => {
+    downloadEstadisticasExcel: async (startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) => {
         const params: Record<string, number | string> = {};
         if (startDate) params.startDate = startDate;
         if (endDate) params.endDate = endDate;
         if (areaId) params.area_id = areaId;
         if (estado) params.estado = estado;
         if (jornada) params.jornada = jornada;
+        if (subdireccionId) params.subdireccion_id = subdireccionId;
+        if (tipo) params.tipo = tipo;
+        if (subtipo) params.subtipo = subtipo;
 
         const response = await api.get('/salidas/estadisticas/excel', {
             params,

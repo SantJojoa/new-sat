@@ -68,7 +68,9 @@ export class ArticulacionesService {
 
         let where: any = {};
 
-        if (!viewAll) {
+        const effectiveViewAll = viewAll && userType.name === 'superadmin';
+
+        if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = user.subdireccion_id || (user.area_id
                     ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
@@ -84,7 +86,7 @@ export class ArticulacionesService {
             where,
             include: {
                 solicitante: { select: { id: true, names: true, email: true } },
-                areas: { select: { id: true, name: true } },
+                areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } },
                 lugar_evento: true,
             },
             orderBy: { fecha_inicio: 'desc' }
@@ -148,8 +150,8 @@ export class ArticulacionesService {
         return this.prisma.articulaciones.delete({ where: { id } });
     }
 
-    async exportExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
-        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado);
+    async exportExcel(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, subdireccionId?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, subdireccionId);
         const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
         const userInfo = await this.prisma.users.findUnique({ where: { id: user.id }, select: { names: true, last_name: true } });
         return this.excelReport.generate(data, {
@@ -158,8 +160,8 @@ export class ArticulacionesService {
         });
     }
 
-    async exportPdf(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
-        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado);
+    async exportPdf(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, subdireccionId?: string) {
+        const data = await this.getEstadisticas(user, startDate, endDate, areaId, estado, subdireccionId);
         const area = areaId ? await this.prisma.areas.findUnique({ where: { id: areaId }, select: { name: true } }) : null;
         const userInfo = await this.prisma.users.findUnique({ where: { id: user.id }, select: { names: true, last_name: true } });
         return this.pdfReport.generate(data, {
@@ -168,14 +170,11 @@ export class ArticulacionesService {
         });
     }
 
-    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string) {
-        const userType = await this.getUserType(user);
+    async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, subdireccionId?: string) {
         const where: any = {};
         if (areaId) where.area_id = areaId;
         if (estado) where.estado = estado;
-        if (userType?.name !== 'superadmin' && userType?.name !== 'admin_subdireccion') {
-            where.solicitante_id = user.id;
-        }
+        if (subdireccionId) where.areas = { subdireccion_id: subdireccionId };
         if (startDate || endDate) {
             where.fecha_inicio = {};
             if (startDate) where.fecha_inicio.gte = new Date(`${startDate}T00:00:00`);
@@ -184,7 +183,7 @@ export class ArticulacionesService {
 
         const items = await this.prisma.articulaciones.findMany({
             where,
-            include: { solicitante: { select: { id: true, names: true, last_name: true } }, areas: { select: { id: true, name: true } } },
+            include: { solicitante: { select: { id: true, names: true, last_name: true } }, areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } } },
             orderBy: { fecha_inicio: 'desc' }
         });
 
@@ -202,24 +201,29 @@ export class ArticulacionesService {
         const areasMap = items.reduce((acc, item) => { const name = item.areas?.name || 'Sin área'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
         const areas = Object.entries(areasMap).map(([name, count]) => ({ name, count }));
 
-        return { total, estados, topSolicitantes, areas, items };
+        const subdireccionesMap = items.reduce((acc, item: any) => { const name = item.areas?.subdirecciones?.name || 'Sin subdirección'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const porSubdireccion = Object.entries(subdireccionesMap).map(([name, count]) => ({ name, count }));
+
+        return { total, estados, topSolicitantes, areas, porSubdireccion, items };
     }
 
     async getCatalogos(user: users) {
-        const [municipios, areas, lideres] = await Promise.all([
+        const [municipios, areas, lideres, subdirecciones] = await Promise.all([
             this.prisma.municipios.findMany({ orderBy: { name: 'asc' } }),
-            this.prisma.areas.findMany({ orderBy: { name: 'asc' } }),
+            this.prisma.areas.findMany({ orderBy: { name: 'asc' }, include: { subdirecciones: { select: { id: true, name: true } } } }),
             this.prisma.users.findMany({
                 where: { is_active: true },
                 select: { id: true, names: true, last_name: true },
                 orderBy: { names: 'asc' }
             }),
+            this.prisma.subdirecciones.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
         ]);
 
         return {
             municipios: municipios.map(m => ({ id: m.id, name: m.name })),
-            areas: areas.map(a => ({ id: a.id, name: a.name })),
+            areas: areas.map(a => ({ id: a.id, name: a.name, subdireccion_id: a.subdireccion_id || undefined, subdirecciones: a.subdirecciones ? { id: a.subdirecciones.id, name: a.subdirecciones.name } : undefined })),
             lideres: lideres.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}` })),
+            subdirecciones: subdirecciones.map(s => ({ id: s.id, name: s.name })),
         };
     }
 }

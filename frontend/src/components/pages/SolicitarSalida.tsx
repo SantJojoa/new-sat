@@ -112,7 +112,7 @@ export default function SolicitarSalida() {
 
     // Subtipos (local constant data)
     const subtiposItems: CatalogoItem[] = [
-        { id: 'Inspección y Vigilancia SP (IV)', name: 'Inspección y Vigilancia SP (IV)' },
+        { id: 'Inspección y Vigilancia SP (IV)', name: 'Inspección y Vigilancia IV' },
         { id: 'Acompañamiento', name: 'Acompañamiento' },
         { id: 'Capacitación', name: 'Desarrollo de Capacidades' },
     ];
@@ -270,7 +270,7 @@ export default function SolicitarSalida() {
 
                 // Subtipos (string split)
                 if (salida.subtipo_salida) {
-                    const subs = salida.subtipo_salida.split(', ').map((s: string) => ({ id: s, name: s === 'Capacitación' ? 'Desarrollo de Capacidades' : s }));
+                    const subs = salida.subtipo_salida.split(', ').map((s: string) => ({ id: s, name: s === 'Capacitación' ? 'Desarrollo de Capacidades' : s === 'Inspección y Vigilancia SP (IV)' ? 'Inspección y Vigilancia IV' : s }));
                     setSelectedSubtipos(subs);
                 }
 

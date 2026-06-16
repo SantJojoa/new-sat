@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import SlideBar from '../ui/SlideBar';
 import type { ApiErrorPayload } from '../../types/api';
-import type { EstadisticasData } from '../../types/salidas';
+import type { AreaCatalogoItem, EstadisticasData } from '../../types/salidas';
 
 
 const ESTADOS = [
@@ -23,6 +23,22 @@ const JORNADAS = [
     { value: 'Completa', label: 'Completa' },
 ];
 
+const SUBTIPO_DISPLAY_LABELS: Record<string, string> = {
+    'Inspección y Vigilancia SP (IV)': 'Inspección y Vigilancia IV',
+};
+
+const TIPOS = [
+    { value: 'Presencial', label: 'Presencial' },
+    { value: 'Virtual', label: 'Virtual' },
+    { value: 'Presencial y Virtual', label: 'Presencial y Virtual' },
+];
+
+const SUBTIPOS = [
+    { value: 'Inspección y Vigilancia SP (IV)', label: 'Inspección y Vigilancia IV' },
+    { value: 'Acompañamiento', label: 'Acompañamiento' },
+    { value: 'Capacitación', label: 'Desarrollo de Capacidades' },
+];
+
 // Paleta de colores más moderna y vibrante
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -30,22 +46,31 @@ export default function ReportesSalidas() {
     const [data, setData] = useState<EstadisticasData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [areas, setAreas] = useState<{ id: string, name: string }[]>([]);
+    const [areas, setAreas] = useState<AreaCatalogoItem[]>([]);
+    const [subdirecciones, setSubdirecciones] = useState<{ id: string, name: string }[]>([]);
 
     // Estados de filtros
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [selectedSubdireccion, setSelectedSubdireccion] = useState<string>('');
     const [selectedArea, setSelectedArea] = useState<string>('');
     const [selectedEstado, setSelectedEstado] = useState<string>('');
     const [selectedJornada, setSelectedJornada] = useState<string>('');
+    const [selectedTipo, setSelectedTipo] = useState<string>('');
+    const [selectedSubtipo, setSelectedSubtipo] = useState<string>('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
+
+    const areaOptions = selectedSubdireccion
+        ? areas.filter((area) => area.subdireccion_id === selectedSubdireccion)
+        : [];
 
     useEffect(() => {
         const loadCatalogos = async () => {
             try {
                 const cat = await salidasService.getCatalogos();
                 setAreas(cat.areas || []);
+                setSubdirecciones(cat.subdirecciones || []);
             } catch (e) {
                 console.error('Failed to load areas', e);
             }
@@ -62,8 +87,11 @@ export default function ReportesSalidas() {
             const areaId = selectedArea || undefined;
             const estado = selectedEstado || undefined;
             const jornada = selectedJornada || undefined;
+            const subdireccionId = selectedSubdireccion || undefined;
+            const tipo = selectedTipo || undefined;
+            const subtipo = selectedSubtipo || undefined;
 
-            const res = await salidasService.getEstadisticas(start, end, areaId, estado, jornada);
+            const res = await salidasService.getEstadisticas(start, end, areaId, estado, jornada, subdireccionId, tipo, subtipo);
             setData(res);
             setError(null);
         } catch (err) {
@@ -77,14 +105,17 @@ export default function ReportesSalidas() {
 
     useEffect(() => {
         void fetchData();
-    }, [startDate, endDate, selectedArea, selectedEstado, selectedJornada]);
+    }, [startDate, endDate, selectedArea, selectedEstado, selectedJornada, selectedSubdireccion, selectedTipo, selectedSubtipo]);
 
     const handleClearFilters = () => {
         setStartDate('');
         setEndDate('');
+        setSelectedSubdireccion('');
         setSelectedArea('');
         setSelectedEstado('');
         setSelectedJornada('');
+        setSelectedTipo('');
+        setSelectedSubtipo('');
     };
 
     if (loading && !data) {
@@ -134,7 +165,10 @@ export default function ReportesSalidas() {
                                                     endDate || undefined,
                                                     selectedArea || undefined,
                                                     selectedEstado || undefined,
-                                                    selectedJornada || undefined
+                                                    selectedJornada || undefined,
+                                                    selectedSubdireccion || undefined,
+                                                    selectedTipo || undefined,
+                                                    selectedSubtipo || undefined
                                                 );
 
                                                 const url = window.URL.createObjectURL(result.blob);
@@ -170,7 +204,10 @@ export default function ReportesSalidas() {
                                                     endDate || undefined,
                                                     selectedArea || undefined,
                                                     selectedEstado || undefined,
-                                                    selectedJornada || undefined
+                                                    selectedJornada || undefined,
+                                                    selectedSubdireccion || undefined,
+                                                    selectedTipo || undefined,
+                                                    selectedSubtipo || undefined
                                                 );
 
                                                 const url = window.URL.createObjectURL(result.blob);
@@ -240,15 +277,37 @@ export default function ReportesSalidas() {
                                     </div>
 
                                     <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Subdirección</label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedSubdireccion}
+                                                onChange={(e) => {
+                                                    setSelectedSubdireccion(e.target.value);
+                                                    setSelectedArea('');
+                                                }}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
+                                            >
+                                                <option value="">Todas las subdirecciones</option>
+                                                {subdirecciones.map((sub) => (
+                                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                                ))}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Área</label>
                                         <div className="relative">
                                             <select
                                                 value={selectedArea}
                                                 onChange={(e) => setSelectedArea(e.target.value)}
-                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
+                                                disabled={!selectedSubdireccion}
+                                                title={!selectedSubdireccion ? 'Seleccione primero una subdirección' : undefined}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <option value="">Todas las áreas</option>
-                                                {areas.map((area) => (
+                                                {areaOptions.map((area) => (
                                                     <option key={area.id} value={area.id}>{area.name}</option>
                                                 ))}
                                             </select>
@@ -289,6 +348,40 @@ export default function ReportesSalidas() {
                                             <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
                                         </div>
                                     </div>
+
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Tipo de Programación</label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedTipo}
+                                                onChange={(e) => setSelectedTipo(e.target.value)}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
+                                            >
+                                                <option value="">Todos los tipos</option>
+                                                {TIPOS.map((tipo) => (
+                                                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                                                ))}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Subtipo de Programación</label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedSubtipo}
+                                                onChange={(e) => setSelectedSubtipo(e.target.value)}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-zinc-800 font-medium appearance-none"
+                                            >
+                                                <option value="">Todos los subtipos</option>
+                                                {SUBTIPOS.map((sub) => (
+                                                    <option key={sub.value} value={sub.value}>{sub.label}</option>
+                                                ))}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -302,7 +395,7 @@ export default function ReportesSalidas() {
 
                                 {/* KPIs Section */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-                                    <div className="bg-gradient-to-br from-primary to-indigo-600 p-6 rounded-2xl shadow-md flex items-center gap-5 relative overflow-hidden group">
+                                    <div className="bg-primary p-6 rounded-2xl shadow-md flex items-center gap-5 relative overflow-hidden group">
                                         {/* Decorative circle */}
                                         <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
 
@@ -437,8 +530,143 @@ export default function ReportesSalidas() {
                                                             contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
                                                             itemStyle={{ color: '#6366f1', fontWeight: 700 }}
                                                         />
-                                                        <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
+                                        <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
                                                             {data.areas.map((_, index) => (
+                                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Bar Chart: Tipo */}
+                                    <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <span className="material-symbols-outlined text-amber-500 bg-amber-50 p-1.5 rounded-lg text-sm">category</span>
+                                            <h3 className="text-lg font-bold text-zinc-800">Por Tipo de Programación</h3>
+                                        </div>
+                                        <div className="h-[300px] w-full">
+                                            {(!data?.porTipo || data.porTipo.length === 0) ? (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-sm font-medium">No hay datos disponibles</div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={data.porTipo} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                                                        <XAxis
+                                                            dataKey="name"
+                                                            tick={{ fontSize: 11, fill: '#71717A', fontWeight: 600 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            interval={0}
+                                                            angle={-45}
+                                                            textAnchor="end"
+                                                            height={80}
+                                                        />
+                                                        <YAxis
+                                                            allowDecimals={false}
+                                                            tick={{ fontSize: 12, fill: '#A1A1AA', fontWeight: 500 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                        />
+                                                        <RechartsTooltip
+                                                            cursor={{ fill: '#f4f4f5', radius: 6 }}
+                                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
+                                                            itemStyle={{ color: '#f59e0b', fontWeight: 700 }}
+                                                        />
+                                                        <Bar dataKey="count" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
+                                                            {data.porTipo.map((_, index) => (
+                                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Bar Chart: Subtipo */}
+                                    <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <span className="material-symbols-outlined text-pink-500 bg-pink-50 p-1.5 rounded-lg text-sm">label</span>
+                                            <h3 className="text-lg font-bold text-zinc-800">Por Subtipo de Programación</h3>
+                                        </div>
+                                        <div className="h-[300px] w-full">
+                                            {(!data?.porSubtipo || data.porSubtipo.length === 0) ? (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-sm font-medium">No hay datos disponibles</div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={data.porSubtipo.map(s => ({ ...s, name: SUBTIPO_DISPLAY_LABELS[s.name] ?? s.name }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                                                        <XAxis
+                                                            dataKey="name"
+                                                            tick={{ fontSize: 11, fill: '#71717A', fontWeight: 600 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            interval={0}
+                                                            angle={-45}
+                                                            textAnchor="end"
+                                                            height={80}
+                                                        />
+                                                        <YAxis
+                                                            allowDecimals={false}
+                                                            tick={{ fontSize: 12, fill: '#A1A1AA', fontWeight: 500 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                        />
+                                                        <RechartsTooltip
+                                                            cursor={{ fill: '#f4f4f5', radius: 6 }}
+                                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
+                                                            itemStyle={{ color: '#ec4899', fontWeight: 700 }}
+                                                        />
+                                                        <Bar dataKey="count" fill="#ec4899" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
+                                                            {data.porSubtipo.map((_, index) => (
+                                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Bar Chart: Subdireccion */}
+                                    <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow duration-300 lg:col-span-2">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <span className="material-symbols-outlined text-cyan-500 bg-cyan-50 p-1.5 rounded-lg text-sm">account_tree</span>
+                                            <h3 className="text-lg font-bold text-zinc-800">Programaciones por Subdirección</h3>
+                                        </div>
+                                        <div className="h-[350px] w-full">
+                                            {(!data?.porSubdireccion || data.porSubdireccion.length === 0) ? (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-sm font-medium">No hay datos disponibles</div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={data.porSubdireccion} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                                                        <XAxis
+                                                            dataKey="name"
+                                                            tick={{ fontSize: 11, fill: '#71717A', fontWeight: 600 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            interval={0}
+                                                            angle={-45}
+                                                            textAnchor="end"
+                                                            height={100}
+                                                        />
+                                                        <YAxis
+                                                            allowDecimals={false}
+                                                            tick={{ fontSize: 12, fill: '#A1A1AA', fontWeight: 500 }}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                        />
+                                                        <RechartsTooltip
+                                                            cursor={{ fill: '#f4f4f5', radius: 6 }}
+                                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
+                                                            itemStyle={{ color: '#06b6d4', fontWeight: 700 }}
+                                                        />
+                                                        <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]} name="Salidas" maxBarSize={60} isAnimationActive={false}>
+                                                            {data.porSubdireccion.map((_, index) => (
                                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                             ))}
                                                         </Bar>

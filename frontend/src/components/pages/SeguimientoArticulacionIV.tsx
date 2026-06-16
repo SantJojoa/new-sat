@@ -202,7 +202,7 @@ export default function SeguimientoArticulacionIV() {
     const [detailRecord, setDetailRecord] = useState<SalidaRecord | null>(null);
     const [seguimientoRecord, setSeguimientoRecord] = useState<SalidaRecord | null>(null);
 
-    const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
+    const isSuperAdmin = user?.user_type?.name === 'superadmin';
 
     const fetchRecords = useCallback(async () => {
         setLoading(true);
@@ -238,11 +238,15 @@ export default function SeguimientoArticulacionIV() {
         setFilterYear(''); setFilterDateStart(''); setFilterDateEnd('');
     };
 
+    const areaOptionsForFilter = filterSubdireccion
+        ? Array.from(new Set(records.filter(r => r.areas?.subdirecciones?.name === filterSubdireccion).map(r => r.areas?.name).filter(Boolean))) as string[]
+        : [];
+
     const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, subdireccion: filterSubdireccion, estado: filterEstado, municipio: filterMunicipio, month: filterMonth, year: filterYear, dateStart: filterDateStart, dateEnd: filterDateEnd };
     const filterFields: FilterField[] = [
         { type: 'search', key: 'search', placeholder: 'Código, tema o solicitante...' },
-        { type: 'select', key: 'area', emptyLabel: 'Todas las Áreas', options: uniqueAreas },
-        { type: 'select', key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones },
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones }] : []),
+        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: areaOptionsForFilter, disabled: !filterSubdireccion, disabledTitle: 'Seleccione primero una subdirección' }] : []),
         { type: 'select', key: 'estado', emptyLabel: 'Todos los Estados', options: Object.entries(ESTADO_LABEL).map(([v, l]) => ({ value: v, label: l })) },
         { type: 'select', key: 'municipio', emptyLabel: 'Todos los Municipios', options: uniqueMunicipios, icon: 'pin' },
         { type: 'month', key: 'month' },
@@ -254,7 +258,7 @@ export default function SeguimientoArticulacionIV() {
     const handleFilterChange = (key: string, value: string) => {
         if (key === 'search') setSearchTerm(value);
         else if (key === 'area') setFilterArea(value);
-        else if (key === 'subdireccion') setFilterSubdireccion(value);
+        else if (key === 'subdireccion') { setFilterSubdireccion(value); setFilterArea(''); }
         else if (key === 'estado') setFilterEstado(value);
         else if (key === 'municipio') setFilterMunicipio(value);
         else if (key === 'month') setFilterMonth(value);
@@ -298,7 +302,7 @@ export default function SeguimientoArticulacionIV() {
                         </h1>
                         <p className="text-zinc-500 mt-2">Listado de programaciones con subtipo Inspección y Vigilancia SP (IV)</p>
                         <div className="mt-4 flex items-center gap-3 flex-wrap">
-                            {isAdmin && (
+                            {isSuperAdmin && (
                                 <button
                                     onClick={() => setViewAll(prev => !prev)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll ? 'bg-primary text-white border-primary' : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'}`}

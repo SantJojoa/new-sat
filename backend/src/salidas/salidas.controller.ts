@@ -53,9 +53,12 @@ export class SalidasController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
-        @Query('jornada') jornada?: string
+        @Query('jornada') jornada?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
+        @Query('tipo') tipo?: string,
+        @Query('subtipo') subtipo?: string
     ) {
-        return this.salidasService.getEstadisticas(req.user, startDate, endDate, areaId, estado, jornada);
+        return this.salidasService.getEstadisticas(req.user, startDate, endDate, areaId, estado, jornada, subdireccionId, tipo, subtipo);
     }
 
     @Get('estadisticas/pdf')
@@ -68,7 +71,10 @@ export class SalidasController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
-        @Query('jornada') jornada?: string
+        @Query('jornada') jornada?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
+        @Query('tipo') tipo?: string,
+        @Query('subtipo') subtipo?: string
     ) {
         const { buffer, filename } = await this.salidasService.exportEstadisticasPdf(
             req.user,
@@ -76,7 +82,10 @@ export class SalidasController {
             endDate,
             areaId,
             estado,
-            jornada
+            jornada,
+            subdireccionId,
+            tipo,
+            subtipo
         );
 
         res.set({
@@ -97,7 +106,10 @@ export class SalidasController {
         @Query('endDate') endDate?: string,
         @Query('area_id') areaId?: string,
         @Query('estado') estado?: string,
-        @Query('jornada') jornada?: string
+        @Query('jornada') jornada?: string,
+        @Query('subdireccion_id') subdireccionId?: string,
+        @Query('tipo') tipo?: string,
+        @Query('subtipo') subtipo?: string
     ) {
         const { buffer, filename } = await this.salidasService.exportEstadisticasExcel(
             req.user,
@@ -105,7 +117,10 @@ export class SalidasController {
             endDate,
             areaId,
             estado,
-            jornada
+            jornada,
+            subdireccionId,
+            tipo,
+            subtipo
         );
 
         res.set({

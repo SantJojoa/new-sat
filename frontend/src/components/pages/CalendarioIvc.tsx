@@ -29,7 +29,7 @@ export default function CalendarioIvc() {
     const [selected, setSelected] = useState<IvcRecord | null>(null);
     const calendarRef = useRef<FullCalendar>(null);
 
-    const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
+    const isSuperAdmin = user?.user_type?.name === 'superadmin';
 
     useEffect(() => {
         const fetch = async () => {
@@ -85,7 +85,7 @@ export default function CalendarioIvc() {
                         </h1>
                         <p className="text-zinc-500 mt-2">Visualice los registros de Inspección, Vigilancia y Control en el calendario.</p>
                         <div className="mt-4 flex items-center gap-4 flex-wrap">
-                            {isAdmin && (
+                            {isSuperAdmin && (
                                 <button
                                     onClick={() => setViewAll(prev => !prev)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'}`}

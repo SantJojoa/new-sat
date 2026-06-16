@@ -6,7 +6,8 @@ import {
 } from 'recharts';
 import SlideBar from '../ui/SlideBar';
 
-type EstData = { total: number; estados: { name: string; count: number }[]; topSolicitantes: { name: string; count: number }[]; areas: { name: string; count: number }[] };
+type AreaItem = { id: string; name: string; subdireccion_id?: string; subdirecciones?: { id: string; name: string } };
+type EstData = { total: number; estados: { name: string; count: number }[]; topSolicitantes: { name: string; count: number }[]; areas: { name: string; count: number }[]; porSubdireccion?: { name: string; count: number }[] };
 
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
@@ -14,16 +15,25 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function ReportesIvc() {
     const [data, setData] = useState<EstData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [areas, setAreas] = useState<{ id: string; name: string }[]>([]);
+    const [areas, setAreas] = useState<AreaItem[]>([]);
+    const [subdirecciones, setSubdirecciones] = useState<{ id: string; name: string }[]>([]);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [selectedSubdireccion, setSelectedSubdireccion] = useState('');
     const [selectedArea, setSelectedArea] = useState('');
     const [selectedEstado] = useState('');
     const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+    const areaOptions = selectedSubdireccion
+        ? areas.filter((area) => area.subdireccion_id === selectedSubdireccion)
+        : [];
+
     useEffect(() => {
-        ivcService.getCatalogos().then((c: any) => setAreas(c.areas || [])).catch(() => { });
+        ivcService.getCatalogos().then((c: any) => {
+            setAreas(c.areas || []);
+            setSubdirecciones(c.subdirecciones || []);
+        }).catch(() => { });
     }, []);
 
     const fetchData = async () => {
@@ -31,7 +41,8 @@ export default function ReportesIvc() {
         try {
             const res = await ivcService.getEstadisticas(
                 startDate || undefined, endDate || undefined,
-                selectedArea || undefined, selectedEstado || undefined
+                selectedArea || undefined, selectedEstado || undefined,
+                selectedSubdireccion || undefined
             );
             setData(res);
         } finally {
@@ -39,9 +50,9 @@ export default function ReportesIvc() {
         }
     };
 
-    useEffect(() => { void fetchData(); }, [startDate, endDate, selectedArea, selectedEstado]);
+    useEffect(() => { void fetchData(); }, [startDate, endDate, selectedArea, selectedEstado, selectedSubdireccion]);
 
-    const handleClear = () => { setStartDate(''); setEndDate(''); setSelectedArea(''); };
+    const handleClear = () => { setStartDate(''); setEndDate(''); setSelectedArea(''); setSelectedSubdireccion(''); };
 
     const triggerDownload = (blob: Blob, filename: string) => {
         const url = window.URL.createObjectURL(blob);
@@ -76,7 +87,7 @@ export default function ReportesIvc() {
                                 </div>
                                 <div className="flex items-center gap-3 flex-wrap">
                                     <button
-                                        onClick={async () => { setIsGeneratingExcel(true); try { const r = await ivcService.downloadExcel(startDate || undefined, endDate || undefined, selectedArea || undefined, selectedEstado || undefined); triggerDownload(r.blob, r.filename); } finally { setIsGeneratingExcel(false); } }}
+                                        onClick={async () => { setIsGeneratingExcel(true); try { const r = await ivcService.downloadExcel(startDate || undefined, endDate || undefined, selectedArea || undefined, selectedEstado || undefined, selectedSubdireccion || undefined); triggerDownload(r.blob, r.filename); } finally { setIsGeneratingExcel(false); } }}
                                         disabled={!data?.total || isGeneratingExcel}
                                         className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm text-sm"
                                     >
@@ -84,7 +95,7 @@ export default function ReportesIvc() {
                                         {isGeneratingExcel ? 'Generando...' : 'Exportar Excel'}
                                     </button>
                                     <button
-                                        onClick={async () => { setIsGeneratingPdf(true); try { const r = await ivcService.downloadPdf(startDate || undefined, endDate || undefined, selectedArea || undefined, selectedEstado || undefined); triggerDownload(r.blob, r.filename); } finally { setIsGeneratingPdf(false); } }}
+                                        onClick={async () => { setIsGeneratingPdf(true); try { const r = await ivcService.downloadPdf(startDate || undefined, endDate || undefined, selectedArea || undefined, selectedEstado || undefined, selectedSubdireccion || undefined); triggerDownload(r.blob, r.filename); } finally { setIsGeneratingPdf(false); } }}
                                         disabled={!data?.total || isGeneratingPdf}
                                         className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors text-white font-semibold rounded-xl shadow-sm text-sm"
                                     >
@@ -117,12 +128,26 @@ export default function ReportesIvc() {
                                         </div>
                                     ))}
                                     <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Subdirección</label>
+                                        <div className="relative">
+                                            <select value={selectedSubdireccion} onChange={e => { setSelectedSubdireccion(e.target.value); setSelectedArea(''); }}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none">
+                                                <option value="">Todas las subdirecciones</option>
+                                                {subdirecciones.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Área</label>
                                         <div className="relative">
                                             <select value={selectedArea} onChange={e => setSelectedArea(e.target.value)}
-                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none">
+                                                disabled={!selectedSubdireccion}
+                                                title={!selectedSubdireccion ? 'Seleccione primero una subdirección' : undefined}
+                                                className="w-full h-10 pl-3 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none disabled:opacity-50 disabled:cursor-not-allowed">
                                                 <option value="">Todas las áreas</option>
-                                                {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                {areaOptions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                             </select>
                                             <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-lg">expand_more</span>
                                         </div>
@@ -139,7 +164,7 @@ export default function ReportesIvc() {
 
                                 {/* KPI */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-                                    <div className="bg-gradient-to-br from-primary to-indigo-600 p-6 rounded-2xl shadow-md flex items-center gap-5 relative overflow-hidden group">
+                                    <div className="bg-primary p-6 rounded-2xl shadow-md flex items-center gap-5 relative overflow-hidden group">
                                         <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
                                         <div className="size-14 rounded-2xl bg-white/20 text-white flex items-center justify-center backdrop-blur-sm border border-white/10">
                                             <span className="material-symbols-outlined text-[32px]">verified_user</span>
@@ -194,6 +219,30 @@ export default function ReportesIvc() {
                                                         <RechartsTooltip cursor={{ fill: '#f4f4f5', radius: 6 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0/0.1)', padding: '12px 16px' }} />
                                                         <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="IVC" maxBarSize={60} isAnimationActive={false}>
                                                             {data.areas.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white p-5 md:p-7 rounded-2xl border border-zinc-200/80 shadow-sm lg:col-span-2">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <span className="material-symbols-outlined text-cyan-500 bg-cyan-50 p-1.5 rounded-lg text-sm">account_tree</span>
+                                            <h3 className="text-lg font-bold text-zinc-800">IVC por Subdirección</h3>
+                                        </div>
+                                        <div className="h-[350px]">
+                                            {!data?.porSubdireccion?.length ? (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-400 text-sm">No hay datos</div>
+                                            ) : (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={data.porSubdireccion} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                                                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#71717A', fontWeight: 600 }} tickLine={false} axisLine={false} interval={0} angle={-45} textAnchor="end" height={100} />
+                                                        <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#A1A1AA' }} tickLine={false} axisLine={false} />
+                                                        <RechartsTooltip cursor={{ fill: '#f4f4f5', radius: 6 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0/0.1)', padding: '12px 16px' }} />
+                                                        <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]} name="IVC" maxBarSize={60} isAnimationActive={false}>
+                                                            {data.porSubdireccion.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                                         </Bar>
                                                     </BarChart>
                                                 </ResponsiveContainer>

@@ -9,8 +9,8 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
     const mod = await prisma.modules.upsert({
         where: { name: 'programar_asesoria' },
-        update: { description: 'Programar Asesoría', icon: 'support_agent', path: '/programar-asesoria', order: 30, is_active: true },
-        create: { name: 'programar_asesoria', description: 'Programar Asesoría', icon: 'support_agent', path: '/programar-asesoria', order: 30, is_active: true },
+        update: { description: 'Datos Asesoria', icon: 'support_agent', path: '/programar-asesoria', order: 30, is_active: true },
+        create: { name: 'programar_asesoria', description: 'Datos Asesoria', icon: 'support_agent', path: '/programar-asesoria', order: 30, is_active: true },
     });
     console.log('✅ Módulo creado:', mod.name);
     const userTypes = await prisma.user_types.findMany();

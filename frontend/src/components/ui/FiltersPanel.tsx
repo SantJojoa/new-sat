@@ -14,6 +14,8 @@ export interface FilterField {
     years?: number[];
     title?: string;
     icon?: 'layers' | 'pin' | 'calendar';
+    disabled?: boolean;
+    disabledTitle?: string;
 }
 
 interface FiltersPanelProps {
@@ -61,7 +63,9 @@ function renderField(
                 <select
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                    disabled={field.disabled}
+                    title={field.disabled ? field.disabledTitle : undefined}
+                    className={`w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white ${field.disabled ? 'opacity-50 cursor-not-allowed bg-zinc-100' : ''}`}
                 >
                     <option value="">{field.emptyLabel ?? 'Todos'}</option>
                     {opts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

@@ -32,7 +32,7 @@ export interface IvcRecord {
     solicitante_id: string;
     area_id: string;
     solicitante: { id: string; names: string; email: string };
-    areas: { id: string; name: string };
+    areas: { id: string; name: string; subdirecciones?: { id: string; name: string } };
     created_at: string;
     updated_at: string;
 }

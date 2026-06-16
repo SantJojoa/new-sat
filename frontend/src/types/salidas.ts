@@ -11,6 +11,11 @@ export interface IpsCatalogoItem {
     type: string;
 }
 
+export interface AreaCatalogoItem extends CatalogoItem {
+    subdireccion_id?: string;
+    subdirecciones?: RelatedName;
+}
+
 export interface CatalogosResponse {
     municipios: CatalogoItem[];
     ips: IpsCatalogoItem[];
@@ -20,7 +25,8 @@ export interface CatalogosResponse {
     eapbActores: CatalogoItem[];
     organizaciones: CatalogoItem[];
     idsn: CatalogoItem[];
-    areas: CatalogoItem[];
+    areas: AreaCatalogoItem[];
+    subdirecciones?: CatalogoItem[];
     lideres?: CatalogoItem[];
 }
 
@@ -183,6 +189,9 @@ export interface EstadisticasData {
     estados: { name: string; count: number }[];
     topSolicitantes: { name: string; count: number }[];
     areas: { name: string; count: number }[];
+    porTipo?: { name: string; count: number }[];
+    porSubtipo?: { name: string; count: number }[];
+    porSubdireccion?: { name: string; count: number }[];
     total: number;
     items?: SalidaRecord[];
 }

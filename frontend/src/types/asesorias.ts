@@ -61,7 +61,7 @@ export interface AsesoriaRecord {
     estado: string;
     fecha_registro: string;
     registrador: { id: string; names: string; email: string };
-    areas: { id: string; name: string };
+    areas: { id: string; name: string; subdirecciones?: { id: string; name: string } };
     municipio_procedencia?: { id: string; name: string };
     asistentes: AsesoriaAsistente[];
     compromisos: AsesoriaCompromiso[];
