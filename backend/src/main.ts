@@ -8,10 +8,12 @@ async function bootstrap() {
   // Configurar CORS
   app.enableCors({
     origin: [
-      'http://localhost', //ngix
-      'http://localhost:5173', // Vite dev server
-      'http://localhost:3000', // Backend
-      'http://localhost:8080', // Otro puerto común
+      'http://localhost',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://172.16.4.4',
+      'http://172.16.4.4:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
