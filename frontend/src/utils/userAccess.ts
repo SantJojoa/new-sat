@@ -1,28 +1,28 @@
 import type { AuthUser } from "../types/auth";
 
-const normalize = (value?: string | null) =>
-    (value || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
+const SUBDIRECCION_SALUD_PUBLICA_ID = "cmqh8a0n2002425mnzkfx8dxj";
+const SUBDIRECCION_CALIDAD_ID = "cmqh8a0ne002625mnlx87xxdt";
 
-const getSubdireccionName = (user?: AuthUser | null) =>
-    user?.subdireccion?.name || user?.area?.subdirecciones?.name || "";
+const AREAS_IVC_SALUD_PUBLICA = new Set([
+    "cmqh8a0pp003b25mn4om76vms",
+    "cmqh8a0p0002x25mng35bkigh",
+]);
 
-const getAreaName = (user?: AuthUser | null) => user?.area?.name || "";
+const getUserSubdireccionId = (user?: AuthUser | null) =>
+    user?.subdireccion_id || user?.area?.subdirecciones?.id || null;
 
 export const isSaludPublicaUser = (user?: AuthUser | null) =>
-    normalize(getSubdireccionName(user)).includes("subdireccion de salud publica");
-
-export const isCalidadAreaUser = (user?: AuthUser | null) =>
-    normalize(getAreaName(user)).includes("calidad");
+    getUserSubdireccionId(user) === SUBDIRECCION_SALUD_PUBLICA_ID;
 
 export const canUseInspeccionVigilanciaSp = (user?: AuthUser | null) =>
     isSaludPublicaUser(user);
 
-export const canUseIvc = (user?: AuthUser | null) =>
-    isSaludPublicaUser(user) && isCalidadAreaUser(user);
+export const canUseIvc = (user?: AuthUser | null) => {
+    const subdirId = getUserSubdireccionId(user);
+    if (subdirId === SUBDIRECCION_CALIDAD_ID) return true;
+    if (subdirId === SUBDIRECCION_SALUD_PUBLICA_ID && user?.area_id && AREAS_IVC_SALUD_PUBLICA.has(user.area_id)) return true;
+    return false;
+};
 
 export const canAccessModule = (moduleName: string, user?: AuthUser | null) => {
     if (moduleName === "seguimiento_articulacion_iv") {
