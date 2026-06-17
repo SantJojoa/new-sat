@@ -9,7 +9,11 @@ const AREAS_IVC_SALUD_PUBLICA = new Set([
 ]);
 
 const getUserSubdireccionId = (user?: AuthUser | null) =>
-    user?.subdireccion_id || user?.area?.subdirecciones?.id || null;
+    user?.subdireccion_id ||
+    user?.subdireccion?.id ||
+    user?.area?.subdireccion_id ||
+    user?.area?.subdirecciones?.id ||
+    null;
 
 export const isSaludPublicaUser = (user?: AuthUser | null) =>
     getUserSubdireccionId(user) === SUBDIRECCION_SALUD_PUBLICA_ID;
