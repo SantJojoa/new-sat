@@ -65,33 +65,35 @@ export default function RecordsTable<T extends { id: string | number }>({
 }: RecordsTableProps<T>) {
     if (loading) {
         return (
-            <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex items-center justify-center py-20">
-                <RefreshCcw size={24} className="animate-spin text-primary" />
-                <span className="ml-3 text-zinc-500 font-medium">Cargando...</span>
+            <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex items-center justify-center py-24">
+                <RefreshCcw size={20} className="animate-spin text-primary" />
+                <span className="ml-3 text-zinc-500 text-sm font-medium">Cargando...</span>
             </div>
         );
     }
 
     if (records.length === 0) {
         return (
-            <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col items-center justify-center py-20 text-center">
-                <span className="material-symbols-outlined text-zinc-300 text-[48px] mb-3">{emptyIcon}</span>
-                <p className="text-zinc-600 font-medium">{emptyMessage}</p>
-                {emptySubMessage && <p className="text-zinc-400 text-sm mt-1">{emptySubMessage}</p>}
+            <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex flex-col items-center justify-center py-24 text-center">
+                <div className="size-14 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined text-zinc-400 text-[28px]">{emptyIcon}</span>
+                </div>
+                <p className="text-zinc-700 font-medium text-sm">{emptyMessage}</p>
+                {emptySubMessage && <p className="text-zinc-400 text-xs mt-1">{emptySubMessage}</p>}
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 border-b border-zinc-200">
+                    <thead className="bg-zinc-50/80 border-b border-zinc-200">
                         <tr>
                             {columns.map((col, i) => (
                                 <th
                                     key={i}
-                                    className={`px-4 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider ${col.className ?? ''}`}
+                                    className={`px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider ${col.className ?? ''}`}
                                 >
                                     {col.header}
                                 </th>
@@ -103,7 +105,7 @@ export default function RecordsTable<T extends { id: string | number }>({
                         {records.map((record, i) => (
                             <tr
                                 key={record.id ?? i}
-                                className={`hover:bg-zinc-50 transition-colors ${rowClassName ? rowClassName(record) : ''}`}
+                                className={`hover:bg-zinc-50/60 transition-colors ${rowClassName ? rowClassName(record) : ''}`}
                             >
                                 {columns.map((col, j) => (
                                     <td key={j} className={`px-4 py-3 ${col.className ?? ''}`}>

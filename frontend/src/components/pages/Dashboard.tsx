@@ -117,20 +117,29 @@ export default function Dashboard() {
                 <SlideBar />
 
                 <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50">
-                    <div className="bg-white border-b border-zinc-200 px-8 py-8">
+                    <div className="bg-white border-b border-zinc-200 px-8 py-6">
                         <div className="max-w-6xl mx-auto">
-                            <p className="text-zinc-500 font-medium mb-2 capitalize">{today}</p>
-                            <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
+                            <p className="text-xs text-zinc-400 font-medium mb-1.5 capitalize tracking-wide">{today}</p>
+                            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
                                 Hola, <span className="text-primary">{user?.names?.split(' ')[0]}</span>
                             </h1>
-                            <p className="text-zinc-600 mt-2 max-w-2xl text-lg">
-                                <span className="font-bold">Subdireccion:</span> {user?.subdireccion?.name || 'N/A'} - <span className="font-bold">Area:</span> {user?.area?.name || 'N/A'}
-                            </p>
+                            <div className="flex items-center gap-4 mt-2">
+                                {user?.subdireccion?.name && (
+                                    <span className="text-sm text-zinc-500">
+                                        <span className="font-medium text-zinc-700">Subdirección:</span> {user.subdireccion.name}
+                                    </span>
+                                )}
+                                {user?.area?.name && (
+                                    <span className="text-sm text-zinc-500">
+                                        <span className="font-medium text-zinc-700">Área:</span> {user.area.name}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
                     <div className="p-8">
-                        <div className="max-w-6xl mx-auto space-y-12">
+                        <div className="max-w-6xl mx-auto space-y-8">
                             {dedupedModules.length > 0 ? (
                                 categoryOrder.map((category) => {
                                     const modules = groupedModules[category];
@@ -138,35 +147,28 @@ export default function Dashboard() {
 
                                     return (
                                         <div key={category} className="animate-fadeIn">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <h2 className="text-xl font-bold text-zinc-800 tracking-tight">{category}</h2>
-                                                <div className="h-px bg-zinc-200 flex-1"></div>
+                                            <div className="mb-4">
+                                                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">{category}</h2>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                                 {modules.map((permission) => (
                                                     <Link
                                                         key={permission.id}
                                                         to={permission.modules.path || '#'}
-                                                        className="group bg-white rounded-2xl p-6 border border-zinc-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 flex flex-col items-start gap-4"
+                                                        className="group bg-white rounded-xl p-5 border border-zinc-200 hover:border-primary/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-3"
                                                     >
-                                                        <div className="size-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
-                                                            <span className="material-symbols-outlined text-[32px]">
+                                                        <div className="size-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-200">
+                                                            <span className="material-symbols-outlined text-[24px]">
                                                                 {permission.modules.icon || 'grid_view'}
                                                             </span>
                                                         </div>
-                                                        <div>
-                                                            <h3 className="text-lg font-bold text-zinc-900 group-hover:text-primary transition-colors">
+                                                        <div className="flex-1">
+                                                            <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-primary transition-colors leading-snug">
                                                                 {permission.modules.description || permission.modules.name.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                                             </h3>
-                                                            <p className="text-sm text-zinc-500 mt-1 line-clamp-2">
-                                                                {permission.modules.name === 'gestionar_salida' ? 'Administrar y auditar salidas' :
-                                                                    permission.modules.name === 'solicitar_salida' ? 'Crear nuevas solicitudes' :
-                                                                        'Acceso al modulo del sistema'}
-                                                            </p>
                                                         </div>
-                                                        <div className="mt-auto pt-4 w-full flex items-center justify-between text-sm font-semibold text-primary/80 group-hover:text-primary">
-                                                            <span>Ingresar</span>
-                                                            <span className="material-symbols-outlined text-[20px] group-hover:translate-x-2 transition-transform">
+                                                        <div className="w-full flex items-center justify-end text-xs font-medium text-zinc-400 group-hover:text-primary transition-colors">
+                                                            <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
                                                                 arrow_forward
                                                             </span>
                                                         </div>

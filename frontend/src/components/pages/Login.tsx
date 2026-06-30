@@ -51,11 +51,11 @@ export default function Login() {
             return false;
         }
         if (!formData.password) {
-            setError('La contrasena es requerida');
+            setError('La contraseña es requerida');
             return false;
         }
         if (formData.password.length < 4) {
-            setError('La contrasena debe tener al menos 4 caracteres');
+            setError('La contraseña debe tener al menos 4 caracteres');
             return false;
         }
         return true;
@@ -84,7 +84,7 @@ export default function Login() {
             const message = apiError.response?.data?.message;
 
             if (apiError.response?.status === 401) {
-                setError('Credenciales incorrectas. Verifica tu usuario y contrasena.');
+                setError('Credenciales incorrectas. Verifica tu usuario y contraseña.');
             } else if (apiError.response?.status === 404) {
                 setError('Servicio no disponible. Por favor, intenta mas tarde.');
             } else if (apiError.message?.includes('Network Error')) {
@@ -121,12 +121,12 @@ export default function Login() {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/40 to-transparent" />
                         <div className="absolute bottom-10 left-10 right-10 text-white">
-                            <h1 className="text-3xl font-bold mb-2">
-                                SIVAT -
-                                <span className="text-white/95 font-light"> Sistema de Inspeccion, Vigilancia, Tecnología y Asistencia Tecnica</span>
+                            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">IDSN · Nariño</p>
+                            <h1 className="text-2xl font-bold mb-3 leading-snug">
+                                Sistema de Inspección, Vigilancia y Asistencia Técnica
                             </h1>
-                            <p className="text-white/90 font-light leading-relaxed">
-                                Sistema que integra inspeccion, vigilancia, capacitacion y acompanamiento para fortalecer la gestion y el trabajo intersectorial del Instituto Departamental de Salud de Narino.
+                            <p className="text-white/80 text-sm leading-relaxed">
+                                Plataforma integrada para la gestión de inspección, vigilancia, capacitación y acompañamiento del Instituto Departamental de Salud de Nariño.
                             </p>
                         </div>
                     </div>
@@ -137,7 +137,7 @@ export default function Login() {
                                 <span className="text-primary text-3xl">
                                     <HouseWifi />
                                 </span>
-                                <h3 className="text-2xl font-bold text-text-primary">Iniciar Sesion</h3>
+                                <h3 className="text-2xl font-bold text-text-primary">Iniciar Sesión</h3>
                             </div>
                             <p className="text-text-secondary text-sm">Ingrese sus credenciales para acceder a la plataforma SIVAT</p>
                         </div>
@@ -170,7 +170,7 @@ export default function Login() {
                                         type="text"
                                         value={formData.username}
                                         onChange={handleInputChange}
-                                        className="form-input flex w-full rounded-lg text-text-primary focus:outline-0 focus:ring-1 focus:ring-primary border border-border-light bg-white focus:border-primary h-12 placeholder:text-text-secondary/50 pl-11 pr-4 text-base font-normal transition-all"
+                                        className="form-input flex w-full rounded-lg text-text-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-zinc-200 bg-white focus:border-primary h-11 placeholder:text-zinc-300 pl-11 pr-4 text-sm font-normal transition-all"
                                         placeholder="usuario123"
                                         autoComplete="username"
                                         disabled={isSubmitting}
@@ -184,7 +184,7 @@ export default function Login() {
                                         Contrasena
                                     </label>
                                     <button type="button" className="text-primary text-xs font-semibold hover:underline">
-                                        Olvide mi contrasena
+                                        Olvidé mi contraseña
                                     </button>
                                 </div>
                                 <div className="relative group">
@@ -197,7 +197,7 @@ export default function Login() {
                                         type={showPassword ? 'text' : 'password'}
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        className="form-input flex w-full rounded-lg text-text-primary focus:outline-0 focus:ring-1 focus:ring-primary border border-border-light bg-white focus:border-primary h-12 placeholder:text-text-secondary/50 pl-11 pr-4 text-base font-normal transition-all"
+                                        className="form-input flex w-full rounded-lg text-text-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-zinc-200 bg-white focus:border-primary h-11 placeholder:text-zinc-300 pl-11 pr-4 text-sm font-normal transition-all"
                                         placeholder="********"
                                         autoComplete="current-password"
                                         disabled={isSubmitting}
@@ -225,7 +225,7 @@ export default function Login() {
                                     disabled={isSubmitting}
                                 />
                                 <label htmlFor="remember" className="text-sm text-text-secondary">
-                                    Recordar mi sesion
+                                    Recordar mi sesión
                                 </label>
                             </div>
 

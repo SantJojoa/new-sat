@@ -46,7 +46,7 @@ function renderField(
                     placeholder={field.placeholder ?? 'Buscar...'}
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                 />
             </div>
         );
@@ -65,7 +65,7 @@ function renderField(
                     onChange={e => onChange(field.key, e.target.value)}
                     disabled={field.disabled}
                     title={field.disabled ? field.disabledTitle : undefined}
-                    className={`w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white ${field.disabled ? 'opacity-50 cursor-not-allowed bg-zinc-100' : ''}`}
+                    className={`w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm appearance-none bg-white ${field.disabled ? 'opacity-50 cursor-not-allowed bg-zinc-100' : ''}`}
                 >
                     <option value="">{field.emptyLabel ?? 'Todos'}</option>
                     {opts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -81,7 +81,7 @@ function renderField(
                 <select
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm appearance-none bg-white"
                 >
                     <option value="">Todos los Meses</option>
                     {MONTH_LABELS.map((m, i) => (
@@ -99,7 +99,7 @@ function renderField(
                 <select
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm appearance-none bg-white"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm appearance-none bg-white"
                 >
                     <option value="">Todos los Años</option>
                     {(field.years ?? []).map(y => (
@@ -113,7 +113,7 @@ function renderField(
     if (field.type === 'date') {
         return (
             <div key={field.key} className="relative">
-                <div className="flex items-center gap-2 w-full pl-3 pr-4 py-2 rounded-lg border border-zinc-300 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary bg-white">
+                <div className="flex items-center gap-2 w-full pl-3 pr-4 py-2 rounded-lg border border-zinc-200 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary bg-white">
                     <Calendar size={16} className="text-zinc-400" />
                     <input
                         type="date"
@@ -134,22 +134,23 @@ export default function FiltersPanel({ values, onChange, onReset, fields }: Filt
     const hasActive = fields.some(f => !!values[f.key]);
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden mb-6">
-            <div className="p-4 border-b border-zinc-200 bg-zinc-50/50">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-2">
-                        <Search size={16} /> Filtros de Búsqueda
-                    </h3>
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden mb-6">
+            <div className="px-4 pt-3 pb-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                        <Search size={14} />
+                        <span className="text-xs font-medium">Filtros</span>
+                    </div>
                     {hasActive && (
                         <button
                             onClick={onReset}
                             className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover font-medium transition-colors"
                         >
-                            <RefreshCcw size={12} /> Limpiar Filtros
+                            <RefreshCcw size={11} /> Limpiar
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     {fields.map(f => renderField(f, values, onChange))}
                 </div>
             </div>

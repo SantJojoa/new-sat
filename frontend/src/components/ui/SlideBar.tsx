@@ -345,7 +345,7 @@ export default function SlideBar() {
                                 <div className="px-4 py-3 border-b border-zinc-100 bg-zinc-50/80 flex items-start justify-between gap-3 shrink-0">
                                     <div>
                                         <span className="font-black text-zinc-900 text-sm">Notificaciones</span>
-                                        <p className="text-[11px] text-zinc-500 mt-0.5">{unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al dia'}</p>
+                                        <p className="text-[11px] text-zinc-500 mt-0.5">{unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al día'}</p>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
                                         {unreadCount > 0 && (
@@ -365,7 +365,7 @@ export default function SlideBar() {
                                                 <Bell size={22} />
                                             </div>
                                             <p className="font-semibold text-zinc-600">Sin notificaciones</p>
-                                            <p className="text-xs text-zinc-400 mt-1">Cuando haya novedades apareceran aqui.</p>
+                                            <p className="text-xs text-zinc-400 mt-1">Cuando haya novedades aparecerán aquí.</p>
                                         </div>
                                     ) : (
                                         notifications.map(n => {
@@ -417,22 +417,17 @@ export default function SlideBar() {
                         )}
                     </div>
 
-                    <div className="flex flex-col gap-1 px-3">
-                        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                            {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                            <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">
-                                {user?.names?.[0]}{user?.last_name?.[0]}
-                            </div>
-                            <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-bold text-zinc-900 truncate">
-                                    {user?.names} {user?.last_name}
-                                </span>
-                                <span className="text-xs text-zinc-500 truncate">
-                                    {user?.user_type?.name.toUpperCase() || 'Rol desconocido'} • {user?.area?.name || 'Sin Área'}
-                                </span>
-                            </div>
+                    <div className="flex items-center gap-3 px-3">
+                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shrink-0 ring-2 ring-primary/10">
+                            {user?.names?.[0]}{user?.last_name?.[0]}
+                        </div>
+                        <div className="flex flex-col overflow-hidden min-w-0">
+                            <span className="text-sm font-semibold text-zinc-900 truncate">
+                                {user?.names} {user?.last_name}
+                            </span>
+                            <span className="text-[11px] text-zinc-400 truncate">
+                                {user?.area?.name || 'Sin Área'}
+                            </span>
                         </div>
                     </div>
 
