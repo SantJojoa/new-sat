@@ -351,6 +351,9 @@ model seguimiento_acompanamiento {
   proxima_fecha DateTime?
   proxima_hora  String?
 
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

@@ -204,4 +204,37 @@ export const salidasService = {
         }
         setTimeout(() => window.URL.revokeObjectURL(url), 60000);
     },
+
+    uploadActaAcompanamiento: async (id: string, file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post(`/salidas/${id}/seguimiento-acompanamiento/archivo`, formData, {
+            headers: { 'Content-Type': undefined },
+        });
+        return response.data;
+    },
+
+    downloadActaArchivoAcompanamiento: async (id: string, codigo?: string): Promise<void> => {
+        const response = await api.get(`/salidas/${id}/seguimiento-acompanamiento/archivo`, {
+            responseType: 'blob',
+        });
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = `acta-acompanamiento-${id}.pdf`;
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const windowName = `acta-acompanamiento-${codigo ?? id}`;
+        const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        if (!popup) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    },
 }

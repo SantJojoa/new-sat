@@ -30,6 +30,35 @@ export class SalidasService {
         return new Date(`${dateStr}T12:00:00`);
     }
 
+    // Excluye "archivo_manual" (Bytes) de las consultas de listado/detalle para no
+    // transferir el PDF completo en cada carga; solo se expone el nombre del archivo.
+    private readonly seguimientoAcompanamientoSelect = {
+        id: true,
+        salida_id: true,
+        se_programo: true,
+        se_realizo: true,
+        nombre_reunion: true,
+        fecha_reunion: true,
+        hora_inicial: true,
+        hora_final: true,
+        acta_numero: true,
+        institucion: true,
+        municipio: true,
+        lugar: true,
+        material_entregado: true,
+        asistentes: true,
+        orden_del_dia: true,
+        desarrollo: true,
+        conclusiones: true,
+        compromisos: true,
+        proxima_lugar: true,
+        proxima_fecha: true,
+        proxima_hora: true,
+        archivo_manual_nombre: true,
+        created_at: true,
+        updated_at: true,
+    };
+
     private async getUserSubdireccionId(user: users): Promise<string | null> {
         if (user.subdireccion_id) return user.subdireccion_id;
         if (!user.area_id) return null;
@@ -211,7 +240,7 @@ export class SalidasService {
             seguimiento_capacitacion: true,
             seguimiento_ivc: true,
             seguimiento_articulacion_iv: true,
-            seguimiento_acompanamiento: true,
+            seguimiento_acompanamiento: { select: this.seguimientoAcompanamientoSelect },
         };
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
@@ -251,7 +280,7 @@ export class SalidasService {
                 seguimiento_capacitacion: true,
                 seguimiento_ivc: true,
                 seguimiento_articulacion_iv: true,
-                seguimiento_acompanamiento: true,
+                seguimiento_acompanamiento: { select: this.seguimientoAcompanamientoSelect },
             }
         });
 
@@ -623,6 +652,11 @@ export class SalidasService {
     async setSeguimientoAcompanamiento(id: string, dto: SetSeguimientoAcompanamientoDto, user: users) {
         await this.findOne(id, user);
 
+        const existente = await this.prisma.seguimiento_acompanamiento.findUnique({ where: { salida_id: id }, select: { archivo_manual_nombre: true } });
+        if (existente?.archivo_manual_nombre) {
+            throw new BadRequestException('No se puede diligenciar el formulario porque ya se subió un acta escaneada para esta programación');
+        }
+
         const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
         const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;
 
@@ -652,12 +686,51 @@ export class SalidasService {
             where: { salida_id: id },
             create: { salida_id: id, ...data },
             update: data,
+            select: this.seguimientoAcompanamientoSelect,
         });
     }
 
     async generateCertificadoAcompanamiento(id: string, user: users): Promise<Buffer> {
         const salida = await this.findOne(id, user);
         return this.acompanamientoCertificate.generate(salida);
+    }
+
+    async uploadActaAcompanamiento(id: string, file: Express.Multer.File, user: users) {
+        if (!file) throw new BadRequestException('No se recibió ningún archivo');
+        await this.findOne(id, user);
+
+        const existente = await this.prisma.seguimiento_acompanamiento.findUnique({ where: { salida_id: id }, select: { se_realizo: true, archivo_manual_nombre: true } });
+        if (existente?.se_realizo && !existente.archivo_manual_nombre) {
+            throw new BadRequestException('No se puede subir un acta escaneada porque ya se generó el acta por formulario');
+        }
+
+        const archivo = new Uint8Array(file.buffer);
+
+        return this.prisma.seguimiento_acompanamiento.upsert({
+            where: { salida_id: id },
+            create: {
+                salida_id: id,
+                se_programo: true,
+                se_realizo: true,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            update: {
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            select: this.seguimientoAcompanamientoSelect,
+        });
+    }
+
+    async getActaArchivoAcompanamiento(id: string, user: users): Promise<{ buffer: Buffer; nombre: string }> {
+        await this.findOne(id, user);
+        const seguimiento = await this.prisma.seguimiento_acompanamiento.findUnique({
+            where: { salida_id: id },
+            select: { archivo_manual: true, archivo_manual_nombre: true },
+        });
+        if (!seguimiento?.archivo_manual) throw new NotFoundException('No hay un acta escaneada cargada para esta programación');
+        return { buffer: Buffer.from(seguimiento.archivo_manual), nombre: seguimiento.archivo_manual_nombre || `acta-${id}.pdf` };
     }
 
     async bulkReject(dto: BulkRejectSalidaDto, user: users) {

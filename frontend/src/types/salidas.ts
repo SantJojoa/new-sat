@@ -159,6 +159,7 @@ export interface SalidaRecord {
         proxima_lugar?: string | null;
         proxima_fecha?: string | null;
         proxima_hora?: string | null;
+        archivo_manual_nombre?: string | null;
     } | null;
 }
 

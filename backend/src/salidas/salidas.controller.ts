@@ -7,11 +7,16 @@ import {
     Param,
     Delete,
     UseGuards,
+    UseInterceptors,
+    UploadedFile,
+    BadRequestException,
     Request,
     Query,
     Res,
     StreamableFile
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { SalidasService } from './salidas.service';
 import { CreateSalidaDto } from './dto/create-salida.dto';
@@ -263,6 +268,41 @@ export class SalidasController {
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="certificado-acompanamiento-${id}.pdf"`,
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento-acompanamiento/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+            cb(null, true);
+        },
+    }))
+    uploadActaAcompanamiento(
+        @Param('id') id: string,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
+    ) {
+        return this.salidasService.uploadActaAcompanamiento(id, file, req.user);
+    }
+
+    @Get(':id/seguimiento-acompanamiento/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadActaAcompanamiento(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const { buffer, nombre } = await this.salidasService.getActaArchivoAcompanamiento(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${nombre}"`,
         });
         return new StreamableFile(buffer);
     }

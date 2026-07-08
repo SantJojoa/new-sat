@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, FileDown, X, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, FileDown, Upload, X, Plus, Trash2 } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
@@ -385,6 +385,9 @@ export default function SeguimientoAcompanamiento() {
     const [detailRecord, setDetailRecord] = useState<SalidaRecord | null>(null);
     const [actaRecord, setActaRecord] = useState<SalidaRecord | null>(null);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const uploadTargetRef = useRef<SalidaRecord | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
 
@@ -438,6 +441,34 @@ export default function SeguimientoAcompanamiento() {
         finally { setDownloadingId(null); }
     };
 
+    const handleDownloadArchivo = async (record: SalidaRecord) => {
+        setDownloadingId(record.id);
+        try {
+            await salidasService.downloadActaArchivoAcompanamiento(record.id, record.codigo);
+        } catch { alert('Error al descargar el acta escaneada'); }
+        finally { setDownloadingId(null); }
+    };
+
+    const triggerUploadActa = (record: SalidaRecord) => {
+        uploadTargetRef.current = record;
+        fileInputRef.current?.click();
+    };
+
+    const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        const record = uploadTargetRef.current;
+        uploadTargetRef.current = null;
+        if (!file || !record) return;
+        if (file.type !== 'application/pdf') { alert('Solo se permiten archivos PDF'); return; }
+        setUploadingId(record.id);
+        try {
+            await salidasService.uploadActaAcompanamiento(record.id, file);
+            await fetchRecords();
+        } catch { alert('Error al subir el acta escaneada'); }
+        finally { setUploadingId(null); }
+    };
+
     const areaOptionsForFilter = filterSubdireccion
         ? Array.from(new Set(records.filter(r => r.areas?.subdirecciones?.name === filterSubdireccion).map(r => r.areas?.name).filter(Boolean))) as string[]
         : [];
@@ -485,6 +516,7 @@ export default function SeguimientoAcompanamiento() {
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
             <SlideBar />
+            <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileSelected} />
             {actaRecord && (
                 <ActaFormDrawer
                     record={actaRecord}
@@ -537,30 +569,56 @@ export default function SeguimientoAcompanamiento() {
                         records={displayRecords}
                         loading={loading}
                         columns={acompanamientoColumns}
-                        renderActions={r => (
-                            <>
-                                {r.estado === 'aprobada' && (
-                                    <button
-                                        onClick={() => setActaRecord(r)}
-                                        title="Registrar acta de seguimiento"
-                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                    >
-                                        <ClipboardList size={16} />
-                                    </button>
-                                )}
-                                {r.seguimiento_acompanamiento?.se_realizo && (
-                                    <button
-                                        onClick={() => handleDownloadCertificado(r)}
-                                        disabled={downloadingId === r.id}
-                                        title="Descargar certificado"
-                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
-                                    >
-                                        {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
-                                    </button>
-                                )}
-                                <ViewButton onClick={() => setDetailRecord(r)} />
-                            </>
-                        )}
+                        renderActions={r => {
+                            const seg = r.seguimiento_acompanamiento;
+                            const hasUploaded = !!seg?.archivo_manual_nombre;
+                            const formGenerated = !!seg?.se_realizo && !hasUploaded;
+                            return (
+                                <>
+                                    {r.estado === 'aprobada' && (
+                                        <button
+                                            onClick={() => setActaRecord(r)}
+                                            disabled={hasUploaded}
+                                            title={hasUploaded ? 'Deshabilitado: ya se subió un acta escaneada' : 'Registrar acta de seguimiento'}
+                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400"
+                                        >
+                                            <ClipboardList size={16} />
+                                        </button>
+                                    )}
+                                    {r.estado === 'aprobada' && (
+                                        <button
+                                            onClick={() => triggerUploadActa(r)}
+                                            disabled={formGenerated || uploadingId === r.id}
+                                            title={formGenerated ? 'Deshabilitado: el acta ya se generó por formulario' : 'Subir acta escaneada (PDF)'}
+                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400"
+                                        >
+                                            {uploadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <Upload size={16} />}
+                                        </button>
+                                    )}
+                                    {hasUploaded && (
+                                        <button
+                                            onClick={() => handleDownloadArchivo(r)}
+                                            disabled={downloadingId === r.id}
+                                            title="Descargar acta escaneada"
+                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                                        >
+                                            {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
+                                        </button>
+                                    )}
+                                    {!hasUploaded && formGenerated && (
+                                        <button
+                                            onClick={() => handleDownloadCertificado(r)}
+                                            disabled={downloadingId === r.id}
+                                            title="Descargar certificado"
+                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                                        >
+                                            {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
+                                        </button>
+                                    )}
+                                    <ViewButton onClick={() => setDetailRecord(r)} />
+                                </>
+                            );
+                        }}
                         emptyIcon="handshake"
                         emptyMessage="No hay registros de Acompañamiento"
                         emptySubMessage="Registre una programación con subtipo Acompañamiento o ajuste los filtros."
@@ -625,26 +683,61 @@ export default function SeguimientoAcompanamiento() {
                                 ) : (
                                     <p className="text-zinc-400 text-xs italic">Sin acta registrada aún.</p>
                                 )}
-                                <div className="mt-4 flex gap-3">
-                                    {detailRecord.estado === 'aprobada' && (
-                                        <button
-                                            onClick={() => { setDetailRecord(null); setActaRecord(detailRecord); }}
-                                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
-                                        >
-                                            <ClipboardList size={14} />
-                                            {detailRecord.seguimiento_acompanamiento ? 'Editar Acta' : 'Registrar Acta'}
-                                        </button>
-                                    )}
-                                    {detailRecord.seguimiento_acompanamiento?.se_realizo && (
-                                        <button
-                                            onClick={() => handleDownloadCertificado(detailRecord)}
-                                            disabled={downloadingId === detailRecord.id}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                                        >
-                                            {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
-                                            {downloadingId === detailRecord.id ? 'Generando...' : 'Descargar Certificado'}
-                                        </button>
-                                    )}
+                                {detailRecord.seguimiento_acompanamiento?.archivo_manual_nombre && (
+                                    <p className="text-zinc-500 text-xs italic mt-2">Acta escaneada subida: <span className="font-medium text-zinc-700">{detailRecord.seguimiento_acompanamiento.archivo_manual_nombre}</span></p>
+                                )}
+                                <div className="mt-4 flex flex-wrap gap-3">
+                                    {(() => {
+                                        const seg = detailRecord.seguimiento_acompanamiento;
+                                        const hasUploaded = !!seg?.archivo_manual_nombre;
+                                        const formGenerated = !!seg?.se_realizo && !hasUploaded;
+                                        return (
+                                            <>
+                                                {detailRecord.estado === 'aprobada' && (
+                                                    <button
+                                                        onClick={() => { setDetailRecord(null); setActaRecord(detailRecord); }}
+                                                        disabled={hasUploaded}
+                                                        title={hasUploaded ? 'Deshabilitado: ya se subió un acta escaneada' : undefined}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        <ClipboardList size={14} />
+                                                        {seg ? 'Editar Acta' : 'Registrar Acta'}
+                                                    </button>
+                                                )}
+                                                {detailRecord.estado === 'aprobada' && (
+                                                    <button
+                                                        onClick={() => triggerUploadActa(detailRecord)}
+                                                        disabled={formGenerated || uploadingId === detailRecord.id}
+                                                        title={formGenerated ? 'Deshabilitado: el acta ya se generó por formulario' : undefined}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        {uploadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <Upload size={14} />}
+                                                        {uploadingId === detailRecord.id ? 'Subiendo...' : 'Subir Acta Escaneada'}
+                                                    </button>
+                                                )}
+                                                {hasUploaded && (
+                                                    <button
+                                                        onClick={() => handleDownloadArchivo(detailRecord)}
+                                                        disabled={downloadingId === detailRecord.id}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                                    >
+                                                        {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
+                                                        {downloadingId === detailRecord.id ? 'Descargando...' : 'Descargar Acta Escaneada'}
+                                                    </button>
+                                                )}
+                                                {!hasUploaded && formGenerated && (
+                                                    <button
+                                                        onClick={() => handleDownloadCertificado(detailRecord)}
+                                                        disabled={downloadingId === detailRecord.id}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                                    >
+                                                        {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
+                                                        {downloadingId === detailRecord.id ? 'Generando...' : 'Descargar Certificado'}
+                                                    </button>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
