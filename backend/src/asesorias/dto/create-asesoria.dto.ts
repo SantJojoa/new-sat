@@ -1,10 +1,10 @@
-import { IsString, IsOptional, IsNotEmpty, IsArray, IsDateString, ValidateNested, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsArray, IsDateString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AsesoriaAsistenteDto {
     @IsString()
-    @IsNotEmpty()
-    identificacion: string;
+    @IsOptional()
+    identificacion?: string;
 
     @IsString()
     @IsNotEmpty()
@@ -15,8 +15,8 @@ export class AsesoriaAsistenteDto {
     apellido: string;
 
     @IsString()
-    @IsOptional()
-    cargo?: string;
+    @IsNotEmpty()
+    cargo: string;
 
     @IsString()
     @IsOptional()
@@ -27,24 +27,6 @@ export class AsesoriaAsistenteDto {
     movil?: string;
 }
 
-export class AsesoriaCompromisoDto {
-    @IsString()
-    @IsNotEmpty()
-    compromiso: string;
-
-    @IsString()
-    @IsNotEmpty()
-    responsable: string;
-
-    @IsDateString()
-    @IsOptional()
-    fecha?: string;
-
-    @IsString()
-    @IsOptional()
-    observaciones?: string;
-}
-
 export class CreateAsesoriaDto {
     @IsDateString()
     @IsNotEmpty()
@@ -53,6 +35,10 @@ export class CreateAsesoriaDto {
     @IsString()
     @IsNotEmpty()
     hora: string;
+
+    @IsString()
+    @IsNotEmpty()
+    hora_fin: string;
 
     @IsString()
     @IsNotEmpty()
@@ -70,10 +56,6 @@ export class CreateAsesoriaDto {
     @IsOptional()
     municipio_otro?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    lugar: string;
-
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => AsesoriaAsistenteDto)
@@ -86,17 +68,6 @@ export class CreateAsesoriaDto {
     @IsString()
     @IsNotEmpty()
     material_entregado: string;
-
-    @IsInt()
-    @Min(10)
-    @Max(240)
-    duracion_minutos: number;
-
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => AsesoriaCompromisoDto)
-    @IsOptional()
-    compromisos?: AsesoriaCompromisoDto[];
 
     @IsString()
     @IsOptional()

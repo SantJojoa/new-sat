@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react"
 import { AxiosError } from "axios"
 import { asesoriasService } from "../../services/asesoriasService"
 import { useAuth } from "../../hooks/useAuth"
-import type { CreateAsesoriaPayload, AsesoriaAsistente, AsesoriaCompromiso, CatalogoItem } from "../../types/asesorias"
+import type { CreateAsesoriaPayload, AsesoriaAsistente, CatalogoItem } from "../../types/asesorias"
 import type { ApiErrorPayload } from "../../types/api"
 import { CheckCircle, AlertCircle, ClipboardList, Plus, Trash2 } from "lucide-react"
 
@@ -12,31 +12,45 @@ import { CheckCircle, AlertCircle, ClipboardList, Plus, Trash2 } from "lucide-re
 const MEDIOS = ['Email', 'Telefónico', 'Presencial', 'Oficio', 'Virtual'];
 const INSTITUCIONES = ['DLS', 'EAPB', 'ENTIDADES PRIVADAS', 'ENTIDADES PÚBLICAS', 'IDSN', 'IPS', 'PARTICULAR', 'UNIVERSIDAD'];
 const MATERIALES = ['Ninguno', 'Magnético', 'Magnético e Impreso'];
-const DURACIONES = Array.from({ length: 24 }, (_, i) => (i + 1) * 10);
 const EMPTY_ASISTENTE: AsesoriaAsistente = { identificacion: '', nombre: '', apellido: '', cargo: '', email: '', movil: '' };
-const EMPTY_COMPROMISO: AsesoriaCompromiso = { compromiso: '', responsable: '', fecha: '', observaciones: '' };
 
+const nowDateStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const nowTimeStr = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
+const calcularDuracionMinutos = (horaInicio: string, horaFin: string): number | null => {
+    if (!horaInicio || !horaFin) return null;
+    const toMinutes = (t: string) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    };
+    let diff = toMinutes(horaFin) - toMinutes(horaInicio);
+    if (diff < 0) diff += 24 * 60;
+    return diff;
+};
 
 export default function ProgramarAsesoria() {
     const { user } = useAuth();
     const [formData, setFormData] = useState({
-        fecha: '',
-        hora: '',
+        fecha: nowDateStr(),
+        hora: nowTimeStr(),
+        horaFin: '',
         medio: '',
         institucion: '',
         municipioProcedenciaId: '',
         municipioOtro: '',
-        lugar: '',
         temasTratados: '',
         materialEntregado: '',
-        duracionMinutos: '',
         areaId: '',
         solicitanteId: '',
     });
 
     const [asistentes, setAsistentes] = useState<AsesoriaAsistente[]>([{ ...EMPTY_ASISTENTE }]);
-    const [compromisos, setCompromisos] = useState<AsesoriaCompromiso[]>([]);
     const [municipiosData, setMunicipiosData] = useState<CatalogoItem[]>([]);
     const [areasData, setAreasData] = useState<CatalogoItem[]>([]);
     const [lideresData, setLideresData] = useState<CatalogoItem[]>([]);
@@ -45,6 +59,8 @@ export default function ProgramarAsesoria() {
     const [confirmModal, setConfirmModal] = useState(false);
     const [pendingPayload, setPendingPayload] = useState<CreateAsesoriaPayload | null>(null);
     const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string; codigo?: string }>({ type: null, title: '', message: '' });
+
+    const duracionCalculada = calcularDuracionMinutos(formData.hora, formData.horaFin);
 
     useEffect(() => {
         asesoriasService.getCatalogos()
@@ -63,26 +79,20 @@ export default function ProgramarAsesoria() {
     const addAsistente = () => setAsistentes(prev => [...prev, { ...EMPTY_ASISTENTE }]);
     const removeAsistente = (i: number) => { if (asistentes.length > 1) setAsistentes(prev => prev.filter((_, idx) => idx !== i)); };
 
-    const handleCompromisoChange = (i: number, field: keyof AsesoriaCompromiso, value: string) =>
-        setCompromisos(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: value } : c));
-    const addCompromiso = () => setCompromisos(prev => [...prev, { ...EMPTY_COMPROMISO }]);
-    const removeCompromiso = (i: number) => setCompromisos(prev => prev.filter((_, idx) => idx !== i));
-
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const newErrors: Record<string, boolean> = {};
         if (user?.user_type?.name === 'superadmin' && !formData.areaId) newErrors.areaId = true;
         if (!formData.fecha) newErrors.fecha = true;
         if (!formData.hora) newErrors.hora = true;
+        if (!formData.horaFin) newErrors.horaFin = true;
         if (!formData.medio) newErrors.medio = true;
         if (!formData.institucion) newErrors.institucion = true;
         if (!formData.municipioProcedenciaId) newErrors.municipio = true;
         if (formData.municipioProcedenciaId === 'otro' && !formData.municipioOtro.trim()) newErrors.municipio = true;
-        if (!formData.lugar.trim()) newErrors.lugar = true;
         if (!formData.temasTratados.trim()) newErrors.temasTratados = true;
         if (!formData.materialEntregado) newErrors.materialEntregado = true;
-        if (!formData.duracionMinutos) newErrors.duracionMinutos = true;
-        const validAsistentes = asistentes.filter(a => a.identificacion.trim() && a.nombre.trim() && a.apellido.trim());
+        const validAsistentes = asistentes.filter(a => a.nombre.trim() && a.apellido.trim() && a.cargo?.trim());
         if (validAsistentes.length === 0) newErrors.asistentes = true;
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -91,13 +101,11 @@ export default function ProgramarAsesoria() {
         }
         setErrors({});
         setPendingPayload({
-            fecha: formData.fecha, hora: formData.hora, medio: formData.medio, institucion: formData.institucion,
+            fecha: formData.fecha, hora: formData.hora, hora_fin: formData.horaFin, medio: formData.medio, institucion: formData.institucion,
             municipio_procedencia_id: formData.municipioProcedenciaId !== 'otro' ? formData.municipioProcedenciaId || undefined : undefined,
             municipio_otro: formData.municipioProcedenciaId === 'otro' ? formData.municipioOtro : undefined,
-            lugar: formData.lugar, asistentes: validAsistentes,
+            asistentes: validAsistentes,
             temas_tratados: formData.temasTratados, material_entregado: formData.materialEntregado,
-            duracion_minutos: parseInt(formData.duracionMinutos),
-            compromisos: compromisos.filter(c => c.compromiso.trim() && c.responsable.trim()).map(c => ({ ...c, fecha: c.fecha || undefined, observaciones: c.observaciones || undefined })),
             area_id: user?.user_type?.name === 'superadmin' ? formData.areaId || undefined : undefined,
             solicitante_id: formData.solicitanteId || undefined,
         });
@@ -112,9 +120,8 @@ export default function ProgramarAsesoria() {
         try {
             const result = await asesoriasService.createAsesoria(pendingPayload);
             setFeedbackModal({ type: 'success', title: '¡Asesoría Registrada!', message: 'La asesoría fue programada exitosamente.', codigo: result.codigo });
-            setFormData({ fecha: '', hora: '', medio: '', institucion: '', municipioProcedenciaId: '', municipioOtro: '', lugar: '', temasTratados: '', materialEntregado: '', duracionMinutos: '', areaId: '', solicitanteId: '' });
+            setFormData({ fecha: nowDateStr(), hora: nowTimeStr(), horaFin: '', medio: '', institucion: '', municipioProcedenciaId: '', municipioOtro: '', temasTratados: '', materialEntregado: '', areaId: '', solicitanteId: '' });
             setAsistentes([{ ...EMPTY_ASISTENTE }]);
-            setCompromisos([]);
         } catch (error) {
             const msg = (error as AxiosError<ApiErrorPayload>).response?.data?.message || 'Error al guardar';
             setFeedbackModal({ type: 'error', title: 'Error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
@@ -179,8 +186,15 @@ export default function ProgramarAsesoria() {
                                     <input type="date" name="fecha" value={formData.fecha} onChange={handleInputChange} className={inputCls('fecha')} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Hora <span className="text-red-500">*</span></label>
+                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Hora Inicial <span className="text-red-500">*</span></label>
                                     <input type="time" name="hora" value={formData.hora} onChange={handleInputChange} className={inputCls('hora')} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Hora Final <span className="text-red-500">*</span></label>
+                                    <input type="time" name="horaFin" value={formData.horaFin} onChange={handleInputChange} className={inputCls('horaFin')} />
+                                    {duracionCalculada !== null && (
+                                        <p className="text-xs text-zinc-500 mt-1">Duración: {duracionCalculada} minutos</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Medio <span className="text-red-500">*</span></label>
@@ -207,10 +221,6 @@ export default function ProgramarAsesoria() {
                                         <input type="text" name="municipioOtro" value={formData.municipioOtro} onChange={handleInputChange} placeholder="Especifique el municipio" className={`mt-2 ${inputCls('municipio')}`} />
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Lugar donde se realizará la Asesoría <span className="text-red-500">*</span></label>
-                                    <input type="text" name="lugar" value={formData.lugar} onChange={handleInputChange} placeholder="Ingrese el lugar..." className={inputCls('lugar')} />
-                                </div>
                             </div>
                         </div>
 
@@ -235,15 +245,19 @@ export default function ProgramarAsesoria() {
                                             )}
                                         </div>
                                         <div className="grid grid-cols-3 gap-3">
-                                            {(['identificacion', 'nombre', 'apellido'] as const).map(field => (
+                                            {(['nombre', 'apellido'] as const).map(field => (
                                                 <div key={field}>
-                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1 capitalize">{field === 'identificacion' ? 'Identificación' : field.charAt(0).toUpperCase() + field.slice(1)} <span className="text-red-500">*</span></label>
+                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1 capitalize">{field.charAt(0).toUpperCase() + field.slice(1)} <span className="text-red-500">*</span></label>
                                                     <input type="text" value={a[field] as string} onChange={e => handleAsistenteChange(idx, field, e.target.value)} className={rowInput} />
                                                 </div>
                                             ))}
                                             <div>
-                                                <label className="block text-xs font-semibold text-zinc-600 mb-1">Cargo</label>
+                                                <label className="block text-xs font-semibold text-zinc-600 mb-1">Cargo <span className="text-red-500">*</span></label>
                                                 <input type="text" value={a.cargo || ''} onChange={e => handleAsistenteChange(idx, 'cargo', e.target.value)} className={rowInput} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-zinc-600 mb-1">Identificación</label>
+                                                <input type="text" value={a.identificacion || ''} onChange={e => handleAsistenteChange(idx, 'identificacion', e.target.value)} className={rowInput} />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-semibold text-zinc-600 mb-1">Email</label>
@@ -266,7 +280,7 @@ export default function ProgramarAsesoria() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Temas Tratados <span className="text-red-500">*</span></label>
-                                    <input type="text" name="temasTratados" value={formData.temasTratados} onChange={handleInputChange} placeholder="Temas tratados en la asesoría..." className={inputCls('temasTratados')} />
+                                    <textarea name="temasTratados" value={formData.temasTratados} onChange={handleInputChange} placeholder="Temas tratados en la asesoría..." rows={4} className={`${inputCls('temasTratados')} resize-none`} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Material Entregado <span className="text-red-500">*</span></label>
@@ -275,59 +289,9 @@ export default function ProgramarAsesoria() {
                                         {MATERIALES.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Duración (minutos) <span className="text-red-500">*</span></label>
-                                    <select name="duracionMinutos" value={formData.duracionMinutos} onChange={handleInputChange} className={selCls('duracionMinutos')}>
-                                        <option value="">Seleccionar duración...</option>
-                                        {DURACIONES.map(d => <option key={d} value={d}>{d} min</option>)}
-                                    </select>
-                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base font-semibold text-zinc-800 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary text-[20px]">task_alt</span>
-                                    Compromisos / Tareas <span className="text-xs font-normal text-zinc-400">(Opcional)</span>
-                                </h2>
-                                <button type="button" onClick={addCompromiso} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors">
-                                    <Plus size={14} /> Agregar
-                                </button>
-                            </div>
-                            {compromisos.length === 0 ? (
-                                <p className="text-sm text-zinc-400 text-center py-4">Sin compromisos. Haz clic en "Agregar" para añadir uno.</p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {compromisos.map((c, idx) => (
-                                        <div key={idx} className="border border-zinc-100 rounded-lg p-4 bg-zinc-50/50">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="text-xs font-bold text-zinc-500">Compromiso {idx + 1}</span>
-                                                <button type="button" onClick={() => removeCompromiso(idx)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"><Trash2 size={14} /></button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1">Compromiso <span className="text-red-500">*</span></label>
-                                                    <input type="text" value={c.compromiso} onChange={e => handleCompromisoChange(idx, 'compromiso', e.target.value)} className={rowInput} />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1">Responsable <span className="text-red-500">*</span></label>
-                                                    <input type="text" value={c.responsable} onChange={e => handleCompromisoChange(idx, 'responsable', e.target.value)} className={rowInput} />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1">Fecha</label>
-                                                    <input type="date" value={c.fecha || ''} onChange={e => handleCompromisoChange(idx, 'fecha', e.target.value)} className={rowInput} />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-zinc-600 mb-1">Observaciones</label>
-                                                    <input type="text" value={c.observaciones || ''} onChange={e => handleCompromisoChange(idx, 'observaciones', e.target.value)} className={rowInput} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                         <div className="flex justify-end">
                             <button type="submit" disabled={isLoading} className="flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm">
                                 {isLoading ? <><span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> Guardando...</> : <><ClipboardList size={18} /> Registrar Asesoría</>}

@@ -454,12 +454,12 @@ model asesorias {
 
   fecha       DateTime
   hora        String
+  hora_fin    String
   medio       String
   institucion String
 
   municipio_procedencia_id String?
   municipio_otro           String?
-  lugar                    String
 
   temas_tratados     String
   material_entregado String
@@ -475,8 +475,7 @@ model asesorias {
   areas                 areas       @relation("AreasAsesorias", fields: [area_id], references: [id])
   municipio_procedencia municipios? @relation("AsesoriaMunicipioProc", fields: [municipio_procedencia_id], references: [id])
 
-  asistentes  asesoria_asistentes[]
-  compromisos asesoria_compromisos[]
+  asistentes asesoria_asistentes[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -485,23 +484,12 @@ model asesorias {
 model asesoria_asistentes {
   id             String  @id @default(cuid())
   asesoria_id    String
-  identificacion String
+  identificacion String?
   nombre         String
   apellido       String
-  cargo          String?
+  cargo          String
   email          String?
   movil          String?
-
-  asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
-}
-
-model asesoria_compromisos {
-  id            String    @id @default(cuid())
-  asesoria_id   String
-  compromiso    String
-  responsable   String
-  fecha         DateTime?
-  observaciones String?
 
   asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
 }

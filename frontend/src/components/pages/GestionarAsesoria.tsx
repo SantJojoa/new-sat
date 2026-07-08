@@ -4,7 +4,7 @@ import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { asesoriasService } from '../../services/asesoriasService';
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
-import type { AsesoriaRecord, AsesoriaAsistente, AsesoriaCompromiso, CreateAsesoriaPayload } from '../../types/asesorias';
+import type { AsesoriaRecord, AsesoriaAsistente, CreateAsesoriaPayload } from '../../types/asesorias';
 import RecordsTable, { ViewButton, EditButton, DeleteButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
 
@@ -54,7 +54,6 @@ export default function GestionarAsesoria() {
     const [areasData, setAreasData] = useState<{ id: string; name: string }[]>([]);
     const [municipiosData, setMunicipiosData] = useState<{ id: string; name: string }[]>([]);
     const [editAsistentes, setEditAsistentes] = useState<AsesoriaAsistente[]>([]);
-    const [editCompromisos, setEditCompromisos] = useState<AsesoriaCompromiso[]>([]);
     const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string }>({ type: null, title: '', message: '' });
 
     const handleGenerateCertificate = async (record: AsesoriaRecord) => {
@@ -142,18 +141,16 @@ export default function GestionarAsesoria() {
         setEditForm({
             fecha: r.fecha.slice(0, 10),
             hora: r.hora,
+            hora_fin: r.hora_fin,
             medio: r.medio,
             institucion: r.institucion,
             municipio_procedencia_id: r.municipio_otro ? 'otro' : (r.municipio_procedencia_id ?? ''),
             municipio_otro: r.municipio_otro ?? '',
-            lugar: r.lugar,
             temas_tratados: r.temas_tratados,
             material_entregado: r.material_entregado,
-            duracion_minutos: r.duracion_minutos,
             area_id: r.areas?.id,
         });
         setEditAsistentes(r.asistentes ? r.asistentes.map(a => ({ ...a })) : []);
-        setEditCompromisos(r.compromisos ? r.compromisos.map(c => ({ ...c })) : []);
         setEditRecord(r);
     };
 
@@ -164,7 +161,6 @@ export default function GestionarAsesoria() {
             await asesoriasService.updateAsesoria(editRecord.id, {
                 ...editForm,
                 asistentes: editAsistentes,
-                compromisos: editCompromisos,
             });
             setEditRecord(null);
             setFeedbackModal({ type: 'success', title: '¡Actualizado!', message: 'La asesoría fue actualizada exitosamente.' });
@@ -283,7 +279,7 @@ export default function GestionarAsesoria() {
                                 </DetailCard>
                                 <DetailCard label="Fecha y Hora" icon={<Calendar size={10} />}>
                                     <p className="text-zinc-900 font-medium">{new Date(detailRecord.fecha).toLocaleDateString('es-CO')}</p>
-                                    <p className="text-zinc-500 text-xs mt-0.5">Hora: {detailRecord.hora}</p>
+                                    <p className="text-zinc-500 text-xs mt-0.5">Hora: {detailRecord.hora} - {detailRecord.hora_fin}</p>
                                 </DetailCard>
                                 <DetailCard label="Medio" icon={<MapPin size={10} />}>
                                     <p className="text-zinc-900 font-medium">{detailRecord.medio}</p>
@@ -296,9 +292,6 @@ export default function GestionarAsesoria() {
                                     {detailRecord.municipio_otro && (
                                         <p className="text-zinc-500 text-xs mt-0.5">{detailRecord.municipio_otro}</p>
                                     )}
-                                </DetailCard>
-                                <DetailCard label="Lugar" icon={<MapPin size={10} />}>
-                                    <p className="text-zinc-900 font-medium">{detailRecord.lugar}</p>
                                 </DetailCard>
                                 <DetailCard label="Duración" icon={<Clock size={10} />}>
                                     <p className="text-zinc-900 font-medium">{detailRecord.duracion_minutos} minutos</p>
@@ -321,19 +314,6 @@ export default function GestionarAsesoria() {
                                                     {a.cargo && <span className="text-zinc-400">· {a.cargo}</span>}
                                                     {a.email && <span className="text-zinc-400">· {a.email}</span>}
                                                     {a.movil && <span className="text-zinc-400">· {a.movil}</span>}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </DetailCard>
-                                )}
-                                {detailRecord.compromisos && detailRecord.compromisos.length > 0 && (
-                                    <DetailCard label={`Compromisos (${detailRecord.compromisos.length})`} fullWidth>
-                                        <div className="space-y-2 mt-1">
-                                            {detailRecord.compromisos.map((c, i) => (
-                                                <div key={i} className="text-xs text-zinc-700 border-b border-zinc-100 pb-1 last:border-0 last:pb-0">
-                                                    <p className="font-medium">{c.compromiso}</p>
-                                                    <p className="text-zinc-500">Responsable: {c.responsable}{c.fecha ? ` · ${new Date(c.fecha).toLocaleDateString('es-CO')}` : ''}</p>
-                                                    {c.observaciones && <p className="text-zinc-400">{c.observaciones}</p>}
                                                 </div>
                                             ))}
                                         </div>
@@ -365,8 +345,12 @@ export default function GestionarAsesoria() {
                                             <input type="date" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.fecha ?? ''} onChange={e => setEditForm(f => ({ ...f, fecha: e.target.value }))} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hora</label>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hora Inicial</label>
                                             <input type="time" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.hora ?? ''} onChange={e => setEditForm(f => ({ ...f, hora: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hora Final</label>
+                                            <input type="time" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.hora_fin ?? ''} onChange={e => setEditForm(f => ({ ...f, hora_fin: e.target.value }))} />
                                         </div>
                                         <div>
                                             <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Medio</label>
@@ -381,10 +365,6 @@ export default function GestionarAsesoria() {
                                                 <option value="">Sin cambiar</option>
                                                 {areasData.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Duración (minutos)</label>
-                                            <input type="number" min={1} className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.duracion_minutos ?? ''} onChange={e => setEditForm(f => ({ ...f, duracion_minutos: e.target.value ? parseInt(e.target.value) : undefined }))} />
                                         </div>
                                         <div className="col-span-full">
                                             <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Institución</label>
@@ -404,10 +384,6 @@ export default function GestionarAsesoria() {
                                                 <input type="text" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.municipio_otro ?? ''} onChange={e => setEditForm(f => ({ ...f, municipio_otro: e.target.value }))} />
                                             </div>
                                         )}
-                                        <div className="col-span-full">
-                                            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Lugar</label>
-                                            <input type="text" className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={editForm.lugar ?? ''} onChange={e => setEditForm(f => ({ ...f, lugar: e.target.value }))} />
-                                        </div>
                                         <div className="col-span-full">
                                             <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Temas Tratados</label>
                                             <textarea rows={3} className="mt-1 w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" value={editForm.temas_tratados ?? ''} onChange={e => setEditForm(f => ({ ...f, temas_tratados: e.target.value }))} />
@@ -432,34 +408,12 @@ export default function GestionarAsesoria() {
                                         {editAsistentes.map((a, i) => (
                                             <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 relative pr-8">
                                                 <button type="button" onClick={() => setEditAsistentes(arr => arr.filter((_, j) => j !== i))} className="absolute top-2 right-2 p-1 text-zinc-300 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
-                                                <input placeholder="Identificación *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.identificacion} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], identificacion: e.target.value }; setEditAsistentes(arr); }} />
                                                 <input placeholder="Nombre *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.nombre} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], nombre: e.target.value }; setEditAsistentes(arr); }} />
                                                 <input placeholder="Apellido *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.apellido} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], apellido: e.target.value }; setEditAsistentes(arr); }} />
-                                                <input placeholder="Cargo" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.cargo ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], cargo: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Cargo *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.cargo ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], cargo: e.target.value }; setEditAsistentes(arr); }} />
+                                                <input placeholder="Identificación" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.identificacion ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], identificacion: e.target.value }; setEditAsistentes(arr); }} />
                                                 <input placeholder="Email" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.email ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], email: e.target.value }; setEditAsistentes(arr); }} />
                                                 <input placeholder="Móvil" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={a.movil ?? ''} onChange={e => { const arr = [...editAsistentes]; arr[i] = { ...arr[i], movil: e.target.value }; setEditAsistentes(arr); }} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Compromisos */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Compromisos ({editCompromisos.length})</p>
-                                        <button type="button" onClick={() => setEditCompromisos(c => [...c, { compromiso: '', responsable: '', fecha: '', observaciones: '' }])} className="flex items-center gap-1 text-xs text-primary hover:text-primary font-semibold border border-primary/30 px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors">
-                                            <Plus size={12} /> Agregar
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {editCompromisos.length === 0 && <p className="text-zinc-400 text-xs italic py-1">Sin compromisos registrados.</p>}
-                                        {editCompromisos.map((c, i) => (
-                                            <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 relative pr-8">
-                                                <button type="button" onClick={() => setEditCompromisos(arr => arr.filter((_, j) => j !== i))} className="absolute top-2 right-2 p-1 text-zinc-300 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
-                                                <input placeholder="Compromiso *" className="sm:col-span-2 border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.compromiso} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], compromiso: e.target.value }; setEditCompromisos(arr); }} />
-                                                <input placeholder="Responsable *" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.responsable} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], responsable: e.target.value }; setEditCompromisos(arr); }} />
-                                                <input type="date" className="border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.fecha ? c.fecha.slice(0, 10) : ''} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], fecha: e.target.value }; setEditCompromisos(arr); }} />
-                                                <input placeholder="Observaciones" className="sm:col-span-2 border border-zinc-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" value={c.observaciones ?? ''} onChange={e => { const arr = [...editCompromisos]; arr[i] = { ...arr[i], observaciones: e.target.value }; setEditCompromisos(arr); }} />
                                             </div>
                                         ))}
                                     </div>

@@ -22,6 +22,16 @@ export class AsesoriasService {
         return this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
     }
 
+    private calcularDuracionMinutos(horaInicio: string, horaFin: string): number {
+        const toMinutes = (t: string) => {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+        };
+        let diff = toMinutes(horaFin) - toMinutes(horaInicio);
+        if (diff < 0) diff += 24 * 60;
+        return diff;
+    }
+
     async create(dto: CreateAsesoriaDto, user: users) {
         const targetAreaId = dto.area_id || user.area_id;
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
@@ -40,14 +50,14 @@ export class AsesoriasService {
                 codigo,
                 fecha: this.parseDateLocal(dto.fecha),
                 hora: dto.hora,
+                hora_fin: dto.hora_fin,
                 medio: dto.medio,
                 institucion: dto.institucion,
                 municipio_procedencia_id: dto.municipio_procedencia_id || null,
                 municipio_otro: dto.municipio_otro || null,
-                lugar: dto.lugar,
                 temas_tratados: dto.temas_tratados,
                 material_entregado: dto.material_entregado,
-                duracion_minutos: dto.duracion_minutos,
+                duracion_minutos: this.calcularDuracionMinutos(dto.hora, dto.hora_fin),
                 estado: 'registrada',
                 registrador_id: dto.solicitante_id || user.id,
                 area_id: targetAreaId,
@@ -61,21 +71,12 @@ export class AsesoriasService {
                         movil: a.movil,
                     })) || [],
                 },
-                compromisos: {
-                    create: dto.compromisos?.map(c => ({
-                        compromiso: c.compromiso,
-                        responsable: c.responsable,
-                        fecha: c.fecha ? this.parseDateLocal(c.fecha) : null,
-                        observaciones: c.observaciones,
-                    })) || [],
-                },
             },
             include: {
                 registrador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true } },
                 municipio_procedencia: true,
                 asistentes: true,
-                compromisos: true,
             },
         });
     }
@@ -107,7 +108,6 @@ export class AsesoriasService {
                 areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } },
                 municipio_procedencia: true,
                 asistentes: true,
-                compromisos: true,
             },
             orderBy: { fecha: 'desc' },
         });
@@ -121,7 +121,6 @@ export class AsesoriasService {
                 areas: { select: { id: true, name: true } },
                 municipio_procedencia: true,
                 asistentes: true,
-                compromisos: true,
             },
         });
 
@@ -143,24 +142,26 @@ export class AsesoriasService {
     }
 
     async update(id: string, dto: UpdateAsesoriaDto, user: users) {
-        await this.findOne(id, user);
+        const existing = await this.findOne(id, user);
 
         await this.prisma.asesoria_asistentes.deleteMany({ where: { asesoria_id: id } });
-        await this.prisma.asesoria_compromisos.deleteMany({ where: { asesoria_id: id } });
+
+        const horaInicio = dto.hora ?? existing.hora;
+        const horaFin = dto.hora_fin ?? existing.hora_fin;
 
         return this.prisma.asesorias.update({
             where: { id },
             data: {
                 fecha: dto.fecha ? this.parseDateLocal(dto.fecha) : undefined,
                 hora: dto.hora,
+                hora_fin: dto.hora_fin,
                 medio: dto.medio,
                 institucion: dto.institucion,
                 municipio_procedencia_id: dto.municipio_procedencia_id,
                 municipio_otro: dto.municipio_otro,
-                lugar: dto.lugar,
                 temas_tratados: dto.temas_tratados,
                 material_entregado: dto.material_entregado,
-                duracion_minutos: dto.duracion_minutos,
+                duracion_minutos: (dto.hora || dto.hora_fin) ? this.calcularDuracionMinutos(horaInicio, horaFin) : undefined,
                 asistentes: dto.asistentes ? {
                     create: dto.asistentes.map(a => ({
                         identificacion: a.identificacion,
@@ -171,21 +172,12 @@ export class AsesoriasService {
                         movil: a.movil,
                     })),
                 } : undefined,
-                compromisos: dto.compromisos ? {
-                    create: dto.compromisos.map(c => ({
-                        compromiso: c.compromiso,
-                        responsable: c.responsable,
-                        fecha: c.fecha ? this.parseDateLocal(c.fecha) : null,
-                        observaciones: c.observaciones,
-                    })),
-                } : undefined,
             },
             include: {
                 registrador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true } },
                 municipio_procedencia: true,
                 asistentes: true,
-                compromisos: true,
             },
         });
     }

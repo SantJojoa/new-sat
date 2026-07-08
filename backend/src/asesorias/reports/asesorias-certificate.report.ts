@@ -114,8 +114,8 @@ export class AsesoriasCertificateReport implements OnModuleInit {
     // a.codigo              → string   Ej: "ASE-20240101-SAL01"
     // a.fecha               → string   Fecha ISO → usar this.formatDate(a.fecha)
     // a.hora                → string   Ej: "09:00"
+    // a.hora_fin            → string   Ej: "10:00"
     // a.medio               → string   Ej: "Presencial"
-    // a.lugar               → string
     // a.duracion_minutos    → number
     // a.estado              → string   Ej: "registrada"
     // a.institucion         → string
@@ -126,8 +126,7 @@ export class AsesoriasCertificateReport implements OnModuleInit {
     // a.areas?.name         → string
     // a.registrador?.names  → string
     // a.registrador?.email  → string
-    // a.asistentes          → Array<{ identificacion, nombre, apellido, cargo?, email?, movil? }>
-    // a.compromisos         → Array<{ compromiso, responsable, fecha?, observaciones? }>
+    // a.asistentes          → Array<{ identificacion?, nombre, apellido, cargo, email?, movil? }>
     //
     // Helpers disponibles:
     //   this.escapeHtml(valor)   → escapa caracteres HTML
@@ -163,29 +162,6 @@ export class AsesoriasCertificateReport implements OnModuleInit {
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">EMAIL:</td>
             <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.email)}</td>
-        </tr>`).join('');
-
-        const compromisosRows = (a.compromisos ?? []).map((c: any, i: number) => `
-        <tr>
-            <td colspan="6" style="border: 1px solid #000; font-weight: bold; padding: 5px; text-align: center; background-color: #e0e0e0;">
-                COMPROMISO ${i + 1}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">COMPROMISO:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(c.compromiso)}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">RESPONSABLE:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(c.responsable)}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">FECHA:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.formatDate(c.fecha)}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">OBSERVACIÓN:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(c.observaciones)}</td>
         </tr>`).join('');
 
         return `<!DOCTYPE html>
@@ -301,10 +277,8 @@ export class AsesoriasCertificateReport implements OnModuleInit {
             <td colspan="6" style="height: 8px; border: none;"></td>
         </tr>
         <tr>
-            <td colspan="1" style="border: 1px solid #000; padding: 5px;">LUGAR:</td>
-            <td colspan="1" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.lugar)}</td>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">FECHA:</td>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px;">${this.formatDate(a.fecha)}</td>
+            <td colspan="1" style="border: 1px solid #000; padding: 5px;">FECHA:</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.formatDate(a.fecha)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">MEDIO:</td>
@@ -327,17 +301,9 @@ export class AsesoriasCertificateReport implements OnModuleInit {
             <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.institucion)}</td>
         </tr>
         <tr>
-            <td colspan="1" style="border: 1px solid #000; padding: 5px;">DURACIÓN:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(String(a.duracion_minutos ?? '—'))} minutos</td>
+            <td colspan="1" style="border: 1px solid #000; padding: 5px;">HORA:</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.hora)} - ${this.escapeHtml(a.hora_fin)} (${this.escapeHtml(String(a.duracion_minutos ?? '—'))} minutos)</td>
         </tr>
-
-        <!-- COMPROMISOS -->
-        <tr>
-            <td colspan="6" style="border: 1px solid #000; font-weight: bold; padding: 5px; text-align: center; background-color: #cccccc;">
-                COMPROMISOS
-            </td>
-        </tr>
-        ${compromisosRows}
 
     </table>
 
