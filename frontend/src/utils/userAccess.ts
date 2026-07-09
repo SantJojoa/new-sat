@@ -1,34 +1,45 @@
 import type { AuthUser } from "../types/auth";
 
-const SUBDIRECCION_SALUD_PUBLICA_ID = "cmqh8a0n2002425mnzkfx8dxj";
-const SUBDIRECCION_CALIDAD_ID = "cmqh8a0ne002625mnlx87xxdt";
+const SUBDIRECCION_SALUD_PUBLICA = "subdireccion de salud publica";
+const SUBDIRECCION_CALIDAD = "subdireccion de calidad y aseguramiento";
 
-const AREAS_IVC_SALUD_PUBLICA = new Set([
-    "cmqh8a0pp003b25mn4om76vms",
-    "cmqh8a0p0002x25mng35bkigh",
+const AREAS_IV_SALUD_PUBLICA = new Set([
+    "control de medicamentos",
+    "laboratorio de salud publica",
 ]);
 
-const getUserSubdireccionId = (user?: AuthUser | null) =>
-    user?.subdireccion_id ||
-    user?.subdireccion?.id ||
-    user?.area?.subdireccion_id ||
-    user?.area?.subdirecciones?.id ||
-    null;
+const normalize = (value?: string | null) =>
+    (value ?? "")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .trim();
+
+const getUserSubdireccionNombre = (user?: AuthUser | null) =>
+    normalize(user?.subdireccion?.name || user?.area?.subdirecciones?.name);
+
+const getUserAreaNombre = (user?: AuthUser | null) =>
+    normalize(user?.area?.name);
 
 export const isSaludPublicaUser = (user?: AuthUser | null) =>
-    getUserSubdireccionId(user) === SUBDIRECCION_SALUD_PUBLICA_ID;
+    getUserSubdireccionNombre(user) === SUBDIRECCION_SALUD_PUBLICA;
 
-export const canUseInspeccionVigilanciaSp = (user?: AuthUser | null) =>
-    isSaludPublicaUser(user);
+export const canUseInspeccionVigilanciaSp = (user?: AuthUser | null) => {
+    if (user?.user_type?.name === "superadmin") return true;
+    return isSaludPublicaUser(user) && AREAS_IV_SALUD_PUBLICA.has(getUserAreaNombre(user));
+};
 
 export const canUseIvc = (user?: AuthUser | null) => {
-    const subdirId = getUserSubdireccionId(user);
-    if (subdirId === SUBDIRECCION_CALIDAD_ID) return true;
-    if (subdirId === SUBDIRECCION_SALUD_PUBLICA_ID && user?.area_id && AREAS_IVC_SALUD_PUBLICA.has(user.area_id)) return true;
+    if (user?.user_type?.name === "superadmin") return true;
+    const subdireccion = getUserSubdireccionNombre(user);
+    if (subdireccion === SUBDIRECCION_CALIDAD) return true;
+    if (subdireccion === SUBDIRECCION_SALUD_PUBLICA) return true;
     return false;
 };
 
 export const canAccessModule = (moduleName: string, user?: AuthUser | null) => {
+    if (user?.user_type?.name === "superadmin") return true;
+
     if (moduleName === "seguimiento_articulacion_iv") {
         return canUseInspeccionVigilanciaSp(user);
     }
