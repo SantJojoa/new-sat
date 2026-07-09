@@ -26,7 +26,11 @@ export const isSaludPublicaUser = (user?: AuthUser | null) =>
 
 export const canUseInspeccionVigilanciaSp = (user?: AuthUser | null) => {
     if (user?.user_type?.name === "superadmin") return true;
-    return isSaludPublicaUser(user) && AREAS_IV_SALUD_PUBLICA.has(getUserAreaNombre(user));
+    if (!isSaludPublicaUser(user)) return false;
+    // El admin de subdirección no tiene área propia (supervisa toda la subdirección),
+    // así que no aplica el filtro de área que sí rige para usuarios/líderes de área.
+    if (user?.user_type?.name === "admin_subdireccion") return true;
+    return AREAS_IV_SALUD_PUBLICA.has(getUserAreaNombre(user));
 };
 
 export const canUseIvc = (user?: AuthUser | null) => {
