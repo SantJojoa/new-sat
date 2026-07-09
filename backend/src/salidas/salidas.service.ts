@@ -247,7 +247,7 @@ export class SalidasService {
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
 
         let where: any = {};
-        const effectiveViewAll = viewAll && userType.name === 'superadmin';
+        const effectiveViewAll = viewAll;
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = await this.getUserSubdireccionId(user);
