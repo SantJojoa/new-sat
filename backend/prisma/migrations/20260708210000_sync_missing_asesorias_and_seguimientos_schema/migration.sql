@@ -1,4 +1,4 @@
--- DropIndex
+    -- DropIndex
 DROP INDEX "salida_eapb_salida_id_eapb_id_key";
 
 -- DropIndex

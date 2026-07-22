@@ -121,12 +121,12 @@ export default function Login() {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/40 to-transparent" />
                         <div className="absolute bottom-10 left-10 right-10 text-white">
-                            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">IDSN · Nariño</p>
-                            <h1 className="text-2xl font-bold mb-3 leading-snug">
-                                Sistema de Inspección, Vigilancia y Asistencia Técnica
+                            <p className="text-white/60 text-sm font-semibold uppercase tracking-widest">IDSN</p>
+                            <h1 className="text-4xl font-bold leading-snug">
+                                SIVAT
                             </h1>
-                            <p className="text-white/80 text-sm leading-relaxed">
-                                Plataforma integrada para la gestión de inspección, vigilancia, capacitación y acompañamiento del Instituto Departamental de Salud de Nariño.
+                            <p className="text-white/80 text-base leading-relaxed">
+                                Sistema de Inspección, Vigilancia y Asistencia Técnica
                             </p>
                         </div>
                     </div>
@@ -134,9 +134,7 @@ export default function Login() {
                     <div className="w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center overflow-y-auto h-full">
                         <div className="mb-8">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-primary text-3xl">
-                                    <HouseWifi />
-                                </span>
+
                                 <h3 className="text-2xl font-bold text-text-primary">Iniciar Sesión</h3>
                             </div>
                             <p className="text-text-secondary text-sm">Ingrese sus credenciales para acceder a la plataforma SIVAT</p>
@@ -254,7 +252,12 @@ export default function Login() {
                             <p className="text-center text-[11px] uppercase tracking-widest text-text-secondary font-semibold">
                                 Instituto Departamental de Salud de Narino
                             </p>
+                            <span className="text-center text-[10px] text-text-secondary">
+                                Versión 0.1.0
+                            </span>
                         </div>
+
+
                     </div>
                 </div>
             </main>

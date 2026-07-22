@@ -147,6 +147,8 @@ export const ENTIDADES_SEED: string[] = [
     'Coord. Gestion del Riesgo',
     'Alcalde',
     'Referente PIC',
+    'Sujeto de Vigilancia en Salud Mental',
+    'Referente de Protección Especial',
 ];
 
 export const IPS_TIPOS_SEED: string[] = [
@@ -184,6 +186,13 @@ export const EAPB_SEED: string[] = [
     'Asmet Salud',
     'Sanitas',
     'Nueva EPS',
+    'Mallamas',
+    'Famisanar',
+    'Sanidad Policía',
+    'Sanidad Marina',
+    'Sanidad Batallón',
+    'UDENAR',
+    'FOMAG',
 ];
 
 export const EAPB_ACTORES_SEED: string[] = [
