@@ -1,101 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { existsSync } from 'fs';
-import puppeteer, { type Browser } from 'puppeteer-core';
-
-const g = global as typeof global & {
-    __pdfBrowser?: Browser | null;
-    __pdfBrowserPromise?: Promise<Browser> | null;
-};
+import { Injectable } from '@nestjs/common';
+import { PuppeteerBrowserService } from '../../common/services/puppeteer-browser.service';
 
 @Injectable()
-export class AsesoriasCertificateReport implements OnModuleInit {
-
-    async onModuleInit() {
-        this.getBrowser().catch(() => { });
-    }
-
-    private async getBrowser(): Promise<Browser> {
-        if (g.__pdfBrowser) return g.__pdfBrowser;
-
-        if (!g.__pdfBrowserPromise) {
-            g.__pdfBrowserPromise = puppeteer.launch({
-                headless: true,
-                executablePath: this.findChrome(),
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--disable-gpu',
-                ],
-            }).then(b => {
-                g.__pdfBrowser = b;
-                g.__pdfBrowserPromise = null;
-                b.on('disconnected', () => {
-                    g.__pdfBrowser = null;
-                    g.__pdfBrowserPromise = null;
-                });
-                return b;
-            }).catch(err => {
-                g.__pdfBrowserPromise = null;
-                throw err;
-            });
-        }
-        return g.__pdfBrowserPromise;
-    }
-
-    private escapeHtml(str: string | null | undefined): string {
-        if (!str) return '—';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    private formatDate(d: any): string {
-        if (!d) return '—';
-        return new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    private findChrome(): string {
-        if (process.env.PUPPETEER_EXECUTABLE_PATH && existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-            return process.env.PUPPETEER_EXECUTABLE_PATH;
-        }
-        if (process.platform === 'win32') {
-            const pf86 = process.env['PROGRAMFILES(X86)'] ?? 'C:\\Program Files (x86)';
-            const pf = process.env['PROGRAMFILES'] ?? 'C:\\Program Files';
-            const local = process.env['LOCALAPPDATA'] ?? '';
-            const candidates = [
-                `${pf}\\Google\\Chrome\\Application\\chrome.exe`,
-                `${pf86}\\Google\\Chrome\\Application\\chrome.exe`,
-                `${local}\\Google\\Chrome\\Application\\chrome.exe`,
-                `${pf}\\Microsoft\\Edge\\Application\\msedge.exe`,
-                `${pf86}\\Microsoft\\Edge\\Application\\msedge.exe`,
-                `${local}\\Microsoft\\Edge\\Application\\msedge.exe`,
-            ];
-            for (const p of candidates) {
-                if (p && existsSync(p)) return p;
-            }
-        }
-        const linuxCandidates = [
-            '/usr/bin/chromium',
-            '/usr/bin/chromium-browser',
-            '/usr/bin/google-chrome',
-            '/usr/bin/google-chrome-stable',
-        ];
-        for (const p of linuxCandidates) {
-            if (existsSync(p)) return p;
-        }
-        throw new Error('Chrome/Chromium not found. Install Chrome or set PUPPETEER_EXECUTABLE_PATH.');
-    }
+export class AsesoriasCertificateReport {
+    constructor(private readonly puppeteerBrowser: PuppeteerBrowserService) { }
 
     async generate(asesoria: any): Promise<Buffer> {
         const html = this.buildHtml(asesoria);
-        const browser = await this.getBrowser();
+        const browser = await this.puppeteerBrowser.getBrowser();
         const page = await browser.newPage();
         try {
             await page.setContent(html, { waitUntil: 'domcontentloaded' });
@@ -112,7 +24,7 @@ export class AsesoriasCertificateReport implements OnModuleInit {
 
     // ─── Variables disponibles en el template ────────────────────────────────
     // a.codigo              → string   Ej: "ASE-20240101-SAL01"
-    // a.fecha               → string   Fecha ISO → usar this.formatDate(a.fecha)
+    // a.fecha               → string   Fecha ISO → usar this.puppeteerBrowser.formatDate(a.fecha)
     // a.hora                → string   Ej: "09:00"
     // a.hora_fin            → string   Ej: "10:00"
     // a.medio               → string   Ej: "Presencial"
@@ -129,13 +41,13 @@ export class AsesoriasCertificateReport implements OnModuleInit {
     // a.asistentes          → Array<{ identificacion?, nombre, apellido, cargo, email?, movil? }>
     //
     // Helpers disponibles:
-    //   this.escapeHtml(valor)   → escapa caracteres HTML
-    //   this.formatDate(fecha)   → devuelve "dd/mm/yyyy"
+    //   this.puppeteerBrowser.escapeHtml(valor)   → escapa caracteres HTML
+    //   this.puppeteerBrowser.formatDate(fecha)   → devuelve "dd/mm/yyyy"
     // ─────────────────────────────────────────────────────────────────────────
 
     private buildHtml(a: any): string {
-        const municipio = this.escapeHtml(a.municipio_procedencia?.name ?? a.municipio_otro);
-        const registradorDependencia = this.escapeHtml(a.registrador?.areas?.name ?? a.areas?.name);
+        const municipio = this.puppeteerBrowser.escapeHtml(a.municipio_procedencia?.name ?? a.municipio_otro);
+        const registradorDependencia = this.puppeteerBrowser.escapeHtml(a.registrador?.areas?.name ?? a.areas?.name);
 
         const asistentesRows = (a.asistentes ?? []).map((ast: any, i: number) => `
         <tr>
@@ -145,23 +57,23 @@ export class AsesoriasCertificateReport implements OnModuleInit {
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">NOMBRES Y APELLIDOS:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.nombre)} ${this.escapeHtml(ast.apellido)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.nombre)} ${this.puppeteerBrowser.escapeHtml(ast.apellido)}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">IDENTIFICACIÓN:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.identificacion)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.identificacion)}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">CARGO:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.cargo)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.cargo)}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">TELÉFONO:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.movil)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.movil)}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">EMAIL:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(ast.email)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.email)}</td>
         </tr>`).join('');
 
         return `<!DOCTYPE html>
@@ -200,7 +112,7 @@ export class AsesoriasCertificateReport implements OnModuleInit {
             <td rowspan="2"
                 style="width: 25%; border-right: 1px solid #000; text-align: center; vertical-align: middle; padding: 10px;">
                 <span style="color: #999;">
-                    <img src="data:image/png;base64,${require('fs').readFileSync(`${process.cwd()}/public/logo-idsn-certificados.png`).toString('base64')}" alt="Logo"
+                    <img src="data:image/png;base64,${this.puppeteerBrowser.getLogoBase64()}" alt="Logo"
                         style="width: 100px; height: auto;">
                 </span>
             </td>
@@ -253,11 +165,11 @@ export class AsesoriasCertificateReport implements OnModuleInit {
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">NOMBRES Y APELLIDOS:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml((a.registrador?.names ?? '') + ' ' + (a.registrador?.last_name ?? ''))}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml((a.registrador?.names ?? '') + ' ' + (a.registrador?.last_name ?? ''))}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">CARGO:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.registrador?.charge)}</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.registrador?.charge)}</td>
         </tr>
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">DEPENDENCIA:</td>
@@ -278,19 +190,19 @@ export class AsesoriasCertificateReport implements OnModuleInit {
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">FECHA:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.formatDate(a.fecha)}</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.formatDate(a.fecha)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">MEDIO:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.medio)}</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.medio)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">TEMA:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.temas_tratados)}</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.temas_tratados)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">MATERIAL ENTREGADO:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.material_entregado)}</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.material_entregado)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">MUNICIPIO PROCEDENCIA:</td>
@@ -298,11 +210,11 @@ export class AsesoriasCertificateReport implements OnModuleInit {
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">INSTITUCIÓN:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.institucion)}</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.institucion)}</td>
         </tr>
         <tr>
             <td colspan="1" style="border: 1px solid #000; padding: 5px;">HORA:</td>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.escapeHtml(a.hora)} - ${this.escapeHtml(a.hora_fin)} (${this.escapeHtml(String(a.duracion_minutos ?? '—'))} minutos)</td>
+            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(a.hora)} - ${this.puppeteerBrowser.escapeHtml(a.hora_fin)} (${this.puppeteerBrowser.escapeHtml(String(a.duracion_minutos ?? '—'))} minutos)</td>
         </tr>
 
     </table>

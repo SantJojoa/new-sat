@@ -1,20 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { ALLOWED_CORS_ORIGINS } from './common/config/cors-origins';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configurar CORS
   app.enableCors({
-    origin: [
-      'http://localhost',
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:8080',
-      'http://172.16.4.4',
-      'http://172.16.4.4:3000',
-    ],
+    origin: ALLOWED_CORS_ORIGINS,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: [

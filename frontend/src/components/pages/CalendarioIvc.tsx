@@ -91,7 +91,7 @@ export default function CalendarioIvc() {
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${viewAll ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50'}`}
                                 >
                                     <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
-                                    {viewAll ? 'Viendo todas las áreas' : 'Ver todas las áreas'}dd
+                                    {viewAll ? 'Viendo todas las áreas' : 'Ver todas las áreas'}
                                 </button>
                             )}
                         </div>

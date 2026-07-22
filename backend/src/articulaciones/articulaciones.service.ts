@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateArticulacionDto } from './dto/create-articulacion.dto';
 import { UpdateArticulacionDto } from './dto/update-articulacion.dto';
 import { users } from '@prisma/client';
 import { ArticulacionesExcelReport } from './reports/articulaciones-excel.report';
 import { ArticulacionesPdfReport } from './reports/articulaciones-pdf.report';
+import { parseDateLocal } from '../common/utils/date.util';
+import { UserContextService } from '../common/services/user-context.service';
+import { getEstadisticasGenericas } from '../common/utils/estadisticas.util';
 
 @Injectable()
 export class ArticulacionesService {
@@ -12,16 +15,11 @@ export class ArticulacionesService {
         private prisma: PrismaService,
         private excelReport: ArticulacionesExcelReport,
         private pdfReport: ArticulacionesPdfReport,
+        private userContext: UserContextService,
     ) { }
 
-    private parseDateLocal(dateStr: string | Date): Date {
-        if (dateStr instanceof Date) return dateStr;
-        if (dateStr.includes('T')) return new Date(dateStr);
-        return new Date(`${dateStr}T12:00:00`);
-    }
-
     private async getUserType(user: users) {
-        return this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        return this.userContext.getUserType(user);
     }
 
     async create(dto: CreateArticulacionDto, user: users) {
@@ -37,13 +35,16 @@ export class ArticulacionesService {
         const count = await this.prisma.articulaciones.count({ where: { codigo: { startsWith: prefix } } });
         const codigo = `${prefix}${String(count + 1).padStart(2, '0')}`;
 
+        if (await this.prisma.articulaciones.findUnique({ where: { codigo } }))
+            throw new ConflictException('Error generando código único, intente nuevamente');
+
         return this.prisma.articulaciones.create({
             data: {
                 codigo,
                 tipo_programacion: dto.tipo_programacion,
                 tema: dto.tema,
-                fecha_inicio: this.parseDateLocal(dto.fecha_inicio),
-                fecha_final: this.parseDateLocal(dto.fecha_final),
+                fecha_inicio: parseDateLocal(dto.fecha_inicio),
+                fecha_final: parseDateLocal(dto.fecha_final),
                 jornada: dto.jornada,
                 instituciones_convocadas: dto.instituciones_convocadas,
                 transporte_medio: dto.transporte_medio,
@@ -72,9 +73,7 @@ export class ArticulacionesService {
 
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
-                const subdireccionId = user.subdireccion_id || (user.area_id
-                    ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
-                    : null);
+                const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where = { areas: { subdireccion_id: subdireccionId } };
             } else if (userType.name !== 'superadmin') {
@@ -108,9 +107,7 @@ export class ArticulacionesService {
         const userType = await this.getUserType(user);
 
         if (userType?.name === 'admin_subdireccion') {
-            const subdireccionId = user.subdireccion_id || (user.area_id
-                ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
-                : null);
+            const subdireccionId = await this.userContext.getUserSubdireccionId(user);
             const areaInfo = await this.prisma.areas.findUnique({ where: { id: articulacion.area_id }, select: { subdireccion_id: true } });
             if (subdireccionId !== areaInfo?.subdireccion_id)
                 throw new ForbiddenException('No tienes permiso');
@@ -123,14 +120,15 @@ export class ArticulacionesService {
 
     async update(id: string, dto: UpdateArticulacionDto, user: users) {
         const articulacion = await this.findOne(id, user);
+        if (articulacion.estado !== 'pendiente') throw new BadRequestException('Solo pendientes se pueden editar');
 
         const userType = await this.getUserType(user);
         if (articulacion.solicitante_id !== user.id && userType?.name !== 'superadmin')
             throw new ForbiddenException('Solo el creador puede editar');
 
         const data: any = { ...dto };
-        if (dto.fecha_inicio) data.fecha_inicio = this.parseDateLocal(dto.fecha_inicio);
-        if (dto.fecha_final) data.fecha_final = this.parseDateLocal(dto.fecha_final);
+        if (dto.fecha_inicio) data.fecha_inicio = parseDateLocal(dto.fecha_inicio);
+        if (dto.fecha_final) data.fecha_final = parseDateLocal(dto.fecha_final);
         delete data.area_id;
         delete data.solicitante_id;
 
@@ -171,40 +169,7 @@ export class ArticulacionesService {
     }
 
     async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, subdireccionId?: string) {
-        const where: any = {};
-        if (areaId) where.area_id = areaId;
-        if (estado) where.estado = estado;
-        if (subdireccionId) where.areas = { subdireccion_id: subdireccionId };
-        if (startDate || endDate) {
-            where.fecha_inicio = {};
-            if (startDate) where.fecha_inicio.gte = new Date(`${startDate}T00:00:00`);
-            if (endDate) where.fecha_inicio.lte = new Date(`${endDate}T23:59:59`);
-        }
-
-        const items = await this.prisma.articulaciones.findMany({
-            where,
-            include: { solicitante: { select: { id: true, names: true, last_name: true } }, areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } } },
-            orderBy: { fecha_inicio: 'desc' }
-        });
-
-        const total = items.length;
-
-        const estadosMap = items.reduce((acc, item) => { acc[item.estado] = (acc[item.estado] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const estados = Object.entries(estadosMap).map(([name, count]) => ({ name, count }));
-
-        const solMap = items.reduce((acc, item) => {
-            const name = `${item.solicitante.names} ${(item.solicitante as any).last_name || ''}`.trim();
-            acc[name] = (acc[name] || 0) + 1; return acc;
-        }, {} as Record<string, number>);
-        const topSolicitantes = Object.entries(solMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-
-        const areasMap = items.reduce((acc, item) => { const name = item.areas?.name || 'Sin área'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const areas = Object.entries(areasMap).map(([name, count]) => ({ name, count }));
-
-        const subdireccionesMap = items.reduce((acc, item: any) => { const name = item.areas?.subdirecciones?.name || 'Sin subdirección'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const porSubdireccion = Object.entries(subdireccionesMap).map(([name, count]) => ({ name, count }));
-
-        return { total, estados, topSolicitantes, areas, porSubdireccion, items };
+        return getEstadisticasGenericas(this.prisma.articulaciones, { areaId, estado, subdireccionId, startDate, endDate });
     }
 
     async getCatalogos(user: users) {
@@ -213,7 +178,7 @@ export class ArticulacionesService {
             this.prisma.areas.findMany({ orderBy: { name: 'asc' }, include: { subdirecciones: { select: { id: true, name: true } } } }),
             this.prisma.users.findMany({
                 where: { is_active: true },
-                select: { id: true, names: true, last_name: true },
+                select: { id: true, names: true, last_name: true, area_id: true },
                 orderBy: { names: 'asc' }
             }),
             this.prisma.subdirecciones.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
@@ -222,7 +187,7 @@ export class ArticulacionesService {
         return {
             municipios: municipios.map(m => ({ id: m.id, name: m.name })),
             areas: areas.map(a => ({ id: a.id, name: a.name, subdireccion_id: a.subdireccion_id || undefined, subdirecciones: a.subdirecciones ? { id: a.subdirecciones.id, name: a.subdirecciones.name } : undefined })),
-            lideres: lideres.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}` })),
+            lideres: lideres.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}`, area_id: l.area_id || undefined })),
             subdirecciones: subdirecciones.map(s => ({ id: s.id, name: s.name })),
         };
     }

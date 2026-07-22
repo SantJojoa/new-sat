@@ -204,14 +204,6 @@ export class SalidasController {
         return this.salidasService.reject(id, req.user, rejectDto);
     }
 
-    @Get(':id/historial')
-    @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
-    getHistorial(@Param('id') id: string, @Request() req) {
-        // Aquí podrías implementar un historial de cambios si lo necesitas
-        return { message: 'Historial no implementado aún' };
-    }
-
     @Patch(':id/seguimiento')
     @UseGuards(PermissionsGuard)
     @RequirePermissions('solicitar_salida', 'view')

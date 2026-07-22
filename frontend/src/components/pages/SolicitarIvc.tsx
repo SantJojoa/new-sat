@@ -220,7 +220,7 @@ export default function SolicitarIvc() {
                                                     className={`w-full h-12 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.solicitanteId ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                                 >
                                                     <option value="">Seleccione solicitante</option>
-                                                    {lideresData.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                                    {lideresData.filter(l => (l as any).area_id === formData.areaId).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                                                 </select>
                                             </div>
                                         )}
@@ -586,7 +586,7 @@ export default function SolicitarIvc() {
                     </div>
                     <div className="px-6 pb-6 flex gap-3 justify-end">
                         <button onClick={() => setConfirmModal(false)} className="px-4 py-2 rounded-lg border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors cursor-pointer">Cancelar</button>
-                        <button onClick={handleConfirmSubmit} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer">Confirmar</button>
+                        <button onClick={handleConfirmSubmit} disabled={isLoading} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-50">{isLoading ? 'Enviando...' : 'Confirmar'}</button>
                     </div>
                 </div>
             </div>

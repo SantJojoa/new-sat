@@ -178,7 +178,6 @@ export default function Users() {
     const selectedUserType = userTypes.find(type => type.id === formData.user_type_id);
     const selectedRoleName = selectedUserType?.name;
     const isSubdirector = selectedRoleName === 'admin_subdireccion';
-    const showsSubdireccion = true;
     const filteredAreas = formData.subdireccion_id
         ? areas.filter(area => area.subdireccion_id === formData.subdireccion_id)
         : [];
@@ -342,22 +341,20 @@ export default function Users() {
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
-                                    {showsSubdireccion && (
-                                        <div>
-                                            <label className="block text-sm font-semibold text-zinc-700 mb-1">SubdirecciÃ³n</label>
-                                            <select
-                                                required
-                                                value={formData.subdireccion_id}
-                                                onChange={(e) => setFormData({ ...formData, subdireccion_id: e.target.value, area_id: '' })}
-                                                className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
-                                            >
-                                                <option value="">Seleccione subdirecciÃ³n...</option>
-                                                {subdirecciones.map(sub => (
-                                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-zinc-700 mb-1">Subdirección</label>
+                                        <select
+                                            required
+                                            value={formData.subdireccion_id}
+                                            onChange={(e) => setFormData({ ...formData, subdireccion_id: e.target.value, area_id: '' })}
+                                            className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                                        >
+                                            <option value="">Seleccione subdirección...</option>
+                                            {subdirecciones.map(sub => (
+                                                <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-zinc-700 mb-1">Identificación (Cédula)</label>
                                         <input
@@ -413,20 +410,11 @@ export default function Users() {
                                             value={formData.user_type_id}
                                             onChange={(e) => {
                                                 const nextId = e.target.value;
-                                                const nextType = userTypes.find(type => type.id === nextId);
-                                                if (nextType?.name === 'admin_subdireccion') {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        user_type_id: nextId,
-                                                        area_id: '',
-                                                    }));
-                                                } else {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        user_type_id: nextId,
-                                                        area_id: '',
-                                                    }));
-                                                }
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    user_type_id: nextId,
+                                                    area_id: '',
+                                                }));
                                             }}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
                                         >

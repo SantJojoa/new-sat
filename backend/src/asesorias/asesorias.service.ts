@@ -1,25 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAsesoriaDto } from './dto/create-asesoria.dto';
 import { UpdateAsesoriaDto } from './dto/update-asesoria.dto';
 import { users } from '@prisma/client';
 import { AsesoriasCertificateReport } from './reports/asesorias-certificate.report';
+import { parseDateLocal } from '../common/utils/date.util';
+import { UserContextService } from '../common/services/user-context.service';
 
 @Injectable()
 export class AsesoriasService {
     constructor(
         private prisma: PrismaService,
         private certificateReport: AsesoriasCertificateReport,
+        private userContext: UserContextService,
     ) { }
 
-    private parseDateLocal(dateStr: string | Date): Date {
-        if (dateStr instanceof Date) return dateStr;
-        if (dateStr.includes('T')) return new Date(dateStr);
-        return new Date(`${dateStr}T12:00:00`);
-    }
-
     private async getUserType(user: users) {
-        return this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        return this.userContext.getUserType(user);
     }
 
     private calcularDuracionMinutos(horaInicio: string, horaFin: string): number {
@@ -45,10 +42,13 @@ export class AsesoriasService {
         const count = await this.prisma.asesorias.count({ where: { codigo: { startsWith: prefix } } });
         const codigo = `${prefix}${String(count + 1).padStart(2, '0')}`;
 
+        if (await this.prisma.asesorias.findUnique({ where: { codigo } }))
+            throw new ConflictException('Error generando código único, intente nuevamente');
+
         return this.prisma.asesorias.create({
             data: {
                 codigo,
-                fecha: this.parseDateLocal(dto.fecha),
+                fecha: parseDateLocal(dto.fecha),
                 hora: dto.hora,
                 hora_fin: dto.hora_fin,
                 medio: dto.medio,
@@ -91,9 +91,7 @@ export class AsesoriasService {
 
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
-                const subdireccionId = user.subdireccion_id || (user.area_id
-                    ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
-                    : null);
+                const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where = { areas: { subdireccion_id: subdireccionId } };
             } else if (userType.name !== 'superadmin') {
@@ -129,9 +127,7 @@ export class AsesoriasService {
         const userType = await this.getUserType(user);
 
         if (userType?.name === 'admin_subdireccion') {
-            const subdireccionId = user.subdireccion_id || (user.area_id
-                ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
-                : null);
+            const subdireccionId = await this.userContext.getUserSubdireccionId(user);
             const areaInfo = await this.prisma.areas.findUnique({ where: { id: asesoria.area_id }, select: { subdireccion_id: true } });
             if (subdireccionId !== areaInfo?.subdireccion_id) throw new ForbiddenException('No tienes permiso');
         } else if (userType?.name !== 'superadmin' && asesoria.registrador_id !== user.id) {
@@ -144,7 +140,9 @@ export class AsesoriasService {
     async update(id: string, dto: UpdateAsesoriaDto, user: users) {
         const existing = await this.findOne(id, user);
 
-        await this.prisma.asesoria_asistentes.deleteMany({ where: { asesoria_id: id } });
+        if (dto.asistentes !== undefined) {
+            await this.prisma.asesoria_asistentes.deleteMany({ where: { asesoria_id: id } });
+        }
 
         const horaInicio = dto.hora ?? existing.hora;
         const horaFin = dto.hora_fin ?? existing.hora_fin;
@@ -152,7 +150,7 @@ export class AsesoriasService {
         return this.prisma.asesorias.update({
             where: { id },
             data: {
-                fecha: dto.fecha ? this.parseDateLocal(dto.fecha) : undefined,
+                fecha: dto.fecha ? parseDateLocal(dto.fecha) : undefined,
                 hora: dto.hora,
                 hora_fin: dto.hora_fin,
                 medio: dto.medio,

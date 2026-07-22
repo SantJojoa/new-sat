@@ -168,7 +168,7 @@ export default function SolicitarArticulacion() {
     };
 
     const filteredLideres = formData.areaId
-        ? lideresData
+        ? lideresData.filter(l => l.area_id === formData.areaId)
         : lideresData;
 
     return (
@@ -630,9 +630,10 @@ export default function SolicitarArticulacion() {
                             </button>
                             <button
                                 onClick={handleConfirmSubmit}
-                                className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer"
+                                disabled={isLoading}
+                                className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-50"
                             >
-                                Confirmar
+                                {isLoading ? 'Enviando...' : 'Confirmar'}
                             </button>
                         </div>
                     </div>

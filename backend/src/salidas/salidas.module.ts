@@ -7,9 +7,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { SalidasPdfReport } from './reports/salidas-pdf.report';
 import { SalidasExcelReport } from './reports/salidas-excel.report';
 import { AcompanamientoCertificateReport } from './reports/acompanamiento-certificate.report';
+import { CommonModule } from '../common/common.module';
 
 @Module({
-    imports: [AuthModule, NotificationsModule],
+    imports: [AuthModule, NotificationsModule, CommonModule],
     controllers: [SalidasController],
     providers: [SalidasService, PrismaService, SalidasPdfReport, SalidasExcelReport, AcompanamientoCertificateReport],
     exports: [SalidasService],

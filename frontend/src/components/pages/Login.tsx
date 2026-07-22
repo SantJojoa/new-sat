@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
-import { HouseWifi, UserRound, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { UserRound, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { ApiErrorPayload } from '../../types/api';

@@ -26,6 +26,7 @@ import SeguimientoArticulacionIV from './src/components/pages/SeguimientoArticul
 import ProgramarAsesoria from './src/components/pages/ProgramarAsesoria'
 import GestionarAsesoria from './src/components/pages/GestionarAsesoria'
 import SeguimientoAcompanamiento from './src/components/pages/SeguimientoAcompanamiento'
+import NotFound from './src/components/pages/NotFound'
 
 function App() {
     return (
@@ -51,37 +52,37 @@ function App() {
                         } />
 
                         <Route path="solicitar-salida" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="solicitar_salida">
                                 <SolicitarSalida />
                             </ProtectedRoute>
                         } />
 
                         {/* Rutas para nuevos módulos */}
                         <Route path="gestionar-salida" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="gestionar_salida">
                                 <GestionarSalida />
                             </ProtectedRoute>
                         } />
                         <Route path="gestionar-salida/editar/:id" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="gestionar_salida">
                                 <SolicitarSalida />
                             </ProtectedRoute>
                         } />
 
                         <Route path="calendario-salidas" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="calendario_salidas">
                                 <CalendarioSalidas />
                             </ProtectedRoute>
                         } />
 
                         <Route path="reportes-salidas" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="reportes_salidas">
                                 <ReportesSalidas />
                             </ProtectedRoute>
                         } />
 
                         <Route path="solicitar-articulacion" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="solicitar_articulacion">
                                 <SolicitarArticulacion />
                             </ProtectedRoute>
                         } />
@@ -93,13 +94,13 @@ function App() {
                         } />
 
                         <Route path="gestionar-articulacion" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="gestionar_articulacion">
                                 <GestionarArticulacion />
                             </ProtectedRoute>
                         } />
 
                         <Route path="calendario-articulaciones" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="calendario_articulaciones">
                                 <CalendarioArticulaciones />
                             </ProtectedRoute>
                         } />
@@ -117,7 +118,7 @@ function App() {
                         } />
 
                         <Route path="reportes-articulacion" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="reportes_articulacion">
                                 <ReportesArticulacion />
                             </ProtectedRoute>
                         } />
@@ -163,9 +164,10 @@ function App() {
 
 
                         {/* 404 dentro del layout */}
+                        <Route path="*" element={<NotFound />} />
 
                         <Route path="seguimiento-capacitaciones" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="seguimiento_capacitaciones">
                                 <SeguimientoCapacitaciones />
                             </ProtectedRoute>
                         } />
@@ -183,19 +185,19 @@ function App() {
                         } />
 
                         <Route path="programar-asesoria" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="programar_asesoria">
                                 <ProgramarAsesoria />
                             </ProtectedRoute>
                         } />
 
                         <Route path="gestionar-asesoria" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="gestionar_asesoria">
                                 <GestionarAsesoria />
                             </ProtectedRoute>
                         } />
 
                         <Route path="seguimiento-acompanamiento" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute moduleName="seguimiento_acompanamiento">
                                 <SeguimientoAcompanamiento />
                             </ProtectedRoute>
                         } />

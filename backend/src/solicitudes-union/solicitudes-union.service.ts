@@ -3,22 +3,18 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateSolicitudUnionDto, ResolveSolicitudUnionDto } from './dto/solicitudes-union.dto';
 import { users } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
+import { UserContextService } from '../common/services/user-context.service';
 
 @Injectable()
 export class SolicitudesUnionService {
     constructor(
         private prisma: PrismaService,
         private notifications: NotificationsService,
+        private userContext: UserContextService,
     ) { }
 
     private async getUserSubdireccionId(user: users): Promise<string | null> {
-        if (user.subdireccion_id) return user.subdireccion_id;
-        if (!user.area_id) return null;
-        const userArea = await this.prisma.areas.findUnique({
-            where: { id: user.area_id },
-            select: { subdireccion_id: true }
-        });
-        return userArea?.subdireccion_id || null;
+        return this.userContext.getUserSubdireccionId(user);
     }
 
     async create(dto: CreateSolicitudUnionDto, user: users) {

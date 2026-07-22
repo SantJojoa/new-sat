@@ -123,7 +123,7 @@ export default function SolicitarSalida() {
     const getAvailableSubtypes = () => {
         const allowedByUser = canSelectInspeccionVigilanciaSp
             ? subtiposItems
-            : subtiposItems.filter(s => s.id !== 'InspecciÃ³n y Vigilancia SP (IV)');
+            : subtiposItems.filter(s => s.id !== 'Inspección y Vigilancia SP (IV)');
 
         if (formData.tipoSalida === 'Virtual') {
             return allowedByUser.filter(s => s.name === 'Desarrollo de Capacidades');
@@ -145,8 +145,8 @@ export default function SolicitarSalida() {
     }, [formData.tipoSalida, selectedSubtipos]);
 
     useEffect(() => {
-        if (!canSelectInspeccionVigilanciaSp && selectedSubtipos.some(s => s.id === 'InspecciÃ³n y Vigilancia SP (IV)')) {
-            setSelectedSubtipos(prev => prev.filter(s => s.id !== 'InspecciÃ³n y Vigilancia SP (IV)'));
+        if (!canSelectInspeccionVigilanciaSp && selectedSubtipos.some(s => s.id === 'Inspección y Vigilancia SP (IV)')) {
+            setSelectedSubtipos(prev => prev.filter(s => s.id !== 'Inspección y Vigilancia SP (IV)'));
         }
     }, [canSelectInspeccionVigilanciaSp, selectedSubtipos]);
 
@@ -279,17 +279,8 @@ export default function SolicitarSalida() {
                     setTransporteResponsables(salida.transporte_responsables.split(', '));
                 }
 
-                // Lugar Evento (assuming single linked municipality if field exists in backend relation, currently mapped to getById?)
-                // Note: The backend response needed might be missing 'lugar_evento' relation or ID. 
-                // Assuming getById includes it or we map it if available.
-                // Since I didn't see explicit 'lugar_evento' include in previous 'findAll', I should check 'findOne'.
-                // If backend 'findOne' is standard default findUnique, fine. 
-                // But for now let's hope it loads or handle it.
-                if (salida.lugar_evento_id) {
-                    // Need to find name from catalog if only ID is returned
-                    // Or updated backend to include logic.
-                    // A simple workaround: if catalogs loaded wait for them? No, async race.
-                    // Ideally backend returns the object. 
+                if (salida.lugar_evento) {
+                    setSelectedLugarEvento({ id: salida.lugar_evento.id, name: salida.lugar_evento.name });
                 }
 
             } catch (error) {
@@ -1320,6 +1311,7 @@ export default function SolicitarSalida() {
                                     <div className="flex justify-end gap-4 pt-8 mt-8 border-t border-zinc-100">
                                         <button
                                             type="button"
+                                            onClick={() => navigate(-1)}
                                             className="px-6 py-3 rounded-lg border border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 transition-colors cursor-pointer"
                                         >
                                             Cancelar

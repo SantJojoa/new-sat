@@ -307,7 +307,7 @@ export default function ProgramarAsesoria() {
                         <p className="text-sm text-zinc-600 mb-6">¿Está seguro que desea registrar esta asesoría?</p>
                         <div className="flex justify-end gap-3">
                             <button onClick={() => setConfirmModal(false)} className="px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 text-sm font-medium hover:bg-zinc-50 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirmSubmit} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">Confirmar</button>
+                            <button onClick={handleConfirmSubmit} disabled={isLoading} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">{isLoading ? 'Enviando...' : 'Confirmar'}</button>
                         </div>
                     </div>
                 </div>

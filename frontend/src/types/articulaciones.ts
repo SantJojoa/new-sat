@@ -41,6 +41,6 @@ export interface ArticulacionRecord {
 export interface ArticulacionCatalogosResponse {
     municipios: { id: string; name: string }[];
     areas: { id: string; name: string; subdireccion_id?: string; subdirecciones?: { id: string; name: string } }[];
-    lideres: { id: string; name: string }[];
+    lideres: { id: string; name: string; area_id?: string }[];
     subdirecciones?: { id: string; name: string }[];
 }

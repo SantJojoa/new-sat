@@ -97,7 +97,9 @@ function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
         existing != null ? (existing.se_realizo ? 'true' : 'false') : ''
     );
 
-    const numInstituciones = existing?.num_instituciones_asistieron?.toString() ?? '';
+    const [numInstituciones, setNumInstituciones] = useState(
+        existing?.num_instituciones_asistieron?.toString() ?? ''
+    );
     const [numAsistentes, setNumAsistentes] = useState(
         existing?.num_total_asistentes?.toString() ?? ''
     );
@@ -179,6 +181,21 @@ function SeguimientoModal({ record, onClose, onSaved }: SeguimientoModalProps) {
                         <label
                             className="block text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
                             Número de instituciones que asistieron
+                        </label>
+
+                        <input
+                            type="number"
+                            min="0"
+                            value={numInstituciones}
+                            onChange={e => setNumInstituciones(e.target.value)}
+                            placeholder="0"
+                            className="w-full px-3 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            className="block text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                            Número total de asistentes
                         </label>
 
                         <input

@@ -12,7 +12,8 @@ import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
 import { SetSeguimientoAcompanamientoDto } from './dto/set-seguimiento-acompanamiento.dto';
 import { AcompanamientoCertificateReport } from './reports/acompanamiento-certificate.report';
-import { time } from 'console';
+import { parseDateLocal } from '../common/utils/date.util';
+import { UserContextService } from '../common/services/user-context.service';
 
 @Injectable()
 export class SalidasService {
@@ -22,13 +23,8 @@ export class SalidasService {
         private excelReport: SalidasExcelReport,
         private notifications: NotificationsService,
         private acompanamientoCertificate: AcompanamientoCertificateReport,
+        private userContext: UserContextService,
     ) { }
-
-    private parseDateLocal(dateStr: string | Date): Date {
-        if (dateStr instanceof Date) return dateStr;
-        if (dateStr.includes('T')) return new Date(dateStr);
-        return new Date(`${dateStr}T12:00:00`);
-    }
 
     // Excluye "archivo_manual" (Bytes) de las consultas de listado/detalle para no
     // transferir el PDF completo en cada carga; solo se expone el nombre del archivo.
@@ -58,16 +54,6 @@ export class SalidasService {
         created_at: true,
         updated_at: true,
     };
-
-    private async getUserSubdireccionId(user: users): Promise<string | null> {
-        if (user.subdireccion_id) return user.subdireccion_id;
-        if (!user.area_id) return null;
-        const userArea = await this.prisma.areas.findUnique({
-            where: { id: user.area_id },
-            select: { subdireccion_id: true }
-        });
-        return userArea?.subdireccion_id || null;
-    }
 
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
@@ -170,7 +156,7 @@ export class SalidasService {
 
         if (!isSuperadmin) {
             await this.checkConflicts(
-                this.parseDateLocal(createSalidaDto.fecha_inicio), this.parseDateLocal(createSalidaDto.fecha_final),
+                parseDateLocal(createSalidaDto.fecha_inicio), parseDateLocal(createSalidaDto.fecha_final),
                 createSalidaDto.jornada, createSalidaDto.municipios_ids,
                 createSalidaDto.ips_actores || [],
                 createSalidaDto.entidades_ids,
@@ -190,8 +176,8 @@ export class SalidasService {
             data: {
                 codigo: newCodigo, tipo_salida: createSalidaDto.tipo_salida, subtipo_salida: createSalidaDto.subtipo_salida,
                 tema: createSalidaDto.tema, descripcion: createSalidaDto.descripcion,
-                fecha_inicio: this.parseDateLocal(createSalidaDto.fecha_inicio),
-                fecha_final: this.parseDateLocal(createSalidaDto.fecha_final),
+                fecha_inicio: parseDateLocal(createSalidaDto.fecha_inicio),
+                fecha_final: parseDateLocal(createSalidaDto.fecha_final),
                 jornada: createSalidaDto.jornada, estado: 'pendiente',
                 solicitante_id: createSalidaDto.solicitante_id || user.id, area_id: targetAreaId,
                 transporte_medio: createSalidaDto.transporte_medio, transporte_responsables: createSalidaDto.transporte_responsables,
@@ -250,7 +236,7 @@ export class SalidasService {
         const effectiveViewAll = viewAll;
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
-                const subdireccionId = await this.getUserSubdireccionId(user);
+                const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where = {
                     OR: [
@@ -273,6 +259,7 @@ export class SalidasService {
                 municipios: true, salida_ips: { include: { ips: true, actor: true } }, entidades: true,
                 salida_eapb: { include: { eapb: true, actor: true } },
                 organizaciones: true, idsn: true,
+                lugar_evento: { select: { id: true, name: true } },
                 solicitante: { select: { id: true, names: true, email: true } },
                 aprobador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
@@ -289,7 +276,7 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
 
         if (userType?.name === 'admin_subdireccion') {
-            const subdireccionId = await this.getUserSubdireccionId(user);
+            const subdireccionId = await this.userContext.getUserSubdireccionId(user);
             const isOwnerSubdir = subdireccionId && salida.areas.subdireccion_id === subdireccionId;
             const isParticipantSubdir = subdireccionId && (salida as any).areas_participantes?.some((ap: any) => ap.subdireccion_id === subdireccionId);
             if (!isOwnerSubdir && !isParticipantSubdir)
@@ -311,8 +298,8 @@ export class SalidasService {
 
         if (updateSalidaDto.fecha_inicio || updateSalidaDto.municipios_ids) {
             await this.checkConflicts(
-                updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
-                updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
+                updateSalidaDto.fecha_inicio ? parseDateLocal(updateSalidaDto.fecha_inicio) : salida.fecha_inicio,
+                updateSalidaDto.fecha_final ? parseDateLocal(updateSalidaDto.fecha_final) : salida.fecha_final,
                 updateSalidaDto.jornada || salida.jornada,
                 updateSalidaDto.municipios_ids || salida.municipios.map(m => m.id),
                 updateSalidaDto.ips_actores || (salida as any).salida_ips.map((m: any) => ({ ips_id: m.ips_id, actor_id: m.actor_id })),
@@ -335,15 +322,12 @@ export class SalidasService {
             data: {
                 tipo_salida: updateSalidaDto.tipo_salida, subtipo_salida: updateSalidaDto.subtipo_salida,
                 tema: updateSalidaDto.tema, descripcion: updateSalidaDto.descripcion,
-                fecha_inicio: updateSalidaDto.fecha_inicio ? this.parseDateLocal(updateSalidaDto.fecha_inicio) : undefined,
-                fecha_final: updateSalidaDto.fecha_final ? this.parseDateLocal(updateSalidaDto.fecha_final) : undefined,
+                fecha_inicio: updateSalidaDto.fecha_inicio ? parseDateLocal(updateSalidaDto.fecha_inicio) : undefined,
+                fecha_final: updateSalidaDto.fecha_final ? parseDateLocal(updateSalidaDto.fecha_final) : undefined,
                 jornada: updateSalidaDto.jornada, transporte_medio: updateSalidaDto.transporte_medio,
                 transporte_responsables: updateSalidaDto.transporte_responsables,
                 instituciones_convocadas: updateSalidaDto.instituciones_convocadas,
                 municipios_convocados: municipiosConvocadosStr, lugar_evento_id: updateSalidaDto.lugar_evento_id,
-                estado: updateSalidaDto.estado,
-                observaciones: updateSalidaDto.observaciones_aprobacion
-                    ? `${salida.observaciones || ''}\n${updateSalidaDto.observaciones_aprobacion}` : undefined,
                 municipios: updateSalidaDto.municipios_ids ? { set: updateSalidaDto.municipios_ids.map(id => ({ id })) } : undefined,
                 salida_ips: updateSalidaDto.ips_actores !== undefined ? {
                     deleteMany: {},
@@ -428,7 +412,7 @@ export class SalidasService {
                 let lideresWhere: any = { user_type_id: liderRole.id, is_active: true };
 
                 if (userType.name === 'admin_subdireccion') {
-                    const subdireccionId = await this.getUserSubdireccionId(user);
+                    const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                     if (subdireccionId) lideresWhere.areas = { subdireccion_id: subdireccionId };
                 }
 
@@ -560,11 +544,11 @@ export class SalidasService {
         const salidas = await this.prisma.salidas.findMany({ where: { id: { in: dto.ids } }, include: { areas: true } });
         const results: { aprobadas: string[]; errores: { id: string; codigo: string; motivo: string }[] } = { aprobadas: [], errores: [] };
         const validIds: string[] = [];
+        const subdireccionId = userType?.name === 'admin_subdireccion' ? await this.userContext.getUserSubdireccionId(user) : null;
 
         for (const salida of salidas) {
             if (salida.estado !== 'pendiente') { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` }); continue; }
             if (userType?.name === 'admin_subdireccion') {
-                const subdireccionId = await this.getUserSubdireccionId(user);
                 const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' }); continue; }
             }
@@ -741,12 +725,12 @@ export class SalidasService {
         const salidas = await this.prisma.salidas.findMany({ where: { id: { in: dto.ids } }, include: { areas: true } });
         const results: { rechazadas: string[]; errores: { id: string; codigo: string; motivo: string }[] } = { rechazadas: [], errores: [] };
         const validIds: string[] = [];
+        const subdireccionId = userType?.name === 'admin_subdireccion' ? await this.userContext.getUserSubdireccionId(user) : null;
 
         for (const salida of salidas) {
             const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
             if (!canReject) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: `Estado actual: ${salida.estado}` }); continue; }
             if (userType?.name === 'admin_subdireccion') {
-                const subdireccionId = await this.getUserSubdireccionId(user);
                 const userArea = subdireccionId ? { subdireccion_id: subdireccionId } : null;
                 if (salida.areas.subdireccion_id !== userArea?.subdireccion_id) { results.errores.push({ id: salida.id, codigo: salida.codigo, motivo: 'No pertenece a su subdirección' }); continue; }
             }

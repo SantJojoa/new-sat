@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsArray, IsEnum, IsDateString, ValidateNested, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class EapbActorItemDto {
@@ -96,6 +96,8 @@ export class CreateSalidaDto {
     @IsOptional()
     transporte_responsables?: string;
 
+    @IsInt()
+    @Min(0)
     @IsOptional()
     instituciones_convocadas?: number;
 

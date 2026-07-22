@@ -1,10 +1,12 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIvcDto } from './dto/create-ivc.dto';
 import { UpdateIvcDto } from './dto/update-ivc.dto';
 import { users } from '@prisma/client';
 import { IvcExcelReport } from './reports/ivc-excel.report';
 import { IvcPdfReport } from './reports/ivc-pdf.report';
+import { UserContextService } from '../common/services/user-context.service';
+import { getEstadisticasGenericas } from '../common/utils/estadisticas.util';
 
 @Injectable()
 export class IvcService {
@@ -12,15 +14,19 @@ export class IvcService {
         private readonly prisma: PrismaService,
         private readonly excelReport: IvcExcelReport,
         private readonly pdfReport: IvcPdfReport,
+        private readonly userContext: UserContextService,
     ) { }
 
     private async getUserType(user: users) {
-        return this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        return this.userContext.getUserType(user);
     }
 
     private async generateCodigo(): Promise<string> {
         const count = await this.prisma.ivc.count();
-        return `IVC-${String(count + 1).padStart(5, '0')}`;
+        const codigo = `IVC-${String(count + 1).padStart(5, '0')}`;
+        if (await this.prisma.ivc.findUnique({ where: { codigo } }))
+            throw new ConflictException('Error generando código único, intente nuevamente');
+        return codigo;
     }
 
     async create(dto: CreateIvcDto, user: users) {
@@ -77,11 +83,7 @@ export class IvcService {
 
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
-                const subdireccionId =
-                    user.subdireccion_id ||
-                    (user.area_id
-                        ? (await this.prisma.areas.findUnique({ where: { id: user.area_id }, select: { subdireccion_id: true } }))?.subdireccion_id
-                        : null);
+                const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where = { areas: { subdireccion_id: subdireccionId } };
             } else if (userType.name !== 'superadmin') {
@@ -110,12 +112,25 @@ export class IvcService {
             },
         });
         if (!record) throw new NotFoundException('IVC no encontrada');
+
+        const userType = await this.getUserType(user);
+
+        if (userType?.name === 'admin_subdireccion') {
+            const subdireccionId = await this.userContext.getUserSubdireccionId(user);
+            const areaInfo = await this.prisma.areas.findUnique({ where: { id: record.area_id }, select: { subdireccion_id: true } });
+            if (subdireccionId !== areaInfo?.subdireccion_id)
+                throw new ForbiddenException('No tienes permiso');
+        } else if (userType?.name !== 'superadmin' && record.solicitante_id !== user.id) {
+            throw new ForbiddenException('No tienes permiso');
+        }
+
         return record;
     }
 
     async update(id: string, dto: UpdateIvcDto, user: users) {
         const record = await this.prisma.ivc.findUnique({ where: { id } });
         if (!record) throw new NotFoundException('IVC no encontrada');
+        if (record.estado !== 'pendiente') throw new BadRequestException('Solo pendientes se pueden editar');
 
         const userType = await this.getUserType(user);
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
@@ -176,40 +191,7 @@ export class IvcService {
     }
 
     async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, subdireccionId?: string) {
-        const where: any = {};
-        if (areaId) where.area_id = areaId;
-        if (estado) where.estado = estado;
-        if (subdireccionId) where.areas = { subdireccion_id: subdireccionId };
-        if (startDate || endDate) {
-            where.fecha_inicio = {};
-            if (startDate) where.fecha_inicio.gte = new Date(`${startDate}T00:00:00`);
-            if (endDate) where.fecha_inicio.lte = new Date(`${endDate}T23:59:59`);
-        }
-
-        const items = await this.prisma.ivc.findMany({
-            where,
-            include: { solicitante: { select: { id: true, names: true, last_name: true } }, areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } } },
-            orderBy: { fecha_inicio: 'desc' }
-        });
-
-        const total = items.length;
-
-        const estadosMap = items.reduce((acc, item) => { acc[item.estado] = (acc[item.estado] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const estados = Object.entries(estadosMap).map(([name, count]) => ({ name, count }));
-
-        const solMap = items.reduce((acc, item) => {
-            const name = `${item.solicitante.names} ${(item.solicitante as any).last_name || ''}`.trim();
-            acc[name] = (acc[name] || 0) + 1; return acc;
-        }, {} as Record<string, number>);
-        const topSolicitantes = Object.entries(solMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-
-        const areasMap = items.reduce((acc, item) => { const name = item.areas?.name || 'Sin área'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const areas = Object.entries(areasMap).map(([name, count]) => ({ name, count }));
-
-        const subdireccionesMap = items.reduce((acc, item: any) => { const name = item.areas?.subdirecciones?.name || 'Sin subdirección'; acc[name] = (acc[name] || 0) + 1; return acc; }, {} as Record<string, number>);
-        const porSubdireccion = Object.entries(subdireccionesMap).map(([name, count]) => ({ name, count }));
-
-        return { total, estados, topSolicitantes, areas, porSubdireccion, items };
+        return getEstadisticasGenericas(this.prisma.ivc, { areaId, estado, subdireccionId, startDate, endDate });
     }
 
     async getCatalogos() {
@@ -218,7 +200,7 @@ export class IvcService {
             this.prisma.areas.findMany({ orderBy: { name: 'asc' }, include: { subdirecciones: { select: { id: true, name: true } } } }),
             this.prisma.users.findMany({
                 where: { is_active: true },
-                select: { id: true, names: true, last_name: true },
+                select: { id: true, names: true, last_name: true, area_id: true },
                 orderBy: { names: 'asc' },
             }),
             this.prisma.subdirecciones.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
@@ -227,7 +209,7 @@ export class IvcService {
         return {
             municipios: municipios.map(m => ({ id: m.id, name: m.name })),
             areas: areas.map(a => ({ id: a.id, name: a.name, subdireccion_id: a.subdireccion_id || undefined, subdirecciones: a.subdirecciones ? { id: a.subdirecciones.id, name: a.subdirecciones.name } : undefined })),
-            lideres: lideres.map(u => ({ id: u.id, name: `${u.names} ${u.last_name}` })),
+            lideres: lideres.map(u => ({ id: u.id, name: `${u.names} ${u.last_name}`, area_id: u.area_id || undefined })),
             subdirecciones: subdirecciones.map(s => ({ id: s.id, name: s.name })),
         };
     }
