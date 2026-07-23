@@ -7,7 +7,9 @@ import { salidasService, type CatalogoItem } from "../../services/salidasService
 import { useAuth } from "../../hooks/useAuth"
 import type { ApiErrorPayload } from "../../types/api"
 import type { CreateArticulacionPayload } from "../../types/articulaciones"
-import { CheckCircle, AlertCircle, ClipboardList } from "lucide-react"
+import { ClipboardList } from "lucide-react"
+import TagListInput from "../ui/TagListInput"
+import FeedbackModal from "../ui/FeedbackModal"
 
 export default function SolicitarArticulacion() {
     const { user } = useAuth();
@@ -29,9 +31,7 @@ export default function SolicitarArticulacion() {
 
     // Chip inputs
     const [institucionesConvocadas, setInstitucionesConvocadas] = useState<string[]>([]);
-    const [nuevaInstitucion, setNuevaInstitucion] = useState('');
     const [responsables, setResponsables] = useState<string[]>([]);
-    const [nuevoResponsable, setNuevoResponsable] = useState('');
 
     // Single municipio select
     const [selectedLugarEvento, setSelectedLugarEvento] = useState<CatalogoItem | null>(null);
@@ -154,9 +154,7 @@ export default function SolicitarArticulacion() {
             });
             setFormData({ tema: '', fechaInicio: '', fechaFinal: '', jornada: 'Día Completo', transporteMedio: '', transporteNumInstituciones: '', areaId: '', solicitanteId: '' });
             setInstitucionesConvocadas([]);
-            setNuevaInstitucion('');
             setResponsables([]);
-            setNuevoResponsable('');
             setSelectedLugarEvento(null);
         } catch (error) {
             const apiError = error as AxiosError<ApiErrorPayload>;
@@ -275,6 +273,7 @@ export default function SolicitarArticulacion() {
                                             className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.tema ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             placeholder="Describa el tema o actividad de la articulación"
                                         />
+                                        {errors.tema && <p className="text-xs text-red-500">Este campo es obligatorio.</p>}
                                     </div>
 
                                     {/* Fechas y Jornada */}
@@ -290,6 +289,7 @@ export default function SolicitarArticulacion() {
                                                 onChange={handleInputChange}
                                                 className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaInicio ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             />
+                                            {errors.fechaInicio && <p className="text-xs text-red-500">Este campo es obligatorio.</p>}
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
@@ -303,6 +303,7 @@ export default function SolicitarArticulacion() {
                                                 min={formData.fechaInicio}
                                                 className={`w-full h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.fechaFinal ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
                                             />
+                                            {errors.fechaFinal && <p className="text-xs text-red-500">Este campo es obligatorio.</p>}
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm font-semibold text-zinc-700">
@@ -318,6 +319,7 @@ export default function SolicitarArticulacion() {
                                                 <option value="Mañana">Mañana</option>
                                                 <option value="Tarde">Tarde</option>
                                             </select>
+                                            {errors.jornada && <p className="text-xs text-red-500">Este campo es obligatorio.</p>}
                                         </div>
                                     </div>
 
@@ -330,59 +332,13 @@ export default function SolicitarArticulacion() {
                                         <p className="text-sm text-zinc-500 mb-4">
                                             Escriba el nombre de cada institución y presione Enter o Añadir
                                         </p>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={nuevaInstitucion}
-                                                    onChange={(e) => setNuevaInstitucion(e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                            if (nuevaInstitucion.trim()) {
-                                                                setInstitucionesConvocadas(prev => [...prev, nuevaInstitucion.trim()]);
-                                                                setNuevaInstitucion('');
-                                                            }
-                                                        }
-                                                    }}
-                                                    className={`flex-1 h-12 px-4 rounded-lg border focus:ring-primary focus:border-primary transition-all ${errors.institucionesConvocadas && institucionesConvocadas.length === 0 ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}
-                                                    placeholder="Nombre de la institución..."
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (nuevaInstitucion.trim()) {
-                                                            setInstitucionesConvocadas(prev => [...prev, nuevaInstitucion.trim()]);
-                                                            setNuevaInstitucion('');
-                                                        }
-                                                    }}
-                                                    className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">add</span>
-                                                    Añadir
-                                                </button>
-                                            </div>
-                                            <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center flex-wrap gap-2 ${errors.institucionesConvocadas && institucionesConvocadas.length === 0 ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
-                                                {institucionesConvocadas.length === 0 ? (
-                                                    <p className={`text-sm italic ${errors.institucionesConvocadas ? 'text-red-500' : 'text-zinc-400'}`}>
-                                                        No hay instituciones añadidas
-                                                    </p>
-                                                ) : (
-                                                    institucionesConvocadas.map((inst, idx) => (
-                                                        <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-                                                            {inst}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setInstitucionesConvocadas(prev => prev.filter((_, i) => i !== idx))}
-                                                                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                                            >
-                                                                <span className="material-symbols-outlined text-[16px]">close</span>
-                                                            </button>
-                                                        </span>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </div>
+                                        <TagListInput
+                                            values={institucionesConvocadas}
+                                            onChange={setInstitucionesConvocadas}
+                                            placeholder="Nombre de la institución..."
+                                            emptyText="No hay instituciones añadidas"
+                                            hasError={errors.institucionesConvocadas}
+                                        />
                                     </div>
 
                                     {/* Responsable de Articulación */}
@@ -394,57 +350,12 @@ export default function SolicitarArticulacion() {
                                         <p className="text-sm text-zinc-500 mb-4">
                                             Personas responsables de esta articulación
                                         </p>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={nuevoResponsable}
-                                                    onChange={(e) => setNuevoResponsable(e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                            if (nuevoResponsable.trim()) {
-                                                                setResponsables(prev => [...prev, nuevoResponsable.trim()]);
-                                                                setNuevoResponsable('');
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="flex-1 h-12 px-4 rounded-lg border border-zinc-200 focus:ring-primary focus:border-primary transition-all"
-                                                    placeholder="Nombre del responsable..."
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (nuevoResponsable.trim()) {
-                                                            setResponsables(prev => [...prev, nuevoResponsable.trim()]);
-                                                            setNuevoResponsable('');
-                                                        }
-                                                    }}
-                                                    className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">add</span>
-                                                    Añadir
-                                                </button>
-                                            </div>
-                                            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 min-h-[60px] flex items-center flex-wrap gap-2">
-                                                {responsables.length === 0 ? (
-                                                    <p className="text-sm italic text-zinc-400">No hay responsables añadidos</p>
-                                                ) : (
-                                                    responsables.map((r, idx) => (
-                                                        <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-                                                            {r}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setResponsables(prev => prev.filter((_, i) => i !== idx))}
-                                                                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                                            >
-                                                                <span className="material-symbols-outlined text-[16px]">close</span>
-                                                            </button>
-                                                        </span>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </div>
+                                        <TagListInput
+                                            values={responsables}
+                                            onChange={setResponsables}
+                                            placeholder="Nombre del responsable..."
+                                            emptyText="No hay responsables añadidos"
+                                        />
                                     </div>
 
                                     {/* Transporte */}
@@ -470,6 +381,7 @@ export default function SolicitarArticulacion() {
                                                     <option value="Institucional">Institucional</option>
                                                     <option value="No Aplica">No Aplica</option>
                                                 </select>
+                                                {errors.transporteMedio && <p className="text-xs text-red-500">Este campo es obligatorio.</p>}
                                             </div>
 
                                             <div className="flex flex-col gap-2">
@@ -641,38 +553,7 @@ export default function SolicitarArticulacion() {
             )}
 
             {/* Feedback Modal */}
-            {feedbackModal.type && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                        <div className={`p-6 border-b ${feedbackModal.type === 'success' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                    {feedbackModal.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                                </div>
-                                <div>
-                                    <h3 className={`text-lg font-bold ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'}`}>
-                                        {feedbackModal.title}
-                                    </h3>
-                                    {feedbackModal.codigo && (
-                                        <p className="text-green-700 text-sm font-semibold">Código: {feedbackModal.codigo}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-zinc-700 text-sm">{feedbackModal.message}</p>
-                        </div>
-                        <div className="px-6 pb-6 flex justify-end">
-                            <button
-                                onClick={() => setFeedbackModal({ type: null, title: '', message: '' })}
-                                className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer"
-                            >
-                                Aceptar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <FeedbackModal state={feedbackModal} onClose={() => setFeedbackModal({ type: null, title: '', message: '' })} />
         </div>
     );
 }

@@ -22,6 +22,8 @@ export function ViewButton({ onClick }: { onClick: () => void }) {
     return (
         <button
             onClick={onClick}
+            title="Ver"
+            aria-label="Ver"
             className="p-1.5 rounded-lg text-zinc-400 hover:text-primary hover:bg-primary/10 transition-colors"
         >
             <Eye size={16} />
@@ -34,6 +36,7 @@ export function EditButton({ onClick }: { onClick: () => void }) {
         <button
             onClick={onClick}
             title="Editar"
+            aria-label="Editar"
             className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
         >
             <Pencil size={16} />
@@ -46,6 +49,7 @@ export function DeleteButton({ onClick }: { onClick: () => void }) {
         <button
             onClick={onClick}
             title="Eliminar"
+            aria-label="Eliminar"
             className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
         >
             <Trash2 size={16} />

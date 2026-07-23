@@ -1,9 +1,9 @@
 import api from './api';
-import type { IvcRecord, CreateIvcPayload } from '../types/ivc';
+import type { IvcRecord, CreateIvcPayload, IvcCatalogosResponse } from '../types/ivc';
 
 export const ivcService = {
-    getCatalogos: async () => {
-        const response = await api.get('/ivc/catalogos');
+    getCatalogos: async (): Promise<IvcCatalogosResponse> => {
+        const response = await api.get<IvcCatalogosResponse>('/ivc/catalogos');
         return response.data;
     },
 

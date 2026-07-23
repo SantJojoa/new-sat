@@ -47,7 +47,7 @@ export default function DetailModal({ title, codigo, onClose, children, maxWidth
                         <h3 className="text-xl font-black text-zinc-900">{title}</h3>
                         <p className="text-zinc-500 text-sm">Código: <span className="font-mono font-bold text-primary">{codigo}</span></p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
+                    <button onClick={onClose} aria-label="Cerrar" className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors">
                         <XCircle size={24} />
                     </button>
                 </div>

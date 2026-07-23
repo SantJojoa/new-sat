@@ -12,6 +12,37 @@ import { solicitudesUnionService } from "../../services/solicitudesUnionService"
 import { ventanaProgramacionService, type VentanaStatus } from "../../services/ventanaProgramacionService"
 import { io } from "socket.io-client"
 import { canUseInspeccionVigilanciaSp } from "../../utils/userAccess"
+import TagListInput from "../ui/TagListInput"
+
+function ChipList({ items, onRemove, emptyText }: { items: CatalogoItem[], onRemove: (item: CatalogoItem) => void, emptyText: string }) {
+    if (items.length === 0) {
+        return (
+            <p className="text-sm text-zinc-400 italic">
+                {emptyText}
+            </p>
+        );
+    }
+
+    return (
+        <div className="flex flex-wrap gap-2">
+            {items.map((item) => (
+                <span
+                    key={item.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
+                >
+                    {item.name}
+                    <button
+                        onClick={() => onRemove(item)}
+                        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                        type="button"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                </span>
+            ))}
+        </div>
+    );
+}
 
 export default function SolicitarSalida() {
     const { user } = useAuth();
@@ -48,7 +79,6 @@ export default function SolicitarSalida() {
 
     // Transport section state
     const [transporteResponsables, setTransporteResponsables] = useState<string[]>([]);
-    const [nuevoResponsable, setNuevoResponsable] = useState('');
     const [selectedLugarEvento, setSelectedLugarEvento] = useState<CatalogoItem | null>(null);
 
     // Modal states (replaces alerts)
@@ -490,7 +520,6 @@ export default function SolicitarSalida() {
                 setSelectedIDSN([]);
                 setSelectedSubtipos([]);
                 setTransporteResponsables([]);
-                setNuevoResponsable('');
                 setSelectedLugarEvento(null);
             }
         } catch (error) {
@@ -580,36 +609,6 @@ export default function SolicitarSalida() {
         if (selectedEapbActors.length === 0) {
             setSelectedEAPB([]);
         }
-    };
-
-    const ChipList = ({ items, onRemove, emptyText }: { items: CatalogoItem[], onRemove: (item: CatalogoItem) => void, emptyText: string }) => {
-        if (items.length === 0) {
-            return (
-                <p className="text-sm text-zinc-400 italic">
-                    {emptyText}
-                </p>
-            );
-        }
-
-        return (
-            <div className="flex flex-wrap gap-2">
-                {items.map((item) => (
-                    <span
-                        key={item.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
-                    >
-                        {item.name}
-                        <button
-                            onClick={() => onRemove(item)}
-                            className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                            type="button"
-                        >
-                            <span className="material-symbols-outlined text-[16px]">close</span>
-                        </button>
-                    </span>
-                ))}
-            </div>
-        );
     };
 
     if (!isEditing && ventanaLoading) {
@@ -1166,64 +1165,13 @@ export default function SolicitarSalida() {
                                         </p>
                                     </div>
 
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={nuevoResponsable}
-                                                onChange={(e) => setNuevoResponsable(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        if (nuevoResponsable.trim()) {
-                                                            setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
-                                                            setNuevoResponsable('');
-                                                        }
-                                                    }
-                                                }}
-                                                className="flex-1 h-12 px-4 rounded-lg border border-zinc-200 focus:ring-primary focus:border-primary transition-all"
-                                                placeholder="Escriba el nombre del responsable y presione Enter o Añadir"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    if (nuevoResponsable.trim()) {
-                                                        setTransporteResponsables([...transporteResponsables, nuevoResponsable.trim()]);
-                                                        setNuevoResponsable('');
-                                                    }
-                                                }}
-                                                className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-semibold cursor-pointer flex items-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">add</span>
-                                                Añadir
-                                            </button>
-                                        </div>
-                                        <div className={`p-4 bg-zinc-50 rounded-lg border min-h-[60px] flex items-center ${errors.transporteResponsables ? 'border-red-500 ring-1 ring-red-500' : 'border-zinc-200'}`}>
-                                            {transporteResponsables.length === 0 ? (
-                                                <p className={`text-sm italic ${errors.transporteResponsables ? 'text-red-500' : 'text-zinc-400'}`}>
-                                                    No hay responsables añadidos
-                                                </p>
-                                            ) : (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {transporteResponsables.map((responsable, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20"
-                                                        >
-                                                            {responsable}
-                                                            <button
-                                                                onClick={() => setTransporteResponsables(transporteResponsables.filter((_, i) => i !== index))}
-                                                                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                                                type="button"
-                                                            >
-                                                                <span className="material-symbols-outlined text-[16px]">close</span>
-                                                            </button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <TagListInput
+                                        values={transporteResponsables}
+                                        onChange={setTransporteResponsables}
+                                        placeholder="Escriba el nombre del responsable y presione Enter o Añadir"
+                                        emptyText="No hay responsables añadidos"
+                                        hasError={errors.transporteResponsables}
+                                    />
 
                                     {/* Sección de Transporte */}
                                     <div className="pt-6 border-t border-zinc-100 mt-8 mb-6">

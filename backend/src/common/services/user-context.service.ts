@@ -19,4 +19,26 @@ export class UserContextService {
         });
         return userArea?.subdireccion_id || null;
     }
+
+    // Resuelve el área destino de un registro (salida/articulación/asesoría) que se está creando.
+    // Prioriza el área explícita del DTO, luego el área del solicitante en cuyo nombre se
+    // registra (caso admin_subdireccion, que no tiene área propia), y por último el área
+    // del propio usuario autenticado.
+    async resolveTargetAreaId(
+        explicitAreaId: string | undefined | null,
+        solicitanteId: string | undefined | null,
+        user: users,
+    ): Promise<string | null> {
+        if (explicitAreaId) return explicitAreaId;
+
+        if (solicitanteId && solicitanteId !== user.id) {
+            const solicitante = await this.prisma.users.findUnique({
+                where: { id: solicitanteId },
+                select: { area_id: true },
+            });
+            if (solicitante?.area_id) return solicitante.area_id;
+        }
+
+        return user.area_id;
+    }
 }

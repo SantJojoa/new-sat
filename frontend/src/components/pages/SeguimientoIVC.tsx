@@ -7,23 +7,7 @@ import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
 import { salidasService } from "../../services/salidasService";
 import type { SalidaRecord } from "../../types/salidas";
-
-
-const ESTADO_STYLES: Record<string, string> = {
-    pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    aprobada: 'bg-green-100 text-green-800 border-green-200',
-    rechazada: 'bg-red-100 text-red-800 border-red-200',
-    entregada: 'bg-blue-100 text-blue-800 border-blue-200',
-    cancelada: 'bg-zinc-100 text-zinc-600 border-zinc-200',
-};
-
-const ESTADO_LABEL: Record<string, string> = {
-    pendiente: 'Pendiente',
-    aprobada: 'Aprobada',
-    rechazada: 'Rechazada',
-    entregada: 'Entregada',
-    cancelada: 'Cancelada',
-};
+import { ESTADO_STYLES, ESTADO_LABEL } from "../../utils/estados";
 
 const ivcColumns: TableColumn<SalidaRecord>[] = [
     { header: 'Código', render: r => <span className="font-mono font-bold text-primary text-xs">{r.codigo}</span> },

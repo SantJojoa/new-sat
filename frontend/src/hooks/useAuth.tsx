@@ -1,29 +1,6 @@
 import { useState, useEffect, createContext, useContext, type ReactNode } from 'react';
-import axios from 'axios';
+import { api } from '../services/api';
 import type { AuthUser } from '../types/auth';
-
-// Configurar axios
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    withCredentials: true,
-});
-
-// Interceptor para añadir token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
 
 interface AuthContextType {
     user: AuthUser | null;

@@ -61,7 +61,7 @@ export default function CalendarioSalidas() {
     const events: CalendarEvent[] = salidas.map((salida) => {
         const colors = STATUS_COLORS[salida.estado] || STATUS_COLORS.pendiente;
         const endDate = new Date(salida.fecha_final);
-        endDate.setDate(endDate.getDate() + 1);
+        endDate.setUTCDate(endDate.getUTCDate() + 1);
 
         return {
             id: salida.id,

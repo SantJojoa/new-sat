@@ -25,6 +25,8 @@ import { ApproveSalidaDto, RejectSalidaDto, BulkApproveSalidaDto, BulkRejectSali
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { AreaAccessGuard } from '../auth/guards/area-access.guard';
+import { RequireAreaAccess } from '../auth/decorators/area-access.decorator';
 import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
@@ -216,8 +218,9 @@ export class SalidasController {
     }
 
     @Patch(':id/seguimiento-ivc')
-    @UseGuards(PermissionsGuard)
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
     @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('ivc')
     setSeguimientoIvc(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoIvcDto,
@@ -227,8 +230,9 @@ export class SalidasController {
     }
 
     @Patch(':id/seguimiento-articulacion-iv')
-    @UseGuards(PermissionsGuard)
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
     @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('iv')
     setSeguimientoArticulacionIv(
         @Param('id') id: string,
         @Body() dto: SetSeguimientoArticulacionIvDto,

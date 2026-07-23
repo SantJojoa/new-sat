@@ -1,4 +1,4 @@
-import { api as apiClient } from '../api/client';
+import { api as apiClient } from './api';
 
 export interface AppNotification {
     id: string;

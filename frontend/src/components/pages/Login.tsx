@@ -181,6 +181,7 @@ export default function Login() {
                                     <label htmlFor="password" className="text-text-primary text-sm font-semibold leading-normal">
                                         Contrasena
                                     </label>
+                                    {/* TODO: implementar cuando exista servicio de correo */}
                                     <button type="button" className="text-primary text-xs font-semibold hover:underline">
                                         Olvidé mi contraseña
                                     </button>

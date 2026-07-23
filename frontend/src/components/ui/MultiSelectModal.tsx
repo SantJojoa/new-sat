@@ -45,7 +45,7 @@ function MultiSelectModalContent({
                             </div>
                             <h3 className="text-xl font-bold text-zinc-900">{title}</h3>
                         </div>
-                        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
+                        <button onClick={onClose} aria-label="Cerrar" className="text-zinc-400 hover:text-zinc-600 transition-colors" type="button">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>

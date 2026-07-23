@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import { RefreshCcw, Calendar, MapPin, Layers, CheckCircle, AlertCircle, Trash2, X } from 'lucide-react';
+import { RefreshCcw, Calendar, MapPin, Layers, X } from 'lucide-react';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { ivcService } from '../../services/ivcService';
-import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
-import type { IvcRecord, CreateIvcPayload } from '../../types/ivc';
+import FiltersPanel from '../ui/FiltersPanel';
+import type { IvcRecord } from '../../types/ivc';
 import RecordsTable, { ViewButton, EditButton, DeleteButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
+import FeedbackModal from '../ui/FeedbackModal';
+import ConfirmModal from '../ui/ConfirmModal';
+import { useGestionarProgramacion } from '../../hooks/useGestionarProgramacion';
 
 const ivcColumns: TableColumn<IvcRecord>[] = [
     { header: 'Código', render: r => <span className="font-mono font-bold text-primary text-xs">{r.codigo}</span> },
@@ -37,133 +39,15 @@ const ivcColumns: TableColumn<IvcRecord>[] = [
 
 export default function GestionarIvc() {
     const { user } = useAuth();
-    const [records, setRecords] = useState<IvcRecord[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [viewAll, setViewAll] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterArea, setFilterArea] = useState('');
-    const [filterSubdireccion, setFilterSubdireccion] = useState('');
-    const [filterDateStart, setFilterDateStart] = useState('');
-    const [filterDateEnd, setFilterDateEnd] = useState('');
-    const [uniqueSubdirecciones, setUniqueSubdirecciones] = useState<string[]>([]);
-    const [detailRecord, setDetailRecord] = useState<IvcRecord | null>(null);
-    const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string }>({ type: null, title: '', message: '' });
-
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
-    const [editRecord, setEditRecord] = useState<IvcRecord | null>(null);
-    const [deleteRecord, setDeleteRecord] = useState<IvcRecord | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [editForm, setEditForm] = useState<Partial<CreateIvcPayload>>({});
-    const [areasData, setAreasData] = useState<{ id: string; name: string }[]>([]);
-
-    const fetchRecords = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await ivcService.getAll(viewAll);
-            setRecords(data);
-            setUniqueSubdirecciones(Array.from(new Set(data.map(r => r.areas?.subdirecciones?.name).filter(Boolean))) as string[]);
-        } catch (error) {
-            console.error('Error fetching IVC:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [viewAll]);
-
-    useEffect(() => { void fetchRecords(); }, [fetchRecords]);
-
-    useEffect(() => {
-        ivcService.getCatalogos().then((data: { areas: { id: string; name: string }[] }) => setAreasData(data.areas)).catch(console.error);
-    }, []);
-
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setDetailRecord(null);
-                setEditRecord(null);
-                setDeleteRecord(null);
-                setFeedbackModal({ type: null, title: '', message: '' });
-            }
-        };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, []);
-
-    const filtered = records.filter(r => {
-        const term = searchTerm.toLowerCase();
-        const matchSearch = !term || r.codigo.toLowerCase().includes(term) || r.tema.toLowerCase().includes(term) || r.solicitante?.names?.toLowerCase().includes(term) || false;
-        const matchArea = !filterArea || r.areas?.name === filterArea;
-        const matchSubdireccion = !filterSubdireccion || r.areas?.subdirecciones?.name === filterSubdireccion;
-        const matchStart = !filterDateStart || new Date(r.fecha_inicio) >= new Date(filterDateStart);
-        const matchEnd = !filterDateEnd || new Date(r.fecha_final) <= new Date(filterDateEnd);
-        return matchSearch && matchArea && matchSubdireccion && matchStart && matchEnd;
-    });
-
-    const areaOptionsForFilter = filterSubdireccion
-        ? Array.from(new Set(records.filter(r => r.areas?.subdirecciones?.name === filterSubdireccion).map(r => r.areas?.name).filter(Boolean))) as string[]
-        : [];
-
-    const filterValues: Record<string, string> = { search: searchTerm, area: filterArea, subdireccion: filterSubdireccion, dateStart: filterDateStart, dateEnd: filterDateEnd };
-    const filterFields: FilterField[] = [
-        { type: 'search', key: 'search', placeholder: 'Código, tema o solicitante...' },
-        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'subdireccion', emptyLabel: 'Todas las Subdirecciones', options: uniqueSubdirecciones }] : []),
-        ...(isSuperAdmin ? [{ type: 'select' as const, key: 'area', emptyLabel: 'Todas las Áreas', options: areaOptionsForFilter, disabled: !filterSubdireccion, disabledTitle: 'Seleccione primero una subdirección' }] : []),
-        { type: 'date', key: 'dateStart', title: 'Fecha Inicio' },
-        { type: 'date', key: 'dateEnd', title: 'Fecha Final' },
-    ];
-    const handleFilterChange = (key: string, value: string) => {
-        if (key === 'search') setSearchTerm(value);
-        else if (key === 'area') setFilterArea(value);
-        else if (key === 'subdireccion') { setFilterSubdireccion(value); setFilterArea(''); }
-        else if (key === 'dateStart') setFilterDateStart(value);
-        else if (key === 'dateEnd') setFilterDateEnd(value);
-    };
-    const handleResetFilters = () => { setSearchTerm(''); setFilterArea(''); setFilterSubdireccion(''); setFilterDateStart(''); setFilterDateEnd(''); };
-
-    const handleOpenEdit = (r: IvcRecord) => {
-        setEditForm({
-            tema: r.tema,
-            fecha_inicio: r.fecha_inicio.slice(0, 10),
-            fecha_final: r.fecha_final.slice(0, 10),
-            jornada: r.jornada,
-            instituciones_convocadas: r.instituciones_convocadas ?? '',
-            responsable_articulacion: r.responsable_articulacion ?? '',
-            transporte_medio: r.transporte_medio ?? '',
-            transporte_num_instituciones: r.transporte_num_instituciones,
-            area_id: r.area_id,
-        });
-        setEditRecord(r);
-    };
-
-    const handleSave = async () => {
-        if (!editRecord) return;
-        setIsSaving(true);
-        try {
-            await ivcService.update(editRecord.id, editForm);
-            setEditRecord(null);
-            setFeedbackModal({ type: 'success', title: '¡Actualizado!', message: 'El registro IVC fue actualizado exitosamente.' });
-            void fetchRecords();
-        } catch {
-            setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo actualizar el registro IVC.' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!deleteRecord) return;
-        setIsDeleting(true);
-        try {
-            await ivcService.delete(deleteRecord.id);
-            setDeleteRecord(null);
-            setFeedbackModal({ type: 'success', title: '¡Eliminado!', message: 'El registro IVC fue eliminado exitosamente.' });
-            void fetchRecords();
-        } catch {
-            setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo eliminar el registro IVC.' });
-        } finally {
-            setIsDeleting(false);
-        }
-    };
+    const {
+        loading, viewAll, setViewAll, fetchRecords, filtered,
+        detailRecord, setDetailRecord, feedbackModal, setFeedbackModal,
+        editRecord, setEditRecord, deleteRecord, setDeleteRecord,
+        isSaving, isDeleting, editForm, setEditForm, areasData,
+        filterValues, filterFields, handleFilterChange, handleResetFilters,
+        handleOpenEdit, handleSave, handleDelete,
+    } = useGestionarProgramacion(ivcService, isSuperAdmin);
 
     return (
         <div className="bg-bg-light font-display min-h-screen flex h-screen overflow-hidden">
@@ -333,53 +217,25 @@ export default function GestionarIvc() {
                             </div>
                             <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-2">
                                 <button onClick={() => setEditRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">Cancelar</button>
-                                <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer">{isSaving ? 'Guardando...' : 'Guardar'}</button>
+                                <button onClick={() => handleSave('El registro IVC fue actualizado exitosamente.', 'No se pudo actualizar el registro IVC.')} disabled={isSaving} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer">{isSaving ? 'Guardando...' : 'Guardar'}</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {deleteRecord && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
-                            <div className="p-6 border-b bg-red-50 border-red-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
-                                        <Trash2 size={20} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-red-900">Eliminar IVC</h3>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <p className="text-zinc-700 text-sm">¿Está seguro que desea eliminar el registro IVC <span className="font-mono font-bold text-primary">{deleteRecord.codigo}</span>? Esta acción no se puede deshacer.</p>
-                            </div>
-                            <div className="px-6 pb-6 flex justify-end gap-2">
-                                <button onClick={() => setDeleteRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">Cancelar</button>
-                                <button onClick={handleDelete} disabled={isDeleting} className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer">{isDeleting ? 'Eliminando...' : 'Eliminar'}</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <ConfirmModal
+                    open={!!deleteRecord}
+                    danger
+                    title="Eliminar IVC"
+                    message={<p>¿Está seguro que desea eliminar el registro IVC <span className="font-mono font-bold text-primary">{deleteRecord?.codigo}</span>? Esta acción no se puede deshacer.</p>}
+                    confirmLabel="Eliminar"
+                    confirmingLabel="Eliminando..."
+                    isLoading={isDeleting}
+                    onConfirm={() => handleDelete('El registro IVC fue eliminado exitosamente.', 'No se pudo eliminar el registro IVC.')}
+                    onCancel={() => setDeleteRecord(null)}
+                />
 
-                {/* Feedback Modal */}
-                {feedbackModal.type && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
-                            <div className={`p-6 border-b ${feedbackModal.type === 'success' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {feedbackModal.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                                    </div>
-                                    <h3 className={`text-lg font-bold ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{feedbackModal.title}</h3>
-                                </div>
-                            </div>
-                            <div className="p-6"><p className="text-zinc-700 text-sm">{feedbackModal.message}</p></div>
-                            <div className="px-6 pb-6 flex justify-end">
-                                <button onClick={() => setFeedbackModal({ type: null, title: '', message: '' })} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer">Aceptar</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <FeedbackModal state={feedbackModal} onClose={() => setFeedbackModal({ type: null, title: '', message: '' })} />
             </main>
         </div>
     );

@@ -33,18 +33,18 @@ export class IvcService {
         const userType = await this.getUserType(user);
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
 
-        let targetAreaId = user.area_id;
-
-        if (userType.name === 'superadmin' && dto.area_id) {
-            targetAreaId = dto.area_id;
-        }
-
-        if (!targetAreaId) throw new ForbiddenException('El usuario no tiene área asignada');
-
         const solicitanteId =
             (userType.name === 'admin_subdireccion' || userType.name === 'superadmin') && dto.solicitante_id
                 ? dto.solicitante_id
                 : user.id;
+
+        const targetAreaId = await this.userContext.resolveTargetAreaId(
+            userType.name === 'superadmin' ? dto.area_id : undefined,
+            solicitanteId,
+            user,
+        );
+
+        if (!targetAreaId) throw new ForbiddenException('El usuario no tiene área asignada');
 
         const codigo = await this.generateCodigo();
 

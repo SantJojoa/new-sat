@@ -7,9 +7,12 @@ import { UpdateIvcDto } from './dto/update-ivc.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { AreaAccessGuard } from '../auth/guards/area-access.guard';
+import { RequireAreaAccess } from '../auth/decorators/area-access.decorator';
 
 @Controller('ivc')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AreaAccessGuard)
+@RequireAreaAccess('ivc')
 export class IvcController {
     constructor(private readonly ivcService: IvcService) { }
 

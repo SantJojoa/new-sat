@@ -5,7 +5,8 @@ import { asesoriasService } from "../../services/asesoriasService"
 import { useAuth } from "../../hooks/useAuth"
 import type { CreateAsesoriaPayload, AsesoriaAsistente, CatalogoItem } from "../../types/asesorias"
 import type { ApiErrorPayload } from "../../types/api"
-import { CheckCircle, AlertCircle, ClipboardList, Plus, Trash2 } from "lucide-react"
+import { ClipboardList, Plus, Trash2 } from "lucide-react"
+import FeedbackModal from "../ui/FeedbackModal"
 
 
 
@@ -83,6 +84,7 @@ export default function ProgramarAsesoria() {
         e.preventDefault();
         const newErrors: Record<string, boolean> = {};
         if (user?.user_type?.name === 'superadmin' && !formData.areaId) newErrors.areaId = true;
+        if (user?.user_type?.name === 'admin_subdireccion' && !formData.solicitanteId) newErrors.solicitanteId = true;
         if (!formData.fecha) newErrors.fecha = true;
         if (!formData.hora) newErrors.hora = true;
         if (!formData.horaFin) newErrors.horaFin = true;
@@ -171,6 +173,22 @@ export default function ProgramarAsesoria() {
                                             {lideresData.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                                         </select>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {user?.user_type?.name === 'admin_subdireccion' && (
+                            <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
+                                <h2 className="text-base font-semibold text-zinc-800 mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">admin_panel_settings</span>
+                                    Registrador
+                                </h2>
+                                <div>
+                                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Registrador <span className="text-red-500">*</span></label>
+                                    <select name="solicitanteId" value={formData.solicitanteId} onChange={handleInputChange} className={selCls('solicitanteId')}>
+                                        <option value="">Seleccione registrador</option>
+                                        {lideresData.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
                         )}
@@ -312,17 +330,7 @@ export default function ProgramarAsesoria() {
                     </div>
                 </div>
             )}
-            {feedbackModal.type && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
-                        {feedbackModal.type === 'success' ? <CheckCircle className="text-green-500 mb-3 mx-auto" size={48} /> : <AlertCircle className="text-red-500 mb-3 mx-auto" size={48} />}
-                        <h3 className="text-lg font-bold text-zinc-900 mb-1">{feedbackModal.title}</h3>
-                        <p className="text-sm text-zinc-600 mb-2">{feedbackModal.message}</p>
-                        {feedbackModal.codigo && <p className="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-lg text-zinc-800 mb-4">Código: <strong>{feedbackModal.codigo}</strong></p>}
-                        <button onClick={() => setFeedbackModal({ type: null, title: '', message: '' })} className="mt-2 px-6 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors">Cerrar</button>
-                    </div>
-                </div>
-            )}
+            <FeedbackModal state={feedbackModal} onClose={() => setFeedbackModal({ type: null, title: '', message: '' })} />
         </div>
     )
 }

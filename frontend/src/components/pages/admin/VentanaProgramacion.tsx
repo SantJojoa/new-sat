@@ -31,7 +31,7 @@ export default function VentanaProgramacion() {
     useEffect(() => { void fetchStatus(); }, []);
 
     useEffect(() => {
-        const timer = setInterval(() => setNow(new Date()), 1000);
+        const timer = setInterval(() => setNow(new Date()), 30000);
         return () => clearInterval(timer);
     }, []);
 

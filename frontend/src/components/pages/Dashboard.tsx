@@ -35,7 +35,7 @@ export default function Dashboard() {
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios'],
-        'Asesorias': ['programar_asesoria'],
+        'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento']
     };
 
@@ -85,6 +85,11 @@ export default function Dashboard() {
         {
             id: 'programar-asesoria-module',
             modules: { id: 'programar-asesoria-module', name: 'programar_asesoria', description: 'Datos Asesoria', icon: 'support_agent', path: '/programar-asesoria', is_active: true, order: 105 },
+            can_view: true
+        },
+        {
+            id: 'gestionar-asesoria-module',
+            modules: { id: 'gestionar-asesoria-module', name: 'gestionar_asesoria', description: 'Gestionar Asesorías', icon: 'manage_search', path: '/gestionar-asesoria', is_active: true, order: 105 },
             can_view: true
         },
         {

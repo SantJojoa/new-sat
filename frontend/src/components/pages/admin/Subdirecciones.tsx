@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../../api/client';
+import { api } from '../../../services/api';
 import SlideBar from '../../ui/SlideBar';
 import { Plus, Search, Trash2, Edit, X, Building2 } from 'lucide-react';
 

@@ -23,7 +23,7 @@ export class ArticulacionesService {
     }
 
     async create(dto: CreateArticulacionDto, user: users) {
-        const targetAreaId = dto.area_id || user.area_id;
+        const targetAreaId = await this.userContext.resolveTargetAreaId(dto.area_id, dto.solicitante_id, user);
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
 
         const userArea = await this.prisma.areas.findUnique({ where: { id: targetAreaId }, select: { name: true } });

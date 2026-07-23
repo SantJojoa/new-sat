@@ -139,7 +139,7 @@ export class SalidasService {
                 throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${nextMonthName}`);
         }
 
-        const targetAreaId = createSalidaDto.area_id || user.area_id;
+        const targetAreaId = await this.userContext.resolveTargetAreaId(createSalidaDto.area_id, createSalidaDto.solicitante_id, user);
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
 
         const userArea = await this.prisma.areas.findUnique({ where: { id: targetAreaId }, select: { name: true } });

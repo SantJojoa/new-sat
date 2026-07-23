@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, CheckCircle, AlertCircle, Trash2, X, Plus } from 'lucide-react';
+import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, Trash2, X, Plus } from 'lucide-react';
+import FeedbackModal from '../ui/FeedbackModal';
+import ConfirmModal from '../ui/ConfirmModal';
 import SlideBar from '../ui/SlideBar';
 import { useAuth } from '../../hooks/useAuth';
 import { asesoriasService } from '../../services/asesoriasService';
@@ -165,7 +167,8 @@ export default function GestionarAsesoria() {
             setEditRecord(null);
             setFeedbackModal({ type: 'success', title: '¡Actualizado!', message: 'La asesoría fue actualizada exitosamente.' });
             void fetchRecords();
-        } catch {
+        } catch (error) {
+            console.error('Error updating asesoria:', error);
             setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo actualizar la asesoría.' });
         } finally {
             setIsSaving(false);
@@ -180,7 +183,8 @@ export default function GestionarAsesoria() {
             setDeleteRecord(null);
             setFeedbackModal({ type: 'success', title: '¡Eliminado!', message: 'La asesoría fue eliminada exitosamente.' });
             void fetchRecords();
-        } catch {
+        } catch (error) {
+            console.error('Error deleting asesoria:', error);
             setFeedbackModal({ type: 'error', title: 'Error', message: 'No se pudo eliminar la asesoría.' });
         } finally {
             setIsDeleting(false);
@@ -427,46 +431,19 @@ export default function GestionarAsesoria() {
                     </div>
                 )}
 
-                {deleteRecord && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
-                            <div className="p-6 border-b bg-red-50 border-red-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
-                                        <Trash2 size={20} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-red-900">Eliminar Asesoría</h3>
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <p className="text-zinc-700 text-sm">¿Está seguro que desea eliminar la asesoría <span className="font-mono font-bold text-primary">{deleteRecord.codigo}</span>? Esta acción no se puede deshacer.</p>
-                            </div>
-                            <div className="px-6 pb-6 flex justify-end gap-2">
-                                <button onClick={() => setDeleteRecord(null)} className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-sm font-medium transition-colors">Cancelar</button>
-                                <button onClick={handleDelete} disabled={isDeleting} className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer">{isDeleting ? 'Eliminando...' : 'Eliminar'}</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <ConfirmModal
+                    open={!!deleteRecord}
+                    danger
+                    title="Eliminar Asesoría"
+                    message={<p>¿Está seguro que desea eliminar la asesoría <span className="font-mono font-bold text-primary">{deleteRecord?.codigo}</span>? Esta acción no se puede deshacer.</p>}
+                    confirmLabel="Eliminar"
+                    confirmingLabel="Eliminando..."
+                    isLoading={isDeleting}
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteRecord(null)}
+                />
 
-                {feedbackModal.type && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
-                            <div className={`p-6 border-b ${feedbackModal.type === 'success' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${feedbackModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {feedbackModal.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                                    </div>
-                                    <h3 className={`text-lg font-bold ${feedbackModal.type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{feedbackModal.title}</h3>
-                                </div>
-                            </div>
-                            <div className="p-6"><p className="text-zinc-700 text-sm">{feedbackModal.message}</p></div>
-                            <div className="px-6 pb-6 flex justify-end">
-                                <button onClick={() => setFeedbackModal({ type: null, title: '', message: '' })} className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors cursor-pointer">Aceptar</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <FeedbackModal state={feedbackModal} onClose={() => setFeedbackModal({ type: null, title: '', message: '' })} />
             </main>
         </div>
     );
