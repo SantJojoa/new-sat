@@ -5,4 +5,5 @@ export const ALLOWED_CORS_ORIGINS = [
     'http://localhost:8080',
     'http://172.16.4.4',
     'http://172.16.4.4:3000',
+    'https://sivat.idsn.gov.co',
 ];
