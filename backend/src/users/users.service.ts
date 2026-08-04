@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -205,11 +206,24 @@ export class UsersService {
     async remove(id: string) {
         await this.findOne(id);
 
-        return await this.prisma.users.delete({
-            where: {
-                id
-            },
-        });
+        try {
+            return await this.prisma.users.delete({
+                where: {
+                    id
+                },
+            });
+        } catch (error) {
+            const pgCode =
+                (error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined) ??
+                (error as { cause?: { code?: string } })?.cause?.code;
+
+            if (pgCode === 'P2003' || pgCode === '23503' || pgCode === '23001') {
+                throw new ConflictException(
+                    'Este usuario tiene programaciones, articulaciones, IVC, uniones o asesorías asociadas y no se puede eliminar. Desactívalo en su lugar.',
+                );
+            }
+            throw error;
+        }
     }
 
     async deactivate(id: string) {

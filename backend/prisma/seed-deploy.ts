@@ -109,7 +109,7 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
             } else if (m.name === 'solicitar_salida' || m.name === 'gestionar_salida') {
                 if (isAdminSub) perm = { can_view: true, can_create: m.name === 'solicitar_salida', can_edit: false, can_delete: false, can_approve: true };
                 else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: m.name !== 'gestionar_salida', can_approve: false };
-                else if (isUsuario) perm = { can_view: false, can_create: false, can_edit: false, can_delete: false, can_approve: false };
+                else if (isUsuario) perm = { can_view: m.name === 'solicitar_salida', can_create: false, can_edit: false, can_delete: false, can_approve: false };
             } else if (['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'].includes(m.name)) {
                 if (isAdminSub) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: true };
                 else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };

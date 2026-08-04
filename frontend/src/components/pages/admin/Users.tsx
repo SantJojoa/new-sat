@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { api } from '../../../services/api';
 import SlideBar from '../../ui/SlideBar';
 import { Plus, Search, Trash2, Edit, X, UserCog, Ban, CheckCircle } from 'lucide-react';
@@ -115,6 +116,8 @@ export default function Users() {
             fetchData();
         } catch (error) {
             console.error('Error deleting user:', error);
+            const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+            alert(message || 'Error al eliminar usuario.');
         }
     };
 
