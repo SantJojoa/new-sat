@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { ApiErrorPayload } from '../../types/api';
 import type { RouteState } from '../../types/auth';
+import { APP_VERSION } from '../../version';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -111,11 +112,11 @@ export default function Login() {
     return (
         <div className="bg-background-light min-h-screen flex flex-col font-display">
             <main className="flex grow items-center justify-center p-4 md:p-8">
-                <div className="bg-white max-w-[1000px] w-full flex flex-col md:flex-row rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden border border-border-light md:h-[650px]">
-                    <div className="hidden md:flex md:w-1/2 relative min-h-[500px] bg-primary overflow-hidden h-full">
+                <div className="bg-white max-w-250 w-full flex flex-col md:flex-row rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden border border-border-light md:h-162.5">
+                    <div className="hidden md:flex md:w-1/2 relative min-h-125 bg-primary overflow-hidden h-full">
                         <div
                             className="absolute inset-0 bg-cover bg-center"
-                            style={{ backgroundImage: "url('https://www.idsn.gov.co/info/idsn_se/media/galeria12605.jpg')" }}
+                            style={{ backgroundImage: "url(/bg-1.JPG)" }}
                             role="img"
                             aria-label="Imagen institucional"
                         />
@@ -254,7 +255,7 @@ export default function Login() {
                                 Instituto Departamental de Salud de Narino
                             </p>
                             <span className="text-center text-[10px] text-text-secondary">
-                                Versión 0.1.0
+                                Versión {APP_VERSION}
                             </span>
                         </div>
 
