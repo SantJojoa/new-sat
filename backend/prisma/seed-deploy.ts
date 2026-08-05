@@ -108,7 +108,10 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
                 perm = { can_view: true, can_create: true, can_edit: false, can_delete: false, can_approve: false };
             } else if (m.name === 'solicitar_salida' || m.name === 'gestionar_salida') {
                 if (isAdminSub) perm = { can_view: true, can_create: m.name === 'solicitar_salida', can_edit: false, can_delete: false, can_approve: true };
-                else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: m.name !== 'gestionar_salida', can_approve: false };
+                // El líder puede eliminar sus propias programaciones mientras sigan pendientes (lo valida
+                // SalidasService.remove); el botón de eliminar en Gestionar Programación depende de este
+                // permiso sobre el módulo 'gestionar_salida'.
+                else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };
                 else if (isUsuario) perm = { can_view: m.name === 'solicitar_salida', can_create: false, can_edit: false, can_delete: false, can_approve: false };
             } else if (['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'].includes(m.name)) {
                 if (isAdminSub) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: true };
@@ -130,6 +133,19 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
         }
     }
     console.log('✅ Permisos verificados');
+
+    // Corrección puntual: el upsert de arriba no modifica filas ya existentes (`update: {}`), así que
+    // instalaciones seedeadas antes de este cambio quedaron con can_delete=false para 'lider' en
+    // 'gestionar_salida'. Se corrige explícitamente para que el líder pueda eliminar sus propias
+    // programaciones pendientes desde Gestionar Programación.
+    if (userTypes['lider'] && modules['gestionar_salida']) {
+        await prisma.permissions.updateMany({
+            where: { user_type_id: userTypes['lider'].id, module_id: modules['gestionar_salida'].id },
+            data: { can_delete: true },
+        });
+        console.log('✅ Permiso can_delete corregido: lider / gestionar_salida');
+    }
+
     return modules;
 }
 

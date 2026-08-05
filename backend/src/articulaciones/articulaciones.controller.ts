@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException, Request, Query, Res } from '@nestjs/common';
 import { StreamableFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { ArticulacionesService } from './articulaciones.service';
 import { CreateArticulacionDto } from './dto/create-articulacion.dto';
 import { UpdateArticulacionDto } from './dto/update-articulacion.dto';
+import { SetSeguimientoArticulacionDto } from './dto/set-seguimiento-articulacion.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
@@ -101,5 +104,67 @@ export class ArticulacionesController {
     @RequirePermissions('solicitar_articulacion', 'delete')
     remove(@Param('id') id: string, @Request() req) {
         return this.articulacionesService.remove(id, req.user);
+    }
+
+    @Patch(':id/seguimiento-articulacion')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    setSeguimientoArticulacion(
+        @Param('id') id: string,
+        @Body() dto: SetSeguimientoArticulacionDto,
+        @Request() req
+    ) {
+        return this.articulacionesService.setSeguimientoArticulacion(id, dto, req.user);
+    }
+
+    @Get(':id/certificado-articulacion')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async getCertificadoArticulacion(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const buffer = await this.articulacionesService.generateCertificadoArticulacion(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="certificado-articulacion-${id}.pdf"`,
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento-articulacion/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+            cb(null, true);
+        },
+    }))
+    uploadActaArticulacion(
+        @Param('id') id: string,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
+    ) {
+        return this.articulacionesService.uploadActaArticulacion(id, file, req.user);
+    }
+
+    @Get(':id/seguimiento-articulacion/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async downloadActaArticulacion(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const { buffer, nombre } = await this.articulacionesService.getActaArchivoArticulacion(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${nombre}"`,
+        });
+        return new StreamableFile(buffer);
     }
 }

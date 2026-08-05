@@ -26,6 +26,8 @@ import SeguimientoArticulacionIV from './src/components/pages/SeguimientoArticul
 import ProgramarAsesoria from './src/components/pages/ProgramarAsesoria'
 import GestionarAsesoria from './src/components/pages/GestionarAsesoria'
 import SeguimientoAcompanamiento from './src/components/pages/SeguimientoAcompanamiento'
+import SeguimientoArticulacion from './src/components/pages/SeguimientoArticulacion'
+import ActaAcompanamientoNoRegistrado from './src/components/pages/ActaAcompanamientoNoRegistrado'
 import NotFound from './src/components/pages/NotFound'
 
 function App() {
@@ -199,6 +201,18 @@ function App() {
                         <Route path="seguimiento-acompanamiento" element={
                             <ProtectedRoute moduleName="seguimiento_acompanamiento">
                                 <SeguimientoAcompanamiento />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="seguimiento-articulacion" element={
+                            <ProtectedRoute moduleName="seguimiento_articulacion">
+                                <SeguimientoArticulacion />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="acompanamiento-no-registrado" element={
+                            <ProtectedRoute moduleName="seguimiento_acompanamiento">
+                                <ActaAcompanamientoNoRegistrado />
                             </ProtectedRoute>
                         } />
                     </Route>

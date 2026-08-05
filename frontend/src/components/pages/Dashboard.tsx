@@ -36,7 +36,7 @@ export default function Dashboard() {
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento']
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento', 'seguimiento_articulacion', 'acompanamiento_no_registrado']
     };
 
     const getCategory = (moduleName: string) => {
@@ -95,6 +95,16 @@ export default function Dashboard() {
         {
             id: 'seguimiento-acompanamiento-module',
             modules: { id: 'seguimiento-acompanamiento-module', name: 'seguimiento_acompanamiento', description: 'Seguimiento de Acompañamiento', icon: 'handshake', path: '/seguimiento-acompanamiento', is_active: true, order: 106 },
+            can_view: true
+        },
+        {
+            id: 'seguimiento-articulacion-module',
+            modules: { id: 'seguimiento-articulacion-module', name: 'seguimiento_articulacion', description: 'Seguimiento de Articulaciones', icon: 'hub', path: '/seguimiento-articulacion', is_active: true, order: 107 },
+            can_view: true
+        },
+        {
+            id: 'acompanamiento-no-registrado-module',
+            modules: { id: 'acompanamiento-no-registrado-module', name: 'acompanamiento_no_registrado', description: 'Acta de Acompañamiento No Registrado', icon: 'note_add', path: '/acompanamiento-no-registrado', is_active: true, order: 108 },
             can_view: true
         }
     ];

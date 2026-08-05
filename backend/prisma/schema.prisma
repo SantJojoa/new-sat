@@ -20,6 +20,7 @@ model areas {
   articulaciones            articulaciones[]    @relation("AreasArticulaciones")
   ivc                       ivc[]               @relation("AreasIvc")
   asesorias                 asesorias[]         @relation("AreasAsesorias")
+  acompanamientos_no_registrados acompanamientos_no_registrados[]
 }
 
 model subdirecciones {
@@ -69,6 +70,7 @@ model users {
   articulaciones_solicitadas    articulaciones[]    @relation("SolicitanteArticulaciones")
   ivc_solicitadas               ivc[]               @relation("SolicitanteIvc")
   asesorias_registradas         asesorias[]         @relation("AsesoriasRegistradas")
+  acompanamientos_no_registrados acompanamientos_no_registrados[] @relation("RegistradorAcompanamientoNoRegistrado")
 }
 
 model notifications {
@@ -389,8 +391,46 @@ model articulaciones {
   solicitante users @relation("SolicitanteArticulaciones", fields: [solicitante_id], references: [id])
   areas       areas @relation("AreasArticulaciones", fields: [area_id], references: [id])
 
+  seguimiento_articulacion seguimiento_articulacion?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model seguimiento_articulacion {
+  id             String @id @default(cuid())
+  articulacion_id String @unique
+
+  se_programo Boolean @default(false)
+  se_realizo  Boolean
+
+  nombre_reunion     String?
+  fecha_reunion      DateTime?
+  hora_inicial       String?
+  hora_final         String?
+  acta_numero        String?
+  institucion        String?
+  municipio          String?
+  lugar              String?
+  material_entregado String?
+
+  asistentes    Json?
+  orden_del_dia Json?
+  desarrollo    String?
+  conclusiones  String?
+  compromisos   Json?
+
+  proxima_lugar String?
+  proxima_fecha DateTime?
+  proxima_hora  String?
+
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  articulacion articulaciones @relation(fields: [articulacion_id], references: [id], onDelete: Cascade)
 }
 
 model ivc {
@@ -495,4 +535,41 @@ model asesoria_asistentes {
   movil          String?
 
   asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
+}
+
+model acompanamientos_no_registrados {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  nombre_reunion     String?
+  fecha_reunion      DateTime?
+  hora_inicial       String?
+  hora_final         String?
+  acta_numero        String?
+  institucion        String?
+  municipio          String?
+  lugar              String?
+  material_entregado String?
+
+  asistentes    Json?
+  orden_del_dia Json?
+  desarrollo    String?
+  conclusiones  String?
+  compromisos   Json?
+
+  proxima_lugar String?
+  proxima_fecha DateTime?
+  proxima_hora  String?
+
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
+
+  area_id        String
+  registrador_id String
+
+  areas       areas @relation(fields: [area_id], references: [id])
+  registrador users @relation("RegistradorAcompanamientoNoRegistrado", fields: [registrador_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

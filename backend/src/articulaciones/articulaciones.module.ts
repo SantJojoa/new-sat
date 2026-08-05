@@ -5,12 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { ArticulacionesExcelReport } from './reports/articulaciones-excel.report';
 import { ArticulacionesPdfReport } from './reports/articulaciones-pdf.report';
+import { ArticulacionCertificateReport } from './reports/articulacion-certificate.report';
 import { CommonModule } from '../common/common.module';
 
 @Module({
     imports: [AuthModule, CommonModule],
     controllers: [ArticulacionesController],
-    providers: [ArticulacionesService, PrismaService, ArticulacionesExcelReport, ArticulacionesPdfReport],
+    providers: [ArticulacionesService, PrismaService, ArticulacionesExcelReport, ArticulacionesPdfReport, ArticulacionCertificateReport],
     exports: [ArticulacionesService],
 })
 export class ArticulacionesModule { }

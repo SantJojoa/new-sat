@@ -2,9 +2,11 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateArticulacionDto } from './dto/create-articulacion.dto';
 import { UpdateArticulacionDto } from './dto/update-articulacion.dto';
+import { SetSeguimientoArticulacionDto } from './dto/set-seguimiento-articulacion.dto';
 import { users } from '@prisma/client';
 import { ArticulacionesExcelReport } from './reports/articulaciones-excel.report';
 import { ArticulacionesPdfReport } from './reports/articulaciones-pdf.report';
+import { ArticulacionCertificateReport } from './reports/articulacion-certificate.report';
 import { parseDateLocal } from '../common/utils/date.util';
 import { UserContextService } from '../common/services/user-context.service';
 import { getEstadisticasGenericas } from '../common/utils/estadisticas.util';
@@ -15,8 +17,38 @@ export class ArticulacionesService {
         private prisma: PrismaService,
         private excelReport: ArticulacionesExcelReport,
         private pdfReport: ArticulacionesPdfReport,
+        private articulacionCertificate: ArticulacionCertificateReport,
         private userContext: UserContextService,
     ) { }
+
+    // Excluye "archivo_manual" (Bytes) de las consultas de listado/detalle para no
+    // transferir el PDF completo en cada carga; solo se expone el nombre del archivo.
+    private readonly seguimientoArticulacionSelect = {
+        id: true,
+        articulacion_id: true,
+        se_programo: true,
+        se_realizo: true,
+        nombre_reunion: true,
+        fecha_reunion: true,
+        hora_inicial: true,
+        hora_final: true,
+        acta_numero: true,
+        institucion: true,
+        municipio: true,
+        lugar: true,
+        material_entregado: true,
+        asistentes: true,
+        orden_del_dia: true,
+        desarrollo: true,
+        conclusiones: true,
+        compromisos: true,
+        proxima_lugar: true,
+        proxima_fecha: true,
+        proxima_hora: true,
+        archivo_manual_nombre: true,
+        created_at: true,
+        updated_at: true,
+    };
 
     private async getUserType(user: users) {
         return this.userContext.getUserType(user);
@@ -87,6 +119,7 @@ export class ArticulacionesService {
                 solicitante: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdirecciones: { select: { id: true, name: true } } } },
                 lugar_evento: true,
+                seguimiento_articulacion: { select: this.seguimientoArticulacionSelect },
             },
             orderBy: { fecha_inicio: 'desc' }
         });
@@ -99,6 +132,7 @@ export class ArticulacionesService {
                 solicitante: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true } },
                 lugar_evento: true,
+                seguimiento_articulacion: { select: this.seguimientoArticulacionSelect },
             }
         });
 
@@ -190,5 +224,89 @@ export class ArticulacionesService {
             lideres: lideres.map(l => ({ id: l.id, name: `${l.names} ${l.last_name}`, area_id: l.area_id || undefined })),
             subdirecciones: subdirecciones.map(s => ({ id: s.id, name: s.name })),
         };
+    }
+
+    async setSeguimientoArticulacion(id: string, dto: SetSeguimientoArticulacionDto, user: users) {
+        await this.findOne(id, user);
+
+        const existente = await this.prisma.seguimiento_articulacion.findUnique({ where: { articulacion_id: id }, select: { archivo_manual_nombre: true } });
+        if (existente?.archivo_manual_nombre) {
+            throw new BadRequestException('No se puede diligenciar el formulario porque ya se subió un acta escaneada para esta articulación');
+        }
+
+        const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
+        const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;
+
+        const data = {
+            se_programo: dto.se_programo,
+            se_realizo: dto.se_realizo,
+            nombre_reunion: dto.nombre_reunion ?? null,
+            fecha_reunion: fechaReunion,
+            hora_inicial: dto.hora_inicial ?? null,
+            hora_final: dto.hora_final ?? null,
+            acta_numero: dto.acta_numero ?? null,
+            institucion: dto.institucion ?? null,
+            municipio: dto.municipio ?? null,
+            lugar: dto.lugar ?? null,
+            material_entregado: dto.material_entregado ?? null,
+            asistentes: dto.asistentes as any,
+            orden_del_dia: dto.orden_del_dia as any,
+            desarrollo: dto.desarrollo ?? null,
+            conclusiones: dto.conclusiones ?? null,
+            compromisos: dto.compromisos as any,
+            proxima_lugar: dto.proxima_lugar ?? null,
+            proxima_fecha: proximaFecha,
+            proxima_hora: dto.proxima_hora ?? null,
+        };
+
+        return this.prisma.seguimiento_articulacion.upsert({
+            where: { articulacion_id: id },
+            create: { articulacion_id: id, ...data },
+            update: data,
+            select: this.seguimientoArticulacionSelect,
+        });
+    }
+
+    async generateCertificadoArticulacion(id: string, user: users): Promise<Buffer> {
+        const articulacion = await this.findOne(id, user);
+        return this.articulacionCertificate.generate(articulacion);
+    }
+
+    async uploadActaArticulacion(id: string, file: Express.Multer.File, user: users) {
+        if (!file) throw new BadRequestException('No se recibió ningún archivo');
+        await this.findOne(id, user);
+
+        const existente = await this.prisma.seguimiento_articulacion.findUnique({ where: { articulacion_id: id }, select: { se_realizo: true, archivo_manual_nombre: true } });
+        if (existente?.se_realizo && !existente.archivo_manual_nombre) {
+            throw new BadRequestException('No se puede subir un acta escaneada porque ya se generó el acta por formulario');
+        }
+
+        const archivo = new Uint8Array(file.buffer);
+
+        return this.prisma.seguimiento_articulacion.upsert({
+            where: { articulacion_id: id },
+            create: {
+                articulacion_id: id,
+                se_programo: true,
+                se_realizo: true,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            update: {
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            select: this.seguimientoArticulacionSelect,
+        });
+    }
+
+    async getActaArchivoArticulacion(id: string, user: users): Promise<{ buffer: Buffer; nombre: string }> {
+        await this.findOne(id, user);
+        const seguimiento = await this.prisma.seguimiento_articulacion.findUnique({
+            where: { articulacion_id: id },
+            select: { archivo_manual: true, archivo_manual_nombre: true },
+        });
+        if (!seguimiento?.archivo_manual) throw new NotFoundException('No hay un acta escaneada cargada para esta articulación');
+        return { buffer: Buffer.from(seguimiento.archivo_manual), nombre: seguimiento.archivo_manual_nombre || `acta-${id}.pdf` };
     }
 }

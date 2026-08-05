@@ -175,6 +175,20 @@ export default function SlideBar() {
             label: 'Seguimiento de Acompañamiento',
             icon: 'handshake',
             href: '/seguimiento-acompanamiento'
+        },
+        {
+            id: 'seguimiento-articulacion-module',
+            name: 'seguimiento_articulacion',
+            label: 'Seguimiento de Articulaciones',
+            icon: 'hub',
+            href: '/seguimiento-articulacion'
+        },
+        {
+            id: 'acompanamiento-no-registrado-module',
+            name: 'acompanamiento_no_registrado',
+            label: 'Acta de Acompañamiento No Registrado',
+            icon: 'note_add',
+            href: '/acompanamiento-no-registrado'
         }
     ];
 
@@ -193,7 +207,7 @@ export default function SlideBar() {
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
-        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento'],
+        'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento', 'seguimiento_articulacion', 'acompanamiento_no_registrado'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
     };
