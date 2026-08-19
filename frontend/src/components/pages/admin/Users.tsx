@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { api } from '../../../services/api';
 import SlideBar from '../../ui/SlideBar';
-import { Plus, Search, Trash2, Edit, X, UserCog, Ban, CheckCircle } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, X, UserCog, Ban, CheckCircle, Upload } from 'lucide-react';
+import BulkUploadUsersModal from './BulkUploadUsersModal';
 
 interface UserType {
     id: string;
@@ -46,6 +47,7 @@ export default function Users() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
@@ -195,13 +197,22 @@ export default function Users() {
                             <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3"><UserCog className="text-primary" size={32} />Usuarios</h1>
                             <p className="text-zinc-500 mt-2">Gestiona los usuarios, roles y permisos</p>
                         </div>
-                        <button
-                            onClick={() => openModal()}
-                            className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors"
-                        >
-                            <Plus size={20} />
-                            Nuevo Usuario
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsBulkModalOpen(true)}
+                                className="bg-white text-zinc-700 border border-zinc-300 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-zinc-100 transition-colors"
+                            >
+                                <Upload size={20} />
+                                Cargar desde Excel
+                            </button>
+                            <button
+                                onClick={() => openModal()}
+                                className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors"
+                            >
+                                <Plus size={20} />
+                                Nuevo Usuario
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
@@ -476,6 +487,16 @@ export default function Users() {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {isBulkModalOpen && (
+                    <BulkUploadUsersModal
+                        userTypes={userTypes}
+                        areas={areas}
+                        subdirecciones={subdirecciones}
+                        onClose={() => setIsBulkModalOpen(false)}
+                        onCompleted={fetchData}
+                    />
                 )}
             </main>
         </div>
