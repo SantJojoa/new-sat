@@ -76,9 +76,10 @@ export default function GestionarSalida() {
 
     const isAdmin = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
+    const canManageJoinRequests = isAdmin || salidas.some(s => s.solicitante_id === user?.id);
 
     const fetchJoinRequests = useCallback(async () => {
-        if (!isAdmin) return;
+        if (!canManageJoinRequests) return;
         setJoinRequestsLoading(true);
         try {
             const data = await solicitudesUnionService.getAll();
@@ -88,7 +89,7 @@ export default function GestionarSalida() {
         } finally {
             setJoinRequestsLoading(false);
         }
-    }, [isAdmin]);
+    }, [canManageJoinRequests]);
 
     const handleJoinResolve = async () => {
         if (!joinResolveModal.solicitudId || !joinResolveModal.type) return;
@@ -478,7 +479,7 @@ export default function GestionarSalida() {
                                     {viewAll ? 'Viendo Todas las Áreas' : 'Ver Todas las Áreas'}
                                 </button>
                             )}
-                            {isAdmin && (
+                            {canManageJoinRequests && (
                                 <button
                                     onClick={() => { setJoinRequestsTab(true); void fetchJoinRequests(); }}
                                     className="px-4 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 relative bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-50"
@@ -547,7 +548,7 @@ export default function GestionarSalida() {
                 </div>
 
                 {/* Join Requests Modal */}
-                {isAdmin && joinRequestsTab && (
+                {canManageJoinRequests && joinRequestsTab && (
                     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) setJoinRequestsTab(false); }}>
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col animate-slideUp overflow-hidden">
                             <div className="p-4 sm:p-5 border-b border-zinc-200 bg-blue-50/60 flex items-center justify-between gap-3 shrink-0">

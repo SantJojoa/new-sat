@@ -1,6 +1,6 @@
 import {
     Controller, Get, Post, Body, Patch, Param, Delete, UseGuards,
-    UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile,
+    UseInterceptors, UploadedFile, BadRequestException, Res, StreamableFile, Query,
 } from "@nestjs/common";
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -10,6 +10,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { BulkUploadUsersDto } from "./dto/bulk-upload-users.dto";
 import { ConfirmBulkUsersDto } from "./dto/confirm-bulk-users.dto";
+import { BulkUpdateRoleDto } from "./dto/bulk-update-role.dto";
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
@@ -35,6 +36,27 @@ export class UsersController {
     @RequirePermissions('usuarios', 'view')
     getUserTypes() {
         return this.usersService.findUserTypes();
+    }
+
+    @Get('export')
+    @RequirePermissions('usuarios', 'view')
+    async exportUsers(
+        @Query('subdireccion_id') subdireccionId: string | undefined,
+        @Query('area_id') areaId: string | undefined,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const buffer = await this.usersService.exportUsersToExcel({ subdireccionId, areaId });
+        res.set({
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="usuarios.xlsx"',
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Patch('bulk/role')
+    @RequirePermissions('usuarios', 'edit')
+    bulkUpdateRole(@Body() dto: BulkUpdateRoleDto) {
+        return this.usersService.bulkUpdateRole(dto);
     }
 
     @Get('bulk-upload/template')

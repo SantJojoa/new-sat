@@ -84,8 +84,8 @@ export class SolicitudesUnionService {
                 }
             };
         } else {
-            // Regular user sees only their own requests
-            where = { solicitante_id: user.id };
+            // Regular user sees their own requests, plus requests to salidas they created
+            where = { OR: [{ solicitante_id: user.id }, { salida: { solicitante_id: user.id } }] };
         }
 
         return this.prisma.solicitudes_union.findMany({
@@ -124,7 +124,9 @@ export class SolicitudesUnionService {
             });
         }
 
-        return 0;
+        return this.prisma.solicitudes_union.count({
+            where: { estado: 'pendiente', salida: { solicitante_id: user.id } }
+        });
     }
 
     async accept(id: string, dto: ResolveSolicitudUnionDto, user: users) {
@@ -136,10 +138,11 @@ export class SolicitudesUnionService {
         if (solicitud.estado !== 'pendiente') throw new BadRequestException('La solicitud ya fue procesada');
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || ''))
-            throw new ForbiddenException('No autorizado');
+        const isOwner = solicitud.salida.solicitante_id === user.id;
+        const isAdminType = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '');
+        if (!isAdminType && !isOwner) throw new ForbiddenException('No autorizado');
 
-        if (userType?.name === 'admin_subdireccion') {
+        if (isAdminType && userType?.name === 'admin_subdireccion' && !isOwner) {
             const subdireccionId = await this.getUserSubdireccionId(user);
             if (solicitud.salida.areas.subdireccion_id !== subdireccionId)
                 throw new ForbiddenException('Esta solicitud no pertenece a tu subdirección');
@@ -181,10 +184,11 @@ export class SolicitudesUnionService {
         if (solicitud.estado !== 'pendiente') throw new BadRequestException('La solicitud ya fue procesada');
 
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
-        if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || ''))
-            throw new ForbiddenException('No autorizado');
+        const isOwner = solicitud.salida.solicitante_id === user.id;
+        const isAdminType = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '');
+        if (!isAdminType && !isOwner) throw new ForbiddenException('No autorizado');
 
-        if (userType?.name === 'admin_subdireccion') {
+        if (isAdminType && userType?.name === 'admin_subdireccion' && !isOwner) {
             const subdireccionId = await this.getUserSubdireccionId(user);
             if (solicitud.salida.areas.subdireccion_id !== subdireccionId)
                 throw new ForbiddenException('Esta solicitud no pertenece a tu subdirección');

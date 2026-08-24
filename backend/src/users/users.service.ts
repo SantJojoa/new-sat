@@ -5,6 +5,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { BulkUploadUsersDto } from "./dto/bulk-upload-users.dto";
 import { ConfirmBulkUsersDto } from "./dto/confirm-bulk-users.dto";
+import { BulkUpdateRoleDto } from "./dto/bulk-update-role.dto";
 import * as bcrypt from 'bcrypt';
 import * as ExcelJS from 'exceljs';
 
@@ -269,6 +270,45 @@ export class UsersService {
             where: { id },
             data: { is_active: true },
         });
+    }
+
+    async bulkUpdateRole(dto: BulkUpdateRoleDto) {
+        const userType = await this.prisma.user_types.findUnique({ where: { id: dto.user_type_id } });
+        if (!userType) throw new BadRequestException('Tipo de usuario no encontrado');
+
+        const targetUsers = await this.prisma.users.findMany({ where: { id: { in: dto.user_ids } } });
+
+        const results: { id: string; status: 'ok' | 'error'; message?: string }[] = [];
+
+        for (const userId of dto.user_ids) {
+            const target = targetUsers.find(u => u.id === userId);
+            if (!target) {
+                results.push({ id: userId, status: 'error', message: 'Usuario no encontrado' });
+                continue;
+            }
+
+            const nextAreaId = userType.name === 'admin_subdireccion' ? null : target.area_id;
+            if (userType.name !== 'admin_subdireccion' && !nextAreaId) {
+                results.push({ id: userId, status: 'error', message: 'El usuario no tiene un área asignada, requerida para este rol' });
+                continue;
+            }
+
+            try {
+                await this.prisma.users.update({
+                    where: { id: userId },
+                    data: { user_type_id: dto.user_type_id, area_id: nextAreaId },
+                });
+                results.push({ id: userId, status: 'ok' });
+            } catch {
+                results.push({ id: userId, status: 'error', message: 'Error al actualizar el usuario' });
+            }
+        }
+
+        return {
+            updated: results.filter(r => r.status === 'ok').length,
+            failed: results.filter(r => r.status === 'error').length,
+            results,
+        };
     }
 
     private stripDiacritics(value: string): string {
@@ -603,6 +643,62 @@ export class UsersService {
             email: 'santiago.jojoa@example.com',
             charge: 'Profesional Universitario',
         });
+
+        return Buffer.from(await workbook.xlsx.writeBuffer());
+    }
+
+    async exportUsersToExcel(filters: { subdireccionId?: string; areaId?: string }): Promise<Buffer> {
+        const where: Prisma.usersWhereInput = {};
+        if (filters.areaId) {
+            where.area_id = filters.areaId;
+        } else if (filters.subdireccionId) {
+            where.OR = [
+                { subdireccion_id: filters.subdireccionId },
+                { areas: { subdireccion_id: filters.subdireccionId } },
+            ];
+        }
+
+        const users = await this.prisma.users.findMany({
+            where,
+            include: this.userInclude,
+            orderBy: { names: 'asc' },
+        });
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Usuarios');
+
+        sheet.columns = [
+            { header: 'Nombres', key: 'names', width: 22 },
+            { header: 'Apellidos', key: 'last_name', width: 22 },
+            { header: 'Usuario', key: 'username', width: 20 },
+            { header: 'Email', key: 'email', width: 30 },
+            { header: 'Identificación', key: 'num_id', width: 18 },
+            { header: 'Cargo', key: 'charge', width: 26 },
+            { header: 'Rol', key: 'role', width: 20 },
+            { header: 'Subdirección', key: 'subdireccion', width: 26 },
+            { header: 'Área', key: 'area', width: 26 },
+            { header: 'Estado', key: 'status', width: 12 },
+        ];
+
+        sheet.getRow(1).eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+        });
+
+        for (const user of users) {
+            sheet.addRow({
+                names: user.names,
+                last_name: user.last_name,
+                username: user.username,
+                email: user.email,
+                num_id: user.num_id,
+                charge: user.charge || '',
+                role: user.user_types?.name || '',
+                subdireccion: user.subdirecciones?.name || user.areas?.subdirecciones?.name || '',
+                area: user.user_types?.name === 'admin_subdireccion' ? '' : (user.areas?.name || ''),
+                status: user.is_active ? 'Activo' : 'Inactivo',
+            });
+        }
 
         return Buffer.from(await workbook.xlsx.writeBuffer());
     }
