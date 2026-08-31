@@ -102,7 +102,6 @@ export default function SolicitarSalida() {
         jornada: string;
         area: string;
         solicitante: string;
-        municipios: string[];
         ips: string[];
         entidades: string[];
         eapb: string[];
@@ -1669,11 +1668,6 @@ export default function SolicitarSalida() {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-2">
-                                                        {c.municipios?.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {c.municipios.map((m, i) => <span key={`m-${i}`} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] border border-blue-200">{m}</span>)}
-                                                            </div>
-                                                        )}
                                                         {c.ips?.length > 0 && (
                                                             <div className="flex flex-wrap gap-1">
                                                                 {c.ips.map((item, i) => <span key={`i-${i}`} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] border border-indigo-200">{item}</span>)}
@@ -1699,7 +1693,7 @@ export default function SolicitarSalida() {
                                                                 {c.idsn.map((item, i) => <span key={`id-${i}`} className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-[10px] border border-rose-200">{item}</span>)}
                                                             </div>
                                                         )}
-                                                        {(!c.municipios?.length && !c.ips?.length && !c.eapb?.length && !c.entidades?.length && !c.organizaciones?.length && !c.idsn?.length) && (
+                                                        {(!c.ips?.length && !c.eapb?.length && !c.entidades?.length && !c.organizaciones?.length && !c.idsn?.length) && (
                                                             <span className="text-zinc-400 italic text-xs">Ninguno</span>
                                                         )}
                                                     </div>

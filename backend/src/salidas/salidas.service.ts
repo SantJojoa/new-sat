@@ -68,8 +68,11 @@ export class SalidasService {
             ? {}
             : { OR: [{ jornada: 'Completa' }, { jornada: jornada }] };
 
+        // El municipio no determina conflicto por sí solo: distintos actores pueden
+        // coincidir en el mismo municipio y fecha sin generar cruce de agenda. Un
+        // conflicto real requiere que se comparta un actor (IPS/EAPB/entidad/
+        // organización/IDSN) entre ambas programaciones.
         const resourceOr: any[] = [
-            ...(municipios.length > 0 ? [{ municipios: { some: { id: { in: municipios } } } }] : []),
             ...ips_actores.map(item => ({
                 salida_ips: { some: { ips_id: item.ips_id, actor_id: item.actor_id ?? null } }
             })),
@@ -97,7 +100,7 @@ export class SalidasService {
         const conflicts = await this.prisma.salidas.findMany({
             where: whereClause,
             include: {
-                solicitante: true, areas: true, municipios: true,
+                solicitante: true, areas: true,
                 salida_ips: { include: { ips: true, actor: true } }, entidades: true,
                 salida_eapb: { include: { eapb: true, actor: true } },
                 organizaciones: true, idsn: true
@@ -105,6 +108,14 @@ export class SalidasService {
         });
 
         if (conflicts.length > 0) {
+            // Solo se listan los actores que realmente coinciden con la solicitud
+            // entrante, no todos los registrados en la programación en conflicto.
+            const ipsActorKeys = new Set(ips_actores.map(item => `${item.ips_id}::${item.actor_id ?? ''}`));
+            const eapbActorKeys = new Set(eapb_actores.map(item => `${item.eapb_id}::${item.actor_id ?? ''}`));
+            const entidadesSet = new Set(entidades);
+            const organizacionesSet = new Set(organizaciones);
+            const idsnSet = new Set(idsn);
+
             throw new ConflictException({
                 message: `Se encontraron ${conflicts.length} actividad(es) en conflicto`,
                 conflicts: conflicts.map(c => ({
@@ -112,10 +123,15 @@ export class SalidasService {
                     fecha_inicio: c.fecha_inicio, fecha_final: c.fecha_final, jornada: c.jornada,
                     area: c.areas.name,
                     solicitante: `${c.solicitante.names} ${c.solicitante.last_name}`,
-                    municipios: c.municipios.map(m => m.name), ips: c.salida_ips.map((m: any) => m.ips.type + (m.actor ? ' - ' + m.actor.name : '')),
-                    entidades: c.entidades.map(m => m.name),
-                    eapb: c.salida_eapb.map(m => m.eapb.name),
-                    organizaciones: c.organizaciones.map(m => m.name), idsn: c.idsn.map(m => m.name),
+                    ips: c.salida_ips
+                        .filter((m: any) => ipsActorKeys.has(`${m.ips_id}::${m.actor_id ?? ''}`))
+                        .map((m: any) => m.ips.type + (m.actor ? ' - ' + m.actor.name : '')),
+                    entidades: c.entidades.filter(m => entidadesSet.has(m.id)).map(m => m.name),
+                    eapb: c.salida_eapb
+                        .filter((m: any) => eapbActorKeys.has(`${m.eapb_id}::${m.actor_id ?? ''}`))
+                        .map((m: any) => m.eapb.name),
+                    organizaciones: c.organizaciones.filter(m => organizacionesSet.has(m.id)).map(m => m.name),
+                    idsn: c.idsn.filter(m => idsnSet.has(m.id)).map(m => m.name),
                 }))
             });
         }
