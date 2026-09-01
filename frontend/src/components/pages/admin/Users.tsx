@@ -548,7 +548,7 @@ export default function Users() {
                                             type="text"
                                             required
                                             value={formData.num_id}
-                                            onChange={(e) => setFormData({ ...formData, num_id: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, num_id: e.target.value.replace(/\s/g, '') })}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
@@ -573,7 +573,7 @@ export default function Users() {
                                             type="text"
                                             required
                                             value={formData.username}
-                                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, username: e.target.value.replace(/\s/g, '') })}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>
@@ -585,7 +585,7 @@ export default function Users() {
                                             type="password"
                                             required={!editingId}
                                             value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value.replace(/\s/g, '') })}
                                             className="w-full px-4 py-2 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                         />
                                     </div>

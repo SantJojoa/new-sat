@@ -1,12 +1,14 @@
-import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean, Matches } from 'class-validator';
 
 export class CreateUserDto {
     @IsString()
     @IsNotEmpty()
+    @Matches(/^\S+$/, { message: 'El nombre de usuario no debe contener espacios' })
     username: string;
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/^\S+$/, { message: 'La contraseña no debe contener espacios' })
     password: string;
 
     @IsString()
@@ -23,6 +25,7 @@ export class CreateUserDto {
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/^\S+$/, { message: 'La identificación no debe contener espacios' })
     num_id: string;
 
     @IsString()

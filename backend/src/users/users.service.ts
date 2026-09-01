@@ -505,6 +505,7 @@ export class UsersService {
             if (!names) errors.push('Falta el nombre');
             if (!last_name) errors.push('Falta el apellido');
             if (!num_id) errors.push('Falta la identificación');
+            else if (/\s/.test(num_id)) errors.push('La identificación no debe contener espacios');
             if (!email) errors.push('Falta el email');
             else if (!emailRegex.test(email)) errors.push('Email con formato inválido');
 
