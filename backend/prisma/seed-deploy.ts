@@ -225,6 +225,13 @@ async function seedCatalogosSimples() {
     }
     console.log('✅ Municipios verificados:', MUNICIPIOS_SEED.length);
 
+    const ENTIDADES_RENAMES: [string, string][] = [
+        ['Referente de Protección Especial', 'Referente de Poblacion Especial'],
+    ];
+    for (const [oldName, newName] of ENTIDADES_RENAMES) {
+        await prisma.entidades.updateMany({ where: { name: oldName }, data: { name: newName } });
+    }
+
     for (const name of ENTIDADES_SEED) {
         const exists = await prisma.entidades.findFirst({ where: { name } });
         if (!exists) await prisma.entidades.create({ data: { name } });

@@ -148,7 +148,8 @@ export const ENTIDADES_SEED: string[] = [
     'Alcalde',
     'Referente PIC',
     'Sujeto de Vigilancia en Salud Mental',
-    'Referente de Protección Especial',
+    'Referente de Poblacion Especial',
+    'Tecnico Sivigila',
 ];
 
 export const IPS_TIPOS_SEED: string[] = [
@@ -179,6 +180,8 @@ export const IPS_ACTORES_SEED: string[] = [
     'Coord. Aten. Usuario',
     'Ref. PIC',
     'Cor. Seg Paciente',
+    'Referente de Poblacion Especial',
+    'Coordinador de Salud Infantil',
 ];
 
 export const EAPB_SEED: string[] = [
