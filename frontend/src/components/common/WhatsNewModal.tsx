@@ -10,7 +10,7 @@ export default function WhatsNewModal() {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || user.user_type?.name !== 'superadmin') return;
         const lastSeen = localStorage.getItem(`${STORAGE_PREFIX}${user.id}`);
         if (lastSeen !== APP_VERSION) {
             setVisible(true);

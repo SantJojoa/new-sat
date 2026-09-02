@@ -14,6 +14,7 @@ import { VentanaProgramacionModule } from './ventana-programacion/ventana-progra
 import { AsesoriasModule } from './asesorias/asesorias.module';
 import { AcompanamientosNoRegistradosModule } from './acompanamientos-no-registrados/acompanamientos-no-registrados.module';
 import { DocumentosAdicionalesModule } from './documentos-adicionales/documentos-adicionales.module';
+import { AvisosModule } from './avisos/avisos.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DocumentosAdicionalesModule } from './documentos-adicionales/documentos
     AsesoriasModule,
     AcompanamientosNoRegistradosModule,
     DocumentosAdicionalesModule,
+    AvisosModule,
   ],
   controllers: [],
   providers: [PrismaService],

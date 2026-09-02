@@ -237,6 +237,13 @@ export default function SlideBar() {
             icon: 'calendar_month',
             href: '/ventana-programacion',
         });
+        groupedItems['Configuración'].push({
+            id: 'avisos-module',
+            name: 'avisos',
+            label: 'Avisos a Usuarios',
+            icon: 'campaign',
+            href: '/avisos',
+        });
     }
 
     // Order of categories to display

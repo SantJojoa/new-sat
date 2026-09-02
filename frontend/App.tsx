@@ -18,6 +18,7 @@ import CalendarioArticulaciones from './src/components/pages/CalendarioArticulac
 import GestionarIvc from './src/components/pages/GestionarIvc'
 import CalendarioIvc from './src/components/pages/CalendarioIvc'
 import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacion'
+import Avisos from './src/components/pages/admin/Avisos'
 import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
 import ReportesIvc from './src/components/pages/ReportesIvc'
 import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacitaciones'
@@ -152,6 +153,12 @@ function App() {
                         <Route path="ventana-programacion" element={
                             <ProtectedRoute allowedRoles={['superadmin']}>
                                 <VentanaProgramacion />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="avisos" element={
+                            <ProtectedRoute allowedRoles={['superadmin']}>
+                                <Avisos />
                             </ProtectedRoute>
                         } />
 

@@ -72,6 +72,7 @@ model users {
   asesorias_registradas         asesorias[]         @relation("AsesoriasRegistradas")
   acompanamientos_no_registrados acompanamientos_no_registrados[] @relation("RegistradorAcompanamientoNoRegistrado")
   documentos_adicionales        documentos_adicionales[]
+  avisos_creados                 avisos[]
 }
 
 model notifications {
@@ -545,6 +546,18 @@ model asesoria_asistentes {
   movil          String?
 
   asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
+}
+
+model avisos {
+  id            String   @id @default(cuid())
+  titulo        String
+  mensaje       String
+  is_active     Boolean  @default(true)
+  created_by_id String?
+  created_by    users?   @relation(fields: [created_by_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model documentos_adicionales {
