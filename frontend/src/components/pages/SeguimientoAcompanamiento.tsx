@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, FileDown, Upload, X, Plus, Trash2 } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, Upload, X, Plus, Trash2 } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
 import DocumentosAdicionales from '../ui/DocumentosAdicionales';
+import DescargarSeguimientoMenu from '../ui/DescargarSeguimientoMenu';
 import UploadActaModal from '../ui/UploadActaModal';
 import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
@@ -570,25 +571,15 @@ export default function SeguimientoAcompanamiento() {
                                             <Upload size={16} />
                                         </button>
                                     )}
-                                    {hasUploaded && (
-                                        <button
-                                            onClick={() => handleDownloadArchivo(r)}
-                                            disabled={downloadingId === r.id}
-                                            title="Descargar acta escaneada"
-                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
-                                        >
-                                            {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
-                                        </button>
-                                    )}
-                                    {seg?.se_realizo && (
-                                        <button
-                                            onClick={() => handleDownloadCertificado(r)}
-                                            disabled={downloadingId === r.id}
-                                            title="Descargar certificado"
-                                            className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
-                                        >
-                                            {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
-                                        </button>
+                                    {(hasUploaded || seg?.se_realizo) && (
+                                        <DescargarSeguimientoMenu
+                                            iconOnly
+                                            basePath={`/salidas/${r.id}`}
+                                            items={[
+                                                ...(hasUploaded ? [{ key: 'acta', label: 'Acta Escaneada', onClick: () => handleDownloadArchivo(r) }] : []),
+                                                ...(seg?.se_realizo ? [{ key: 'certificado', label: 'Certificado', onClick: () => handleDownloadCertificado(r) }] : []),
+                                            ]}
+                                        />
                                     )}
                                     <ViewButton onClick={() => setDetailRecord(r)} />
                                 </>
@@ -685,26 +676,14 @@ export default function SeguimientoAcompanamiento() {
                                                         Subir Acta Escaneada
                                                     </button>
                                                 )}
-                                                {hasUploaded && (
-                                                    <button
-                                                        onClick={() => handleDownloadArchivo(detailRecord)}
-                                                        disabled={downloadingId === detailRecord.id}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                                                    >
-                                                        {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
-                                                        {downloadingId === detailRecord.id ? 'Descargando...' : 'Descargar Acta Escaneada'}
-                                                    </button>
-                                                )}
-                                                {seg?.se_realizo && (
-                                                    <button
-                                                        onClick={() => handleDownloadCertificado(detailRecord)}
-                                                        disabled={downloadingId === detailRecord.id}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                                                    >
-                                                        {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
-                                                        {downloadingId === detailRecord.id ? 'Generando...' : 'Descargar Certificado'}
-                                                    </button>
-                                                )}
+                                                <DescargarSeguimientoMenu
+                                                    basePath={`/salidas/${detailRecord.id}`}
+                                                    disabled={downloadingId === detailRecord.id}
+                                                    items={[
+                                                        ...(hasUploaded ? [{ key: 'acta', label: 'Acta Escaneada', onClick: () => handleDownloadArchivo(detailRecord) }] : []),
+                                                        ...(seg?.se_realizo ? [{ key: 'certificado', label: 'Certificado', onClick: () => handleDownloadCertificado(detailRecord) }] : []),
+                                                    ]}
+                                                />
                                             </>
                                         );
                                     })()}

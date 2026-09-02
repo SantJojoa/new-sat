@@ -9,6 +9,7 @@ import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import type { AsesoriaRecord, AsesoriaAsistente, CreateAsesoriaPayload } from '../../types/asesorias';
 import RecordsTable, { ViewButton, EditButton, DeleteButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
+import DocumentosAdicionales from '../ui/DocumentosAdicionales';
 
 const asesoriaColumns: TableColumn<AsesoriaRecord>[] = [
     { header: 'Código', render: r => <span className="font-mono font-bold text-primary text-xs">{r.codigo}</span> },
@@ -324,6 +325,8 @@ export default function GestionarAsesoria() {
                                     </DetailCard>
                                 )}
                             </DetailGrid>
+
+                            <DocumentosAdicionales basePath={`/asesorias/${detailRecord.id}`} />
                         </div>
                     </DetailModal>
                 )}

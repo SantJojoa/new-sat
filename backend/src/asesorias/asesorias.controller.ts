@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, Res, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles, Request, Query, Res, StreamableFile } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { AsesoriasService } from './asesorias.service';
 import { CreateAsesoriaDto } from './dto/create-asesoria.dto';
@@ -6,11 +8,15 @@ import { UpdateAsesoriaDto } from './dto/update-asesoria.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { DocumentosAdicionalesService, documentosFileFilter, DOCUMENTOS_MULTER_LIMITS, DOCUMENTOS_MAX_FILES } from '../documentos-adicionales/documentos-adicionales.service';
 
 @Controller('asesorias')
 @UseGuards(JwtAuthGuard)
 export class AsesoriasController {
-    constructor(private readonly asesoriasService: AsesoriasService) { }
+    constructor(
+        private readonly asesoriasService: AsesoriasService,
+        private readonly documentosAdicionalesService: DocumentosAdicionalesService,
+    ) { }
 
     @Post()
     @UseGuards(PermissionsGuard)
@@ -68,5 +74,57 @@ export class AsesoriasController {
             'Content-Disposition': `inline; filename="certificado-asesoria-${id}.pdf"`,
         });
         return new StreamableFile(buffer);
+    }
+
+    @Post(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    @UseInterceptors(FilesInterceptor('files', DOCUMENTOS_MAX_FILES, {
+        storage: memoryStorage(),
+        limits: DOCUMENTOS_MULTER_LIMITS,
+        fileFilter: documentosFileFilter,
+    }))
+    async uploadDocumentosAsesoria(
+        @Param('id') id: string,
+        @UploadedFiles() files: Express.Multer.File[],
+        @Request() req,
+    ) {
+        await this.asesoriasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.upload('asesoria', id, files, req.user.id);
+    }
+
+    @Get(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    async listDocumentosAsesoria(@Param('id') id: string, @Request() req) {
+        await this.asesoriasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.list('asesoria', id);
+    }
+
+    @Get(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    async downloadDocumentoAsesoria(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.asesoriasService.findOne(id, req.user);
+        const { buffer, nombre, mimeType } = await this.documentosAdicionalesService.download('asesoria', id, docId);
+        res.set({ 'Content-Type': mimeType, 'Content-Disposition': `inline; filename="${nombre}"` });
+        return new StreamableFile(buffer);
+    }
+
+    @Delete(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('programar_asesoria', 'view')
+    async deleteDocumentoAsesoria(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+    ) {
+        await this.asesoriasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.remove('asesoria', id, docId);
     }
 }
