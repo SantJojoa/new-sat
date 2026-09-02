@@ -55,7 +55,7 @@ model users {
   area_id         String?
   subdireccion_id String?
   charge          String?
-  email           String          @unique
+  email           String
   is_active       Boolean         @default(true)
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt

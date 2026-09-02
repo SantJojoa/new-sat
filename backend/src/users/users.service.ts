@@ -60,7 +60,6 @@ export class UsersService {
             where: {
                 OR: [
                     { username: createUserDto.username },
-                    { email: createUserDto.email },
                     { num_id: createUserDto.num_id }
                 ]
             }
@@ -508,13 +507,11 @@ export class UsersService {
         }
 
         const existing = await this.prisma.users.findMany({
-            select: { username: true, email: true, num_id: true }
+            select: { username: true, num_id: true }
         });
         const takenUsernames = new Set(existing.map(u => u.username));
-        const takenEmails = new Set(existing.map(u => u.email.toLowerCase()));
         const takenNumIds = new Set(existing.map(u => u.num_id));
 
-        const seenEmailsInFile = new Set<string>();
         const seenNumIdsInFile = new Set<string>();
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -524,7 +521,6 @@ export class UsersService {
             const { num_id, email, charge } = raw;
             const names = this.toTitleCase(raw.names);
             const last_name = this.toTitleCase(raw.last_name);
-            const emailLower = email.toLowerCase();
 
             if (!names) errors.push('Falta el nombre');
             if (!last_name) errors.push('Falta el apellido');
@@ -534,12 +530,9 @@ export class UsersService {
             else if (!emailRegex.test(email)) errors.push('Email con formato inválido');
 
             if (num_id && takenNumIds.has(num_id)) errors.push('Identificación ya registrada en el sistema');
-            if (email && takenEmails.has(emailLower)) errors.push('Email ya registrado en el sistema');
             if (num_id && seenNumIdsInFile.has(num_id)) errors.push('Identificación duplicada en el archivo');
-            if (email && seenEmailsInFile.has(emailLower)) errors.push('Email duplicado en el archivo');
 
             if (num_id) seenNumIdsInFile.add(num_id);
-            if (email) seenEmailsInFile.add(emailLower);
 
             const username = (names && last_name) ? this.generateUsername(names, last_name, takenUsernames) : '';
             const password = num_id;
@@ -573,14 +566,12 @@ export class UsersService {
         const finalAreaId = userType.name === 'admin_subdireccion' ? null : (normalizedAreaId ?? null);
 
         const existing = await this.prisma.users.findMany({
-            select: { username: true, email: true, num_id: true }
+            select: { username: true, num_id: true }
         });
         const takenUsernames = new Set(existing.map(u => u.username));
-        const takenEmails = new Set(existing.map(u => u.email.toLowerCase()));
         const takenNumIds = new Set(existing.map(u => u.num_id));
 
         const seenUsernamesInFile = new Set<string>();
-        const seenEmailsInFile = new Set<string>();
         const seenNumIdsInFile = new Set<string>();
 
         const results: Array<{
@@ -595,11 +586,9 @@ export class UsersService {
 
         for (let i = 0; i < dto.users.length; i++) {
             const row = dto.users[i];
-            const emailLower = row.email.toLowerCase();
             const errors: string[] = [];
 
             if (takenUsernames.has(row.username) || seenUsernamesInFile.has(row.username)) errors.push('Nombre de usuario duplicado');
-            if (takenEmails.has(emailLower) || seenEmailsInFile.has(emailLower)) errors.push('Email duplicado');
             if (takenNumIds.has(row.num_id) || seenNumIdsInFile.has(row.num_id)) errors.push('Identificación duplicada');
 
             if (errors.length > 0) {
@@ -625,10 +614,8 @@ export class UsersService {
                 });
 
                 takenUsernames.add(row.username);
-                takenEmails.add(emailLower);
                 takenNumIds.add(row.num_id);
                 seenUsernamesInFile.add(row.username);
-                seenEmailsInFile.add(emailLower);
                 seenNumIdsInFile.add(row.num_id);
 
                 results.push({ row: i + 1, names: row.names, last_name: row.last_name, username: row.username, status: 'created', id: created.id });
