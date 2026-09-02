@@ -109,6 +109,8 @@ export class UsersService {
         const user = await this.prisma.users.create({
             data: {
                 ...createUserDto,
+                names: this.toTitleCase(createUserDto.names),
+                last_name: this.toTitleCase(createUserDto.last_name),
                 password: hashedPassword,
                 area_id: userType.name === 'admin_subdireccion' ? null : normalizedAreaId,
                 subdireccion_id: normalizedSubdireccionId,
@@ -175,6 +177,14 @@ export class UsersService {
 
         if (updateUserDto.password) {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+        }
+
+        if (updateUserDto.names) {
+            updateUserDto.names = this.toTitleCase(updateUserDto.names);
+        }
+
+        if (updateUserDto.last_name) {
+            updateUserDto.last_name = this.toTitleCase(updateUserDto.last_name);
         }
 
         const normalizedUpdateSubId = updateUserDto.subdireccion_id === '' ? null : updateUserDto.subdireccion_id;
@@ -320,6 +330,18 @@ export class UsersService {
                 return code < 0x0300 || code > 0x036f;
             })
             .join('');
+    }
+
+    private toTitleCase(value: string): string {
+        return value
+            .toLowerCase()
+            .split(' ')
+            .map(word => word
+                .split('-')
+                .map(part => part ? part.charAt(0).toUpperCase() + part.slice(1) : part)
+                .join('-')
+            )
+            .join(' ');
     }
 
     private toUsernameToken(value: string): string {
@@ -499,7 +521,9 @@ export class UsersService {
 
         const rows: BulkPreviewRow[] = rawRows.map((raw) => {
             const errors: string[] = [];
-            const { names, last_name, num_id, email, charge } = raw;
+            const { num_id, email, charge } = raw;
+            const names = this.toTitleCase(raw.names);
+            const last_name = this.toTitleCase(raw.last_name);
             const emailLower = email.toLowerCase();
 
             if (!names) errors.push('Falta el nombre');

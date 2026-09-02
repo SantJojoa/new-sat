@@ -205,9 +205,10 @@ export const salidasService = {
         setTimeout(() => window.URL.revokeObjectURL(url), 60000);
     },
 
-    uploadActaAcompanamiento: async (id: string, file: File) => {
+    uploadActaAcompanamiento: async (id: string, file: File, seRealizo: boolean) => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('se_realizo', String(seRealizo));
         const response = await api.post(`/salidas/${id}/seguimiento-acompanamiento/archivo`, formData, {
             headers: { 'Content-Type': undefined },
         });
@@ -226,6 +227,102 @@ export const salidasService = {
         }
         const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
         const windowName = `acta-acompanamiento-${codigo ?? id}`;
+        const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        if (!popup) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    },
+
+    uploadActaCapacitacion: async (id: string, file: File, seRealizo: boolean) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('se_realizo', String(seRealizo));
+        const response = await api.post(`/salidas/${id}/seguimiento/archivo`, formData, {
+            headers: { 'Content-Type': undefined },
+        });
+        return response.data;
+    },
+
+    downloadActaArchivoCapacitacion: async (id: string, codigo?: string): Promise<void> => {
+        const response = await api.get(`/salidas/${id}/seguimiento/archivo`, { responseType: 'blob' });
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = `acta-capacitacion-${id}.pdf`;
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const windowName = `acta-capacitacion-${codigo ?? id}`;
+        const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        if (!popup) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    },
+
+    uploadActaIvc: async (id: string, file: File, seRealizo: boolean) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('se_realizo', String(seRealizo));
+        const response = await api.post(`/salidas/${id}/seguimiento-ivc/archivo`, formData, {
+            headers: { 'Content-Type': undefined },
+        });
+        return response.data;
+    },
+
+    downloadActaArchivoIvc: async (id: string, codigo?: string): Promise<void> => {
+        const response = await api.get(`/salidas/${id}/seguimiento-ivc/archivo`, { responseType: 'blob' });
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = `acta-ivc-${id}.pdf`;
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const windowName = `acta-ivc-${codigo ?? id}`;
+        const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        if (!popup) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    },
+
+    uploadActaArticulacionIv: async (id: string, file: File, seRealizo: boolean) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('se_realizo', String(seRealizo));
+        const response = await api.post(`/salidas/${id}/seguimiento-articulacion-iv/archivo`, formData, {
+            headers: { 'Content-Type': undefined },
+        });
+        return response.data;
+    },
+
+    downloadActaArchivoArticulacionIv: async (id: string, codigo?: string): Promise<void> => {
+        const response = await api.get(`/salidas/${id}/seguimiento-articulacion-iv/archivo`, { responseType: 'blob' });
+        const contentDisposition = response.headers['content-disposition'] as string | undefined;
+        let filename = `acta-articulacion-iv-${id}.pdf`;
+        if (contentDisposition) {
+            const match = /filename="([^"]+)"/i.exec(contentDisposition);
+            if (match?.[1]) filename = match[1];
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
+        const windowName = `acta-articulacion-iv-${codigo ?? id}`;
         const popup = window.open(url, windowName, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
         if (!popup) {
             const link = document.createElement('a');

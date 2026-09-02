@@ -4,16 +4,18 @@ import {
     Post,
     Body,
     Param,
+    Delete,
     UseGuards,
     UseInterceptors,
     UploadedFile,
+    UploadedFiles,
     BadRequestException,
     Request,
     Query,
     Res,
     StreamableFile,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { AcompanamientosNoRegistradosService } from './acompanamientos-no-registrados.service';
@@ -22,11 +24,15 @@ import { UploadActaAcompanamientoNoRegistradoDto } from './dto/upload-acta-acomp
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { DocumentosAdicionalesService, documentosFileFilter, DOCUMENTOS_MULTER_LIMITS, DOCUMENTOS_MAX_FILES } from '../documentos-adicionales/documentos-adicionales.service';
 
 @Controller('acompanamientos-no-registrados')
 @UseGuards(JwtAuthGuard)
 export class AcompanamientosNoRegistradosController {
-    constructor(private readonly service: AcompanamientosNoRegistradosService) { }
+    constructor(
+        private readonly service: AcompanamientosNoRegistradosService,
+        private readonly documentosAdicionalesService: DocumentosAdicionalesService,
+    ) { }
 
     @Post()
     @UseGuards(PermissionsGuard)
@@ -98,5 +104,57 @@ export class AcompanamientosNoRegistradosController {
             'Content-Disposition': `inline; filename="${nombre}"`,
         });
         return new StreamableFile(buffer);
+    }
+
+    @Post(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @UseInterceptors(FilesInterceptor('files', DOCUMENTOS_MAX_FILES, {
+        storage: memoryStorage(),
+        limits: DOCUMENTOS_MULTER_LIMITS,
+        fileFilter: documentosFileFilter,
+    }))
+    async uploadDocumentos(
+        @Param('id') id: string,
+        @UploadedFiles() files: Express.Multer.File[],
+        @Request() req,
+    ) {
+        await this.service.findOne(id, req.user);
+        return this.documentosAdicionalesService.upload('acta_no_registrada', id, files, req.user.id);
+    }
+
+    @Get(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async listDocumentos(@Param('id') id: string, @Request() req) {
+        await this.service.findOne(id, req.user);
+        return this.documentosAdicionalesService.list('acta_no_registrada', id);
+    }
+
+    @Get(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadDocumento(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.service.findOne(id, req.user);
+        const { buffer, nombre, mimeType } = await this.documentosAdicionalesService.download('acta_no_registrada', id, docId);
+        res.set({ 'Content-Type': mimeType, 'Content-Disposition': `inline; filename="${nombre}"` });
+        return new StreamableFile(buffer);
+    }
+
+    @Delete(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async deleteDocumento(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+    ) {
+        await this.service.findOne(id, req.user);
+        return this.documentosAdicionalesService.remove('acta_no_registrada', id, docId);
     }
 }

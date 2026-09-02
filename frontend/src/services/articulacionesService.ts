@@ -117,9 +117,10 @@ export const articulacionesService = {
         setTimeout(() => window.URL.revokeObjectURL(url), 60000);
     },
 
-    uploadActaArticulacion: async (id: string, file: File) => {
+    uploadActaArticulacion: async (id: string, file: File, seRealizo: boolean) => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('se_realizo', String(seRealizo));
         const response = await api.post(`/articulaciones/${id}/seguimiento-articulacion/archivo`, formData, {
             headers: { 'Content-Type': undefined },
         });

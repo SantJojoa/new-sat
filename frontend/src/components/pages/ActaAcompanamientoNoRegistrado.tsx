@@ -4,6 +4,7 @@ import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton } from '../ui/RecordsTable';
 import type { TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
+import DocumentosAdicionales from '../ui/DocumentosAdicionales';
 import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
 import { acompanamientosNoRegistradosService } from "../../services/acompanamientosNoRegistradosService";
@@ -542,6 +543,8 @@ export default function ActaAcompanamientoNoRegistrado() {
                                     </button>
                                 )}
                             </div>
+
+                            <DocumentosAdicionales basePath={`/acompanamientos-no-registrados/${detailRecord.id}`} />
                         </div>
                     </DetailModal>
                 )}

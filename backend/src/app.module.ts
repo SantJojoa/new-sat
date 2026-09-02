@@ -13,6 +13,7 @@ import { IvcModule } from './ivc/ivc.module';
 import { VentanaProgramacionModule } from './ventana-programacion/ventana-programacion.module';
 import { AsesoriasModule } from './asesorias/asesorias.module';
 import { AcompanamientosNoRegistradosModule } from './acompanamientos-no-registrados/acompanamientos-no-registrados.module';
+import { DocumentosAdicionalesModule } from './documentos-adicionales/documentos-adicionales.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AcompanamientosNoRegistradosModule } from './acompanamientos-no-registr
     VentanaProgramacionModule,
     AsesoriasModule,
     AcompanamientosNoRegistradosModule,
+    DocumentosAdicionalesModule,
   ],
   controllers: [],
   providers: [PrismaService],

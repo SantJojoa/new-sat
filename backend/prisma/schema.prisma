@@ -71,6 +71,7 @@ model users {
   ivc_solicitadas               ivc[]               @relation("SolicitanteIvc")
   asesorias_registradas         asesorias[]         @relation("AsesoriasRegistradas")
   acompanamientos_no_registrados acompanamientos_no_registrados[] @relation("RegistradorAcompanamientoNoRegistrado")
+  documentos_adicionales        documentos_adicionales[]
 }
 
 model notifications {
@@ -289,6 +290,9 @@ model seguimiento_articulacion_iv {
   se_realizo_vsp Boolean
   observaciones  String?
 
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -303,6 +307,9 @@ model seguimiento_ivc {
   num_autocomisorio   Int?
   fecha_autocomisorio DateTime?
   observaciones       String?
+
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -319,6 +326,9 @@ model seguimiento_capacitaciones {
   num_total_asistentes         Int?
   evaluacion_satisfaccion      Float?
   observaciones                String?
+
+  archivo_manual        Bytes?
+  archivo_manual_nombre String?
 
   created_at DateTime @default(now())
   update_at  DateTime @updatedAt
@@ -535,6 +545,22 @@ model asesoria_asistentes {
   movil          String?
 
   asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
+}
+
+model documentos_adicionales {
+  id               String   @id @default(cuid())
+  seguimiento_type String // 'articulacion' | 'salida' | 'acta_no_registrada'
+  seguimiento_id   String
+  nombre           String
+  mime_type        String
+  tamano           Int
+  archivo          Bytes
+  uploaded_by_id   String?
+  uploaded_by      users?   @relation(fields: [uploaded_by_id], references: [id])
+
+  created_at DateTime @default(now())
+
+  @@index([seguimiento_type, seguimiento_id])
 }
 
 model acompanamientos_no_registrados {

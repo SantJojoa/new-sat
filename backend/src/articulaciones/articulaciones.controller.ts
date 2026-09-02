@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException, Request, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Request, Query, Res } from '@nestjs/common';
 import { StreamableFile } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { ArticulacionesService } from './articulaciones.service';
@@ -10,11 +10,16 @@ import { SetSeguimientoArticulacionDto } from './dto/set-seguimiento-articulacio
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { DocumentosAdicionalesService, documentosFileFilter, DOCUMENTOS_MULTER_LIMITS, DOCUMENTOS_MAX_FILES } from '../documentos-adicionales/documentos-adicionales.service';
+import { UploadActaSeguimientoDto } from '../common/dto/upload-acta-seguimiento.dto';
 
 @Controller('articulaciones')
 @UseGuards(JwtAuthGuard)
 export class ArticulacionesController {
-    constructor(private readonly articulacionesService: ArticulacionesService) { }
+    constructor(
+        private readonly articulacionesService: ArticulacionesService,
+        private readonly documentosAdicionalesService: DocumentosAdicionalesService,
+    ) { }
 
     @Post()
     @UseGuards(PermissionsGuard)
@@ -146,10 +151,11 @@ export class ArticulacionesController {
     }))
     uploadActaArticulacion(
         @Param('id') id: string,
+        @Body() dto: UploadActaSeguimientoDto,
         @UploadedFile() file: Express.Multer.File,
         @Request() req,
     ) {
-        return this.articulacionesService.uploadActaArticulacion(id, file, req.user);
+        return this.articulacionesService.uploadActaArticulacion(id, file, dto.se_realizo === 'true', req.user);
     }
 
     @Get(':id/seguimiento-articulacion/archivo')
@@ -166,5 +172,57 @@ export class ArticulacionesController {
             'Content-Disposition': `inline; filename="${nombre}"`,
         });
         return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento-articulacion/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    @UseInterceptors(FilesInterceptor('files', DOCUMENTOS_MAX_FILES, {
+        storage: memoryStorage(),
+        limits: DOCUMENTOS_MULTER_LIMITS,
+        fileFilter: documentosFileFilter,
+    }))
+    async uploadDocumentosArticulacion(
+        @Param('id') id: string,
+        @UploadedFiles() files: Express.Multer.File[],
+        @Request() req,
+    ) {
+        await this.articulacionesService.findOne(id, req.user);
+        return this.documentosAdicionalesService.upload('articulacion', id, files, req.user.id);
+    }
+
+    @Get(':id/seguimiento-articulacion/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async listDocumentosArticulacion(@Param('id') id: string, @Request() req) {
+        await this.articulacionesService.findOne(id, req.user);
+        return this.documentosAdicionalesService.list('articulacion', id);
+    }
+
+    @Get(':id/seguimiento-articulacion/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async downloadDocumentoArticulacion(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.articulacionesService.findOne(id, req.user);
+        const { buffer, nombre, mimeType } = await this.documentosAdicionalesService.download('articulacion', id, docId);
+        res.set({ 'Content-Type': mimeType, 'Content-Disposition': `inline; filename="${nombre}"` });
+        return new StreamableFile(buffer);
+    }
+
+    @Delete(':id/seguimiento-articulacion/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_articulacion', 'view')
+    async deleteDocumentoArticulacion(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+    ) {
+        await this.articulacionesService.findOne(id, req.user);
+        return this.documentosAdicionalesService.remove('articulacion', id, docId);
     }
 }

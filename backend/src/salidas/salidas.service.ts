@@ -55,6 +55,41 @@ export class SalidasService {
         updated_at: true,
     };
 
+    private readonly seguimientoCapacitacionSelect = {
+        id: true,
+        salida_id: true,
+        se_realizo: true,
+        num_instituciones_asistieron: true,
+        num_total_asistentes: true,
+        evaluacion_satisfaccion: true,
+        observaciones: true,
+        archivo_manual_nombre: true,
+        created_at: true,
+        update_at: true,
+    };
+
+    private readonly seguimientoIvcSelect = {
+        id: true,
+        salida_id: true,
+        se_realizo: true,
+        num_autocomisorio: true,
+        fecha_autocomisorio: true,
+        observaciones: true,
+        archivo_manual_nombre: true,
+        created_at: true,
+        updated_at: true,
+    };
+
+    private readonly seguimientoArticulacionIvSelect = {
+        id: true,
+        salida_id: true,
+        se_realizo_vsp: true,
+        observaciones: true,
+        archivo_manual_nombre: true,
+        created_at: true,
+        updated_at: true,
+    };
+
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
         municipios: string[] = [],
@@ -239,9 +274,9 @@ export class SalidasService {
             areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
             areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
             lugar_evento: true,
-            seguimiento_capacitacion: true,
-            seguimiento_ivc: true,
-            seguimiento_articulacion_iv: true,
+            seguimiento_capacitacion: { select: this.seguimientoCapacitacionSelect },
+            seguimiento_ivc: { select: this.seguimientoIvcSelect },
+            seguimiento_articulacion_iv: { select: this.seguimientoArticulacionIvSelect },
             seguimiento_acompanamiento: { select: this.seguimientoAcompanamientoSelect },
         };
 
@@ -280,9 +315,9 @@ export class SalidasService {
                 aprobador: { select: { id: true, names: true, email: true } },
                 areas: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
                 areas_participantes: { select: { id: true, name: true, subdireccion_id: true, subdirecciones: { select: { id: true, name: true } } } },
-                seguimiento_capacitacion: true,
-                seguimiento_ivc: true,
-                seguimiento_articulacion_iv: true,
+                seguimiento_capacitacion: { select: this.seguimientoCapacitacionSelect },
+                seguimiento_ivc: { select: this.seguimientoIvcSelect },
+                seguimiento_articulacion_iv: { select: this.seguimientoArticulacionIvSelect },
                 seguimiento_acompanamiento: { select: this.seguimientoAcompanamientoSelect },
             }
         });
@@ -605,8 +640,42 @@ export class SalidasService {
                 num_total_asistentes: dto.num_total_asistentes ?? null,
                 evaluacion_satisfaccion: dto.evaluacion_satisfaccion ?? null,
                 observaciones: dto.observaciones ?? null,
-            }
+            },
+            select: this.seguimientoCapacitacionSelect,
         })
+    }
+
+    async uploadActaCapacitacion(id: string, file: Express.Multer.File, seRealizo: boolean, user: users) {
+        if (!file) throw new BadRequestException('No se recibió ningún archivo');
+        await this.findOne(id, user);
+
+        const archivo = new Uint8Array(file.buffer);
+
+        return this.prisma.seguimiento_capacitaciones.upsert({
+            where: { salida_id: id },
+            create: {
+                salida_id: id,
+                se_realizo: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            update: {
+                se_realizo: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            select: this.seguimientoCapacitacionSelect,
+        });
+    }
+
+    async getActaArchivoCapacitacion(id: string, user: users): Promise<{ buffer: Buffer; nombre: string }> {
+        await this.findOne(id, user);
+        const seguimiento = await this.prisma.seguimiento_capacitaciones.findUnique({
+            where: { salida_id: id },
+            select: { archivo_manual: true, archivo_manual_nombre: true },
+        });
+        if (!seguimiento?.archivo_manual) throw new NotFoundException('No hay un acta escaneada cargada para esta programación');
+        return { buffer: Buffer.from(seguimiento.archivo_manual), nombre: seguimiento.archivo_manual_nombre || `acta-${id}.pdf` };
     }
 
     async setSeguimientoArticulacionIv(id: string, dto: SetSeguimientoArticulacionIvDto, user: users) {
@@ -622,8 +691,42 @@ export class SalidasService {
             update: {
                 se_realizo_vsp: dto.se_realizo_vsp,
                 observaciones: dto.observaciones ?? null,
-            }
+            },
+            select: this.seguimientoArticulacionIvSelect,
         });
+    }
+
+    async uploadActaArticulacionIv(id: string, file: Express.Multer.File, seRealizo: boolean, user: users) {
+        if (!file) throw new BadRequestException('No se recibió ningún archivo');
+        await this.findOne(id, user);
+
+        const archivo = new Uint8Array(file.buffer);
+
+        return this.prisma.seguimiento_articulacion_iv.upsert({
+            where: { salida_id: id },
+            create: {
+                salida_id: id,
+                se_realizo_vsp: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            update: {
+                se_realizo_vsp: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            select: this.seguimientoArticulacionIvSelect,
+        });
+    }
+
+    async getActaArchivoArticulacionIv(id: string, user: users): Promise<{ buffer: Buffer; nombre: string }> {
+        await this.findOne(id, user);
+        const seguimiento = await this.prisma.seguimiento_articulacion_iv.findUnique({
+            where: { salida_id: id },
+            select: { archivo_manual: true, archivo_manual_nombre: true },
+        });
+        if (!seguimiento?.archivo_manual) throw new NotFoundException('No hay un acta escaneada cargada para esta programación');
+        return { buffer: Buffer.from(seguimiento.archivo_manual), nombre: seguimiento.archivo_manual_nombre || `acta-${id}.pdf` };
     }
 
     async setSeguimientoIvc(id: string, dto: SetSeguimientoIvcDto, user: users) {
@@ -645,17 +748,46 @@ export class SalidasService {
                 num_autocomisorio: dto.num_autocomisorio ?? null,
                 fecha_autocomisorio: fechaAutocomisorio,
                 observaciones: dto.observaciones ?? null,
-            }
+            },
+            select: this.seguimientoIvcSelect,
         });
+    }
+
+    async uploadActaIvc(id: string, file: Express.Multer.File, seRealizo: boolean, user: users) {
+        if (!file) throw new BadRequestException('No se recibió ningún archivo');
+        await this.findOne(id, user);
+
+        const archivo = new Uint8Array(file.buffer);
+
+        return this.prisma.seguimiento_ivc.upsert({
+            where: { salida_id: id },
+            create: {
+                salida_id: id,
+                se_realizo: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            update: {
+                se_realizo: seRealizo,
+                archivo_manual: archivo,
+                archivo_manual_nombre: file.originalname,
+            },
+            select: this.seguimientoIvcSelect,
+        });
+    }
+
+    async getActaArchivoIvc(id: string, user: users): Promise<{ buffer: Buffer; nombre: string }> {
+        await this.findOne(id, user);
+        const seguimiento = await this.prisma.seguimiento_ivc.findUnique({
+            where: { salida_id: id },
+            select: { archivo_manual: true, archivo_manual_nombre: true },
+        });
+        if (!seguimiento?.archivo_manual) throw new NotFoundException('No hay un acta escaneada cargada para esta programación');
+        return { buffer: Buffer.from(seguimiento.archivo_manual), nombre: seguimiento.archivo_manual_nombre || `acta-${id}.pdf` };
     }
 
     async setSeguimientoAcompanamiento(id: string, dto: SetSeguimientoAcompanamientoDto, user: users) {
         await this.findOne(id, user);
-
-        const existente = await this.prisma.seguimiento_acompanamiento.findUnique({ where: { salida_id: id }, select: { archivo_manual_nombre: true } });
-        if (existente?.archivo_manual_nombre) {
-            throw new BadRequestException('No se puede diligenciar el formulario porque ya se subió un acta escaneada para esta programación');
-        }
 
         const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
         const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;
@@ -695,14 +827,9 @@ export class SalidasService {
         return this.acompanamientoCertificate.generate(salida);
     }
 
-    async uploadActaAcompanamiento(id: string, file: Express.Multer.File, user: users) {
+    async uploadActaAcompanamiento(id: string, file: Express.Multer.File, seRealizo: boolean, user: users) {
         if (!file) throw new BadRequestException('No se recibió ningún archivo');
         await this.findOne(id, user);
-
-        const existente = await this.prisma.seguimiento_acompanamiento.findUnique({ where: { salida_id: id }, select: { se_realizo: true, archivo_manual_nombre: true } });
-        if (existente?.se_realizo && !existente.archivo_manual_nombre) {
-            throw new BadRequestException('No se puede subir un acta escaneada porque ya se generó el acta por formulario');
-        }
 
         const archivo = new Uint8Array(file.buffer);
 
@@ -711,11 +838,12 @@ export class SalidasService {
             create: {
                 salida_id: id,
                 se_programo: true,
-                se_realizo: true,
+                se_realizo: seRealizo,
                 archivo_manual: archivo,
                 archivo_manual_nombre: file.originalname,
             },
             update: {
+                se_realizo: seRealizo,
                 archivo_manual: archivo,
                 archivo_manual_nombre: file.originalname,
             },

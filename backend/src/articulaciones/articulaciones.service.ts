@@ -229,11 +229,6 @@ export class ArticulacionesService {
     async setSeguimientoArticulacion(id: string, dto: SetSeguimientoArticulacionDto, user: users) {
         await this.findOne(id, user);
 
-        const existente = await this.prisma.seguimiento_articulacion.findUnique({ where: { articulacion_id: id }, select: { archivo_manual_nombre: true } });
-        if (existente?.archivo_manual_nombre) {
-            throw new BadRequestException('No se puede diligenciar el formulario porque ya se subió un acta escaneada para esta articulación');
-        }
-
         const fechaReunion = dto.fecha_reunion ? new Date(dto.fecha_reunion) : null;
         const proximaFecha = dto.proxima_fecha ? new Date(dto.proxima_fecha) : null;
 
@@ -272,14 +267,9 @@ export class ArticulacionesService {
         return this.articulacionCertificate.generate(articulacion);
     }
 
-    async uploadActaArticulacion(id: string, file: Express.Multer.File, user: users) {
+    async uploadActaArticulacion(id: string, file: Express.Multer.File, seRealizo: boolean, user: users) {
         if (!file) throw new BadRequestException('No se recibió ningún archivo');
         await this.findOne(id, user);
-
-        const existente = await this.prisma.seguimiento_articulacion.findUnique({ where: { articulacion_id: id }, select: { se_realizo: true, archivo_manual_nombre: true } });
-        if (existente?.se_realizo && !existente.archivo_manual_nombre) {
-            throw new BadRequestException('No se puede subir un acta escaneada porque ya se generó el acta por formulario');
-        }
 
         const archivo = new Uint8Array(file.buffer);
 
@@ -288,11 +278,12 @@ export class ArticulacionesService {
             create: {
                 articulacion_id: id,
                 se_programo: true,
-                se_realizo: true,
+                se_realizo: seRealizo,
                 archivo_manual: archivo,
                 archivo_manual_nombre: file.originalname,
             },
             update: {
+                se_realizo: seRealizo,
                 archivo_manual: archivo,
                 archivo_manual_nombre: file.originalname,
             },

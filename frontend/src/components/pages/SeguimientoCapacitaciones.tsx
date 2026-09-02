@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, X } from "lucide-react";
+import { RefreshCcw, Calendar, MapPin, Layers, ClipboardList, Upload, FileDown, X } from "lucide-react";
 import FiltersPanel, { type FilterField } from '../ui/FiltersPanel';
 import RecordsTable, { ViewButton, type TableColumn } from '../ui/RecordsTable';
 import DetailModal, { DetailCard, DetailGrid } from '../ui/DetailModal';
+import DocumentosAdicionales from '../ui/DocumentosAdicionales';
+import UploadActaModal from '../ui/UploadActaModal';
 import SlideBar from "../ui/SlideBar";
 import { useAuth } from "../../hooks/useAuth";
 import { salidasService } from "../../services/salidasService";
@@ -261,6 +263,8 @@ export default function SeguimientoCapacitaciones() {
     const [uniqueYears, setUniqueYears] = useState<number[]>([]);
     const [detailRecord, setDetailRecord] = useState<SalidaRecord | null>(null);
     const [seguimientoRecord, setSeguimientoRecord] = useState<SalidaRecord | null>(null);
+    const [uploadActaRecord, setUploadActaRecord] = useState<SalidaRecord | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
     const isSuperAdmin = user?.user_type?.name === 'superadmin';
 
@@ -301,6 +305,20 @@ export default function SeguimientoCapacitaciones() {
         setFilterYear('');
         setFilterDateStart('');
         setFilterDateEnd('');
+    };
+
+    const handleUploadActa = async (file: File, seRealizo: boolean) => {
+        if (!uploadActaRecord) return;
+        await salidasService.uploadActaCapacitacion(uploadActaRecord.id, file, seRealizo);
+        await fetchRecords();
+    };
+
+    const handleDownloadArchivo = async (record: SalidaRecord) => {
+        setDownloadingId(record.id);
+        try {
+            await salidasService.downloadActaArchivoCapacitacion(record.id, record.codigo);
+        } catch { alert('Error al descargar el acta escaneada'); }
+        finally { setDownloadingId(null); }
     };
 
     const areaOptionsForFilter = filterSubdireccion
@@ -360,6 +378,14 @@ export default function SeguimientoCapacitaciones() {
                     onSaved={fetchRecords}
                 />
             )}
+            {uploadActaRecord && (
+                <UploadActaModal
+                    title="Subir Acta Escaneada"
+                    codigo={uploadActaRecord.codigo}
+                    onClose={() => setUploadActaRecord(null)}
+                    onSubmit={handleUploadActa}
+                />
+            )}
             <main className="flex-1 flex flex-col overflow-y-auto bg-zinc-50/50 p-8">
                 <div className="max-w-7xl mx-auto w-full">
                     <div className="mb-6">
@@ -406,10 +432,29 @@ export default function SeguimientoCapacitaciones() {
                                 {r.estado === 'aprobada' && (
                                     <button
                                         onClick={() => setSeguimientoRecord(r)}
-                                        title="Registrar seguimiento"
+                                        title="Registrar seguimiento (formulario)"
                                         className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                                     >
                                         <ClipboardList size={16} />
+                                    </button>
+                                )}
+                                {r.estado === 'aprobada' && (
+                                    <button
+                                        onClick={() => setUploadActaRecord(r)}
+                                        title="Subir acta escaneada (PDF)"
+                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                                    >
+                                        <Upload size={16} />
+                                    </button>
+                                )}
+                                {r.seguimiento_capacitacion?.archivo_manual_nombre && (
+                                    <button
+                                        onClick={() => handleDownloadArchivo(r)}
+                                        disabled={downloadingId === r.id}
+                                        title="Descargar acta escaneada"
+                                        className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                                    >
+                                        {downloadingId === r.id ? <RefreshCcw size={16} className="animate-spin" /> : <FileDown size={16} />}
                                     </button>
                                 )}
                                 <ViewButton onClick={() => setDetailRecord(r)} />
@@ -512,7 +557,40 @@ export default function SeguimientoCapacitaciones() {
                                 ) : (
                                     <p className="text-zinc-400 text-xs italic">Sin seguimiento registrado aún.</p>
                                 )}
+                                {detailRecord.seguimiento_capacitacion?.archivo_manual_nombre && (
+                                    <p className="text-zinc-500 text-xs italic mt-2">Acta escaneada subida: <span className="font-medium text-zinc-700">{detailRecord.seguimiento_capacitacion.archivo_manual_nombre}</span></p>
+                                )}
+                                {detailRecord.estado === 'aprobada' && (
+                                    <div className="mt-4 flex flex-wrap gap-3">
+                                        <button
+                                            onClick={() => { setDetailRecord(null); setSeguimientoRecord(detailRecord); }}
+                                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            <ClipboardList size={14} />
+                                            {detailRecord.seguimiento_capacitacion ? 'Editar Seguimiento' : 'Registrar Seguimiento'}
+                                        </button>
+                                        <button
+                                            onClick={() => setUploadActaRecord(detailRecord)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            <Upload size={14} />
+                                            Subir Acta Escaneada
+                                        </button>
+                                        {detailRecord.seguimiento_capacitacion?.archivo_manual_nombre && (
+                                            <button
+                                                onClick={() => handleDownloadArchivo(detailRecord)}
+                                                disabled={downloadingId === detailRecord.id}
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                            >
+                                                {downloadingId === detailRecord.id ? <RefreshCcw size={14} className="animate-spin" /> : <FileDown size={14} />}
+                                                {downloadingId === detailRecord.id ? 'Descargando...' : 'Descargar Acta Escaneada'}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
+
+                            <DocumentosAdicionales basePath={`/salidas/${detailRecord.id}`} />
                         </div>
                     </DetailModal>
                 )}

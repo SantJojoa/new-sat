@@ -122,6 +122,7 @@ export interface SalidaRecord {
         num_total_asistentes?: number | null;
         evaluacion_satisfaccion?: number | null;
         observaciones?: string | null;
+        archivo_manual_nombre?: string | null;
     } | null;
 
     seguimiento_ivc?: {
@@ -130,12 +131,14 @@ export interface SalidaRecord {
         num_autocomisorio?: number | null;
         fecha_autocomisorio?: string | null;
         observaciones?: string | null;
+        archivo_manual_nombre?: string | null;
     } | null;
 
     seguimiento_articulacion_iv?: {
         id?: string;
         se_realizo_vsp: boolean;
         observaciones?: string | null;
+        archivo_manual_nombre?: string | null;
     } | null;
 
     seguimiento_acompanamiento?: {

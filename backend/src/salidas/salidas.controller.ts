@@ -9,13 +9,14 @@ import {
     UseGuards,
     UseInterceptors,
     UploadedFile,
+    UploadedFiles,
     BadRequestException,
     Request,
     Query,
     Res,
     StreamableFile
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Response } from 'express';
 import { SalidasService } from './salidas.service';
@@ -31,11 +32,16 @@ import { SetSeguimientoDto } from './dto/set-seguimiento.dto';
 import { SetSeguimientoIvcDto } from './dto/set-seguimiento-ivc.dto';
 import { SetSeguimientoArticulacionIvDto } from './dto/set-seguimiento-articulacion-iv.dto';
 import { SetSeguimientoAcompanamientoDto } from './dto/set-seguimiento-acompanamiento.dto';
+import { DocumentosAdicionalesService, documentosFileFilter, DOCUMENTOS_MULTER_LIMITS, DOCUMENTOS_MAX_FILES } from '../documentos-adicionales/documentos-adicionales.service';
+import { UploadActaSeguimientoDto } from '../common/dto/upload-acta-seguimiento.dto';
 
 @Controller('salidas')
 @UseGuards(JwtAuthGuard)
 export class SalidasController {
-    constructor(private readonly salidasService: SalidasService) { }
+    constructor(
+        private readonly salidasService: SalidasService,
+        private readonly documentosAdicionalesService: DocumentosAdicionalesService,
+    ) { }
 
     @Post()
     @UseGuards(PermissionsGuard)
@@ -281,10 +287,11 @@ export class SalidasController {
     }))
     uploadActaAcompanamiento(
         @Param('id') id: string,
+        @Body() dto: UploadActaSeguimientoDto,
         @UploadedFile() file: Express.Multer.File,
         @Request() req,
     ) {
-        return this.salidasService.uploadActaAcompanamiento(id, file, req.user);
+        return this.salidasService.uploadActaAcompanamiento(id, file, dto.se_realizo === 'true', req.user);
     }
 
     @Get(':id/seguimiento-acompanamiento/archivo')
@@ -301,5 +308,169 @@ export class SalidasController {
             'Content-Disposition': `inline; filename="${nombre}"`,
         });
         return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+            cb(null, true);
+        },
+    }))
+    uploadActaCapacitacion(
+        @Param('id') id: string,
+        @Body() dto: UploadActaSeguimientoDto,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
+    ) {
+        return this.salidasService.uploadActaCapacitacion(id, file, dto.se_realizo === 'true', req.user);
+    }
+
+    @Get(':id/seguimiento/archivo')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadActaCapacitacion(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const { buffer, nombre } = await this.salidasService.getActaArchivoCapacitacion(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${nombre}"`,
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento-ivc/archivo')
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('ivc')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+            cb(null, true);
+        },
+    }))
+    uploadActaIvc(
+        @Param('id') id: string,
+        @Body() dto: UploadActaSeguimientoDto,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
+    ) {
+        return this.salidasService.uploadActaIvc(id, file, dto.se_realizo === 'true', req.user);
+    }
+
+    @Get(':id/seguimiento-ivc/archivo')
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('ivc')
+    async downloadActaIvc(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const { buffer, nombre } = await this.salidasService.getActaArchivoIvc(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${nombre}"`,
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Post(':id/seguimiento-articulacion-iv/archivo')
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('iv')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (file.mimetype !== 'application/pdf') return cb(new BadRequestException('Solo se permiten archivos PDF'), false);
+            cb(null, true);
+        },
+    }))
+    uploadActaArticulacionIv(
+        @Param('id') id: string,
+        @Body() dto: UploadActaSeguimientoDto,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
+    ) {
+        return this.salidasService.uploadActaArticulacionIv(id, file, dto.se_realizo === 'true', req.user);
+    }
+
+    @Get(':id/seguimiento-articulacion-iv/archivo')
+    @UseGuards(PermissionsGuard, AreaAccessGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @RequireAreaAccess('iv')
+    async downloadActaArticulacionIv(
+        @Param('id') id: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const { buffer, nombre } = await this.salidasService.getActaArchivoArticulacionIv(id, req.user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${nombre}"`,
+        });
+        return new StreamableFile(buffer);
+    }
+
+    @Post(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    @UseInterceptors(FilesInterceptor('files', DOCUMENTOS_MAX_FILES, {
+        storage: memoryStorage(),
+        limits: DOCUMENTOS_MULTER_LIMITS,
+        fileFilter: documentosFileFilter,
+    }))
+    async uploadDocumentosSalida(
+        @Param('id') id: string,
+        @UploadedFiles() files: Express.Multer.File[],
+        @Request() req,
+    ) {
+        await this.salidasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.upload('salida', id, files, req.user.id);
+    }
+
+    @Get(':id/documentos')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async listDocumentosSalida(@Param('id') id: string, @Request() req) {
+        await this.salidasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.list('salida', id);
+    }
+
+    @Get(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async downloadDocumentoSalida(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.salidasService.findOne(id, req.user);
+        const { buffer, nombre, mimeType } = await this.documentosAdicionalesService.download('salida', id, docId);
+        res.set({ 'Content-Type': mimeType, 'Content-Disposition': `inline; filename="${nombre}"` });
+        return new StreamableFile(buffer);
+    }
+
+    @Delete(':id/documentos/:docId')
+    @UseGuards(PermissionsGuard)
+    @RequirePermissions('solicitar_salida', 'view')
+    async deleteDocumentoSalida(
+        @Param('id') id: string,
+        @Param('docId') docId: string,
+        @Request() req,
+    ) {
+        await this.salidasService.findOne(id, req.user);
+        return this.documentosAdicionalesService.remove('salida', id, docId);
     }
 }
