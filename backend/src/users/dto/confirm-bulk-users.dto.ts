@@ -1,4 +1,4 @@
-import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, ValidateNested, ArrayMinSize, Matches } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested, ArrayMinSize, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BulkUserRowDto {
@@ -15,8 +15,8 @@ export class BulkUserRowDto {
     @Matches(/^\S+$/, { message: 'La identificación no debe contener espacios' })
     num_id: string;
 
-    @IsEmail()
     @IsNotEmpty()
+    @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, { message: 'El email tiene un formato inválido' })
     email: string;
 
     @IsString()
