@@ -2,6 +2,11 @@ import { IsString, IsOptional, IsNotEmpty, IsArray, IsDateString, ValidateNested
 import { Type } from 'class-transformer';
 
 export class AsesoriaAsistenteDto {
+
+    @IsString()
+    @IsOptional()
+    id?: string;
+
     @IsString()
     @IsOptional()
     identificacion?: string;

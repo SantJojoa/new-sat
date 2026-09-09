@@ -79,6 +79,17 @@ export class PuppeteerBrowserService implements OnModuleInit {
                 if (p && existsSync(p)) return p;
             }
         }
+        if (process.platform === 'darwin') {
+            const macCandidates = [
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                '/Applications/Chromium.app/Contents/MacOS/Chromium',
+                '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+                '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+            ];
+            for (const p of macCandidates) {
+                if (existsSync(p)) return p;
+            }
+        }
         const linuxCandidates = [
             '/usr/bin/chromium',
             '/usr/bin/chromium-browser',

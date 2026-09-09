@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './src/hooks/useAuth'
 import Layout from './src/components/layout/Layout'
 import Login from './src/components/pages/Login'
+import FirmarAsistente from './src/components/pages/FirmarAsistente'
 import ProtectedRoute from './src/components/common/ProtectedRoute'
 import SolicitarSalida from './src/components/pages/SolicitarSalida'
 import Dashboard from './src/components/pages/Dashboard'
@@ -38,6 +39,8 @@ function App() {
                 <Routes>
                     {/* Ruta de login sin layout */}
                     <Route path="/login" element={<Login />} />
+
+                    <Route path="/firmar/:token" element={<FirmarAsistente />} />
 
 
                     {/* Rutas principales con layout (navbar + footer) */}

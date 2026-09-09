@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AsesoriasService } from './asesorias.service';
 import { AsesoriasController } from './asesorias.controller';
+import { AsesoriasFirmaController } from './asesorias-firma.controller';
+import { AsesoriasFirmaService } from './asesorias-firma.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { AsesoriasCertificateReport } from './reports/asesorias-certificate.report';
@@ -9,8 +11,8 @@ import { DocumentosAdicionalesModule } from '../documentos-adicionales/documento
 
 @Module({
     imports: [AuthModule, CommonModule, DocumentosAdicionalesModule],
-    controllers: [AsesoriasController],
-    providers: [AsesoriasService, PrismaService, AsesoriasCertificateReport],
+    controllers: [AsesoriasController, AsesoriasFirmaController],
+    providers: [AsesoriasService, PrismaService, AsesoriasCertificateReport, AsesoriasFirmaService],
     exports: [AsesoriasService],
 })
 export class AsesoriasModule { }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as QRCode from 'qrcode';
 import { PuppeteerBrowserService } from '../../common/services/puppeteer-browser.service';
 
 @Injectable()
@@ -6,7 +7,7 @@ export class AsesoriasCertificateReport {
     constructor(private readonly puppeteerBrowser: PuppeteerBrowserService) { }
 
     async generate(asesoria: any): Promise<Buffer> {
-        const html = this.buildHtml(asesoria);
+        const html = await this.buildHtml(asesoria);
         const browser = await this.puppeteerBrowser.getBrowser();
         const page = await browser.newPage();
         try {
@@ -45,11 +46,19 @@ export class AsesoriasCertificateReport {
     //   this.puppeteerBrowser.formatDate(fecha)   → devuelve "dd/mm/yyyy"
     // ─────────────────────────────────────────────────────────────────────────
 
-    private buildHtml(a: any): string {
+    private async buildHtml(a: any): Promise<string> {
         const municipio = this.puppeteerBrowser.escapeHtml(a.municipio_procedencia?.name ?? a.municipio_otro);
         const registradorDependencia = this.puppeteerBrowser.escapeHtml(a.registrador?.areas?.name ?? a.areas?.name);
 
-        const asistentesRows = (a.asistentes ?? []).map((ast: any, i: number) => `
+        const frontendUrl = process.env.FRONTEND_URL || 'https://sivat.idsn.gov.co';
+
+        const asistentesRowsArray = await Promise.all((a.asistentes ?? []).map(async (ast: any, i: number) => {
+            const firmaCell = ast.firmado_at
+                ? `<img src="${ast.firma_data}" style="max-width: 140px; max-height: 55px;" alt="Firma">`
+                : `<img src="${await QRCode.toDataURL(`${frontendUrl}/firmar/${ast.firma_token}`, { margin: 1, width: 200 })}" style="width: 85px; height: 85px;" alt="QR para firmar">
+                   <div style="font-size: 7pt; margin-top: 2px;">Escanea para firmar</div>`;
+
+            return `
         <tr>
             <td colspan="6" style="border: 1px solid #000; font-weight: bold; padding: 5px; text-align: center; background-color: #e0e0e0;">
                 ASISTENTE ${i + 1}
@@ -74,7 +83,13 @@ export class AsesoriasCertificateReport {
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">EMAIL:</td>
             <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.email)}</td>
-        </tr>`).join('');
+        </tr>
+        <tr>
+            <td colspan="2" style="border: 1px solid #000; padding: 5px; vertical-align: middle;">FIRMA:</td>
+            <td colspan="4" style="border: 1px solid #000; padding: 5px; text-align: center;">${firmaCell}</td>
+        </tr>`;
+        }));
+        const asistentesRows = asistentesRowsArray.join('');
 
         return `<!DOCTYPE html>
 <html lang="es">

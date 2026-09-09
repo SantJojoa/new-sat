@@ -141,7 +141,42 @@ export class AsesoriasService {
         const existing = await this.findOne(id, user);
 
         if (dto.asistentes !== undefined) {
-            await this.prisma.asesoria_asistentes.deleteMany({ where: { asesoria_id: id } });
+            const incomingIds = new Set(dto.asistentes.filter(a => a.id).map(a => a.id));
+            const idsToDelete = existing.asistentes
+                .map(a => a.id)
+                .filter(existingId => !incomingIds.has(existingId));
+
+            if (idsToDelete.length) {
+                await this.prisma.asesoria_asistentes.deleteMany({ where: { id: { in: idsToDelete } } });
+            }
+
+            for (const a of dto.asistentes) {
+                if (a.id) {
+                    await this.prisma.asesoria_asistentes.update({
+                        where: { id: a.id },
+                        data: {
+                            identificacion: a.identificacion,
+                            nombre: a.nombre,
+                            apellido: a.apellido,
+                            cargo: a.cargo,
+                            email: a.email,
+                            movil: a.movil,
+                        },
+                    });
+                } else {
+                    await this.prisma.asesoria_asistentes.create({
+                        data: {
+                            asesoria_id: id,
+                            identificacion: a.identificacion,
+                            nombre: a.nombre,
+                            apellido: a.apellido,
+                            cargo: a.cargo,
+                            email: a.email,
+                            movil: a.movil,
+                        },
+                    });
+                }
+            }
         }
 
         const horaInicio = dto.hora ?? existing.hora;
@@ -160,16 +195,6 @@ export class AsesoriasService {
                 temas_tratados: dto.temas_tratados,
                 material_entregado: dto.material_entregado,
                 duracion_minutos: (dto.hora || dto.hora_fin) ? this.calcularDuracionMinutos(horaInicio, horaFin) : undefined,
-                asistentes: dto.asistentes ? {
-                    create: dto.asistentes.map(a => ({
-                        identificacion: a.identificacion,
-                        nombre: a.nombre,
-                        apellido: a.apellido,
-                        cargo: a.cargo,
-                        email: a.email,
-                        movil: a.movil,
-                    })),
-                } : undefined,
             },
             include: {
                 registrador: { select: { id: true, names: true, email: true } },
