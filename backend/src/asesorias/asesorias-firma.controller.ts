@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { AsesoriasFirmaService } from './asesorias-firma.service';
 import { SaveFirmaDto } from './dto/firma-asistente.dto';
 
@@ -12,7 +13,9 @@ export class AsesoriasFirmaController {
     }
 
     @Post(':token')
-    saveFirma(@Param('token') token: string, @Body() dto: SaveFirmaDto) {
-        return this.firmaService.saveFirma(token, dto.firma);
+    saveFirma(@Param('token') token: string, @Body() dto: SaveFirmaDto, @Req() req: Request) {
+        // nginx manda la IP real del visitante en X-Real-IP (no usa X-Forwarded-For)
+        const ip = (req.headers['x-real-ip'] as string) || req.socket.remoteAddress || 'desconocida';
+        return this.firmaService.saveFirma(token, dto.firma, ip);
     }
 }

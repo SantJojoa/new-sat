@@ -21,7 +21,7 @@ export class AsesoriasFirmaService {
         };
     }
 
-    async saveFirma(token: string, firma: string) {
+    async saveFirma(token: string, firma: string, ip: string) {
         if (firma.length > 2_000_000) throw new BadRequestException('La firma es demasiado grande');
 
         const asistente = await this.prisma.asesoria_asistentes.findUnique({ where: { firma_token: token } });
@@ -29,7 +29,7 @@ export class AsesoriasFirmaService {
 
         await this.prisma.asesoria_asistentes.update({
             where: { firma_token: token },
-            data: { firma_data: firma, firmado_at: new Date() },
+            data: { firma_data: firma, firma_ip: ip, firmado_at: new Date() },
         });
         return { success: true };
     }

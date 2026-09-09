@@ -52,13 +52,7 @@ export class AsesoriasCertificateReport {
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://sivat.idsn.gov.co';
 
-        const asistentesRowsArray = await Promise.all((a.asistentes ?? []).map(async (ast: any, i: number) => {
-            const firmaCell = ast.firmado_at
-                ? `<img src="${ast.firma_data}" style="max-width: 140px; max-height: 55px;" alt="Firma">`
-                : `<img src="${await QRCode.toDataURL(`${frontendUrl}/firmar/${ast.firma_token}`, { margin: 1, width: 200 })}" style="width: 85px; height: 85px;" alt="QR para firmar">
-                   <div style="font-size: 7pt; margin-top: 2px;">Escanea para firmar</div>`;
-
-            return `
+        const asistentesRows = (a.asistentes ?? []).map((ast: any, i: number) => `
         <tr>
             <td colspan="6" style="border: 1px solid #000; font-weight: bold; padding: 5px; text-align: center; background-color: #e0e0e0;">
                 ASISTENTE ${i + 1}
@@ -83,13 +77,42 @@ export class AsesoriasCertificateReport {
         <tr>
             <td colspan="2" style="border: 1px solid #000; padding: 5px;">EMAIL:</td>
             <td colspan="4" style="border: 1px solid #000; padding: 5px;">${this.puppeteerBrowser.escapeHtml(ast.email)}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border: 1px solid #000; padding: 5px; vertical-align: middle;">FIRMA:</td>
-            <td colspan="4" style="border: 1px solid #000; padding: 5px; text-align: center;">${firmaCell}</td>
-        </tr>`;
-        }));
-        const asistentesRows = asistentesRowsArray.join('');
+        </tr>`).join('');
+
+        // Una casilla de firma por asistente (QR antes de firmar, firma + IP + fecha/hora después)
+        const asistentesFirmaBoxes = (await Promise.all((a.asistentes ?? []).map(async (ast: any) => {
+            const nombreCompleto = `${this.puppeteerBrowser.escapeHtml(ast.nombre)} ${this.puppeteerBrowser.escapeHtml(ast.apellido)}`;
+
+            if (ast.firmado_at) {
+                const fechaHora = `${this.puppeteerBrowser.formatDate(ast.firmado_at)} ${new Date(ast.firmado_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+                return `
+            <div style="text-align: center; align-self: end;">
+                <div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">${nombreCompleto}</div>
+                <img src="${ast.firma_data}" style="max-width: 150px; max-height: 55px;" alt="Firma">
+                <div style="border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-size: 9pt; font-weight: bold;">
+                    FIRMA DE QUIEN RECIBE LA ASESORÍA
+                </div>
+                <div style="font-size: 6.5pt; color: #555; margin-top: 2px;">
+                    Firmado el ${fechaHora} · IP ${this.puppeteerBrowser.escapeHtml(ast.firma_ip ?? 'desconocida')}
+                </div>
+            </div>`;
+            }
+
+            const qr = await QRCode.toDataURL(`${frontendUrl}/firmar/${ast.firma_token}`, { margin: 1, width: 200 });
+            return `
+            <div style="text-align: center; align-self: end;">
+                <div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">${nombreCompleto}</div>
+                <div style="position: relative; height: 55px;">
+                    <img src="${qr}" style="position: absolute; top: 0; right: 0; width: 42px; height: 42px;" alt="QR para firmar">
+                </div>
+                <div style="border-top: 1px solid #000; padding-top: 4px; font-size: 9pt; font-weight: bold;">
+                    FIRMA DE QUIEN RECIBE LA ASESORÍA
+                </div>
+                <div style="font-size: 6.5pt; color: #666; margin-top: 2px;">
+                    Firme aquí a mano, o escanee el QR para firmar desde el celular
+                </div>
+            </div>`;
+        }))).join('');
 
         return `<!DOCTYPE html>
 <html lang="es">
@@ -235,21 +258,16 @@ export class AsesoriasCertificateReport {
     </table>
 
     <!-- FIRMAS -->
-    <table style="width: 100%; border-collapse: collapse; margin-top: 18mm;">
-        <tr>
-            <td style="width: 45%; text-align: center; vertical-align: bottom; padding: 0 10px;">
-                <div style="border-top: 1px solid #000; padding-top: 6px; font-size: 9pt; font-weight: bold;">
-                    FIRMA DE QUIEN BRINDA LA ASESORÍA
-                </div>
-            </td>
-            <td style="width: 10%;"></td>
-            <td style="width: 45%; text-align: center; vertical-align: bottom; padding: 0 10px;">
-                <div style="border-top: 1px solid #000; padding-top: 6px; font-size: 9pt; font-weight: bold;">
-                    FIRMA DE QUIEN RECIBE LA ASESORÍA
-                </div>
-            </td>
-        </tr>
-    </table>
+    <!-- Grid de 2 columnas: cada casilla cae siempre en su columna exacta,
+         fila tras fila, sin importar cuántas casillas haya ni su altura. -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 10mm; row-gap: 14mm; margin-top: 18mm;">
+        <div style="text-align: center; align-self: end;">
+            <div style="border-top: 1px solid #000; padding-top: 6px; font-size: 9pt; font-weight: bold;">
+                FIRMA DE QUIEN BRINDA LA ASESORÍA
+            </div>
+        </div>
+        ${asistentesFirmaBoxes}
+    </div>
 
     </div>
   </div>

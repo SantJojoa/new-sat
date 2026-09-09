@@ -546,6 +546,7 @@ model asesoria_asistentes {
   movil          String?
   firma_token    String    @unique @default(cuid())
   firma_data     String?
+  firma_ip       String?
   firmado_at     DateTime?
 
   asesoria asesorias @relation(fields: [asesoria_id], references: [id], onDelete: Cascade)
