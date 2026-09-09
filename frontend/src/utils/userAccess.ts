@@ -8,6 +8,8 @@ const AREAS_IVC_SALUD_PUBLICA = new Set([
     "laboratorio de salud publica",
 ]);
 
+const AREA_VIGILANCIA_SALUD_PUBLICA = "vigilancia en salud publica";
+
 const normalize = (value?: string | null) =>
     (value ?? "")
         .normalize("NFD")
@@ -44,6 +46,14 @@ export const canUseIvc = (user?: AuthUser | null) => {
     return false;
 };
 
+export const canUseUnidadAnalisis = (user?: AuthUser | null) => {
+    if (user?.user_type?.name === "superadmin") return true;
+    if (getUserSubdireccionNombre(user) !== SUBDIRECCION_SALUD_PUBLICA) return false;
+    // El admin de subdirección no tiene área propia (supervisa toda la subdirección).
+    if (user?.user_type?.name === "admin_subdireccion") return true;
+    return getUserAreaNombre(user) === AREA_VIGILANCIA_SALUD_PUBLICA;
+};
+
 export const canAccessModule = (moduleName: string, user?: AuthUser | null) => {
     if (user?.user_type?.name === "superadmin") return true;
 
@@ -53,6 +63,10 @@ export const canAccessModule = (moduleName: string, user?: AuthUser | null) => {
 
     if (["solicitar_ivc", "gestionar_ivc", "calendario_ivc", "reportes_ivc", "seguimiento_ivc"].includes(moduleName)) {
         return canUseIvc(user);
+    }
+
+    if (["unidad_analisis", "gestionar_unidad_analisis", "calendario_unidad_analisis"].includes(moduleName)) {
+        return canUseUnidadAnalisis(user);
     }
 
     return true;

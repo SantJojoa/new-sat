@@ -15,6 +15,7 @@ import { AsesoriasModule } from './asesorias/asesorias.module';
 import { AcompanamientosNoRegistradosModule } from './acompanamientos-no-registrados/acompanamientos-no-registrados.module';
 import { DocumentosAdicionalesModule } from './documentos-adicionales/documentos-adicionales.module';
 import { AvisosModule } from './avisos/avisos.module';
+import { UnidadAnalisisModule } from './unidad-analisis/unidad-analisis.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AvisosModule } from './avisos/avisos.module';
     AcompanamientosNoRegistradosModule,
     DocumentosAdicionalesModule,
     AvisosModule,
+    UnidadAnalisisModule,
   ],
   controllers: [],
   providers: [PrismaService],

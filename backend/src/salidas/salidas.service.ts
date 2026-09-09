@@ -283,20 +283,18 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!userType) throw new ForbiddenException('Tipo no encontrado');
 
-        let where: any = {};
+        let where: any = { es_unidad_analisis: false };
         const effectiveViewAll = viewAll;
         if (!effectiveViewAll) {
             if (userType.name === 'admin_subdireccion') {
                 const subdireccionId = await this.userContext.getUserSubdireccionId(user);
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
-                where = {
-                    OR: [
-                        { areas: { subdireccion_id: subdireccionId } },
-                        { areas_participantes: { some: { subdireccion_id: subdireccionId } } }
-                    ]
-                };
+                where.OR = [
+                    { areas: { subdireccion_id: subdireccionId } },
+                    { areas_participantes: { some: { subdireccion_id: subdireccionId } } }
+                ];
             } else if (userType.name !== 'superadmin') {
-                where = { solicitante_id: user.id };
+                where.solicitante_id = user.id;
             }
         }
 
@@ -407,6 +405,7 @@ export class SalidasService {
 
     async approve(id: string, user: users, approveDto: ApproveSalidaDto) {
         const salida = await this.findOne(id, user);
+        if (salida.es_unidad_analisis) throw new BadRequestException('No aplica para Unidad de Análisis');
         if (salida.estado !== 'pendiente') throw new BadRequestException('La salida no está pendiente');
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (!['admin_subdireccion', 'superadmin'].includes(userType?.name || '')) throw new ForbiddenException('No autorizado');
@@ -423,6 +422,7 @@ export class SalidasService {
 
     async reject(id: string, user: users, rejectDto: RejectSalidaDto) {
         const salida = await this.findOne(id, user);
+        if (salida.es_unidad_analisis) throw new BadRequestException('No aplica para Unidad de Análisis');
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         const canReject = salida.estado === 'pendiente' || (salida.estado === 'aprobada' && userType?.name === 'superadmin');
         if (!canReject) throw new BadRequestException('No se puede rechazar en el estado actual');
@@ -478,7 +478,7 @@ export class SalidasService {
     }
 
     async getEstadisticas(user: users, startDate?: string, endDate?: string, areaId?: string, estado?: string, jornada?: string, subdireccionId?: string, tipo?: string, subtipo?: string) {
-        const where: any = {};
+        const where: any = { es_unidad_analisis: false };
         if (areaId) where.area_id = areaId;
         if (estado) where.estado = estado;
         if (jornada) where.jornada = jornada;

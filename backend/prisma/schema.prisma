@@ -282,6 +282,10 @@ model salidas {
   solicitudes_union            solicitudes_union[]
   areas_participantes          areas[]             @relation("SalidasAreasParticipantes")
   seguimiento_capacitacionesId String?
+
+  // Registros del módulo "IV - Unidad de Análisis": misma tabla/catálogos que una
+  // programación normal, pero sin cruce/estado/uniones/ventana (ver UnidadAnalisisService).
+  es_unidad_analisis Boolean @default(false)
 }
 
 model seguimiento_articulacion_iv {

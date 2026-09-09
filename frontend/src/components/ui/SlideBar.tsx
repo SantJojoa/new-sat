@@ -207,6 +207,7 @@ export default function SlideBar() {
         'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
         'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
+        'IV - Unidad de Análisis': ['unidad_analisis', 'gestionar_unidad_analisis', 'calendario_unidad_analisis'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento', 'seguimiento_articulacion', 'acompanamiento_no_registrado'],
         'Gestión de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios']
@@ -247,7 +248,7 @@ export default function SlideBar() {
     }
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'IV - Unidad de Análisis', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
     const isItemActive = (href: string) => location.pathname === href || location.pathname.startsWith(`${href}/`);
 

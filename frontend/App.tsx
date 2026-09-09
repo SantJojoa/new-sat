@@ -30,6 +30,9 @@ import GestionarAsesoria from './src/components/pages/GestionarAsesoria'
 import SeguimientoAcompanamiento from './src/components/pages/SeguimientoAcompanamiento'
 import SeguimientoArticulacion from './src/components/pages/SeguimientoArticulacion'
 import ActaAcompanamientoNoRegistrado from './src/components/pages/ActaAcompanamientoNoRegistrado'
+import SolicitarUnidadAnalisis from './src/components/pages/SolicitarUnidadAnalisis'
+import GestionarUnidadAnalisis from './src/components/pages/GestionarUnidadAnalisis'
+import CalendarioUnidadAnalisis from './src/components/pages/CalendarioUnidadAnalisis'
 import NotFound from './src/components/pages/NotFound'
 
 function App() {
@@ -223,6 +226,30 @@ function App() {
                         <Route path="acompanamiento-no-registrado" element={
                             <ProtectedRoute moduleName="seguimiento_acompanamiento">
                                 <ActaAcompanamientoNoRegistrado />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="solicitar-unidad-analisis" element={
+                            <ProtectedRoute moduleName="unidad_analisis">
+                                <SolicitarUnidadAnalisis />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="gestionar-unidad-analisis" element={
+                            <ProtectedRoute moduleName="gestionar_unidad_analisis">
+                                <GestionarUnidadAnalisis />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="gestionar-unidad-analisis/editar/:id" element={
+                            <ProtectedRoute moduleName="gestionar_unidad_analisis">
+                                <SolicitarUnidadAnalisis />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="calendario-unidad-analisis" element={
+                            <ProtectedRoute moduleName="calendario_unidad_analisis">
+                                <CalendarioUnidadAnalisis />
                             </ProtectedRoute>
                         } />
                     </Route>

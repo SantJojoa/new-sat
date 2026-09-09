@@ -25,6 +25,7 @@ export class SolicitudesUnionService {
             include: { areas: { include: { subdirecciones: true } } }
         });
         if (!salida) throw new NotFoundException('Salida no encontrada');
+        if (salida.es_unidad_analisis) throw new BadRequestException('No aplica para Unidad de Análisis');
 
         if (salida.area_id === user.area_id)
             throw new BadRequestException('No puedes solicitar unirte a tu propia salida');

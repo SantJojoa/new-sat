@@ -4,6 +4,7 @@ import { AREA_ACCESS_KEY, AreaAccessScope } from '../decorators/area-access.deco
 
 const SUBDIRECCION_SALUD_PUBLICA = 'subdireccion de salud publica';
 const SUBDIRECCION_CALIDAD = 'subdireccion de calidad y aseguramiento';
+const AREA_VIGILANCIA_SALUD_PUBLICA = 'vigilancia en salud publica';
 
 const AREAS_IVC_SALUD_PUBLICA = new Set([
     'control de medicamentos',
@@ -48,6 +49,10 @@ export class AreaAccessGuard implements CanActivate {
         } else if (scope === 'iv') {
             // Todos los usuarios de la Subdirección de Salud Pública pueden usar IV, sin filtro de área.
             allowed = subdireccion === SUBDIRECCION_SALUD_PUBLICA;
+        } else if (scope === 'unidad_analisis') {
+            if (subdireccion === SUBDIRECCION_SALUD_PUBLICA) {
+                allowed = user.user_types?.name === 'admin_subdireccion' || area === AREA_VIGILANCIA_SALUD_PUBLICA;
+            }
         }
 
         if (!allowed) {

@@ -73,6 +73,9 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
         { name: 'gestionar_ivc', description: 'Gestionar IVC', icon: 'table_view', path: '/gestionar-ivc', order: 11 },
         { name: 'calendario_ivc', description: 'Calendario IVC', icon: 'event', path: '/calendario-ivc', order: 12 },
         { name: 'programar_asesoria', description: 'Datos Asesoria', icon: 'support_agent', path: '/programar-asesoria', order: 30 },
+        { name: 'unidad_analisis', description: 'Solicitar Unidad de Análisis', icon: 'analytics', path: '/solicitar-unidad-analisis', order: 13 },
+        { name: 'gestionar_unidad_analisis', description: 'Gestionar Unidad de Análisis', icon: 'table_view', path: '/gestionar-unidad-analisis', order: 14 },
+        { name: 'calendario_unidad_analisis', description: 'Calendario Unidad de Análisis', icon: 'event', path: '/calendario-unidad-analisis', order: 15 },
     ];
 
     const modules: Record<string, { id: string; name: string }> = {};
@@ -117,6 +120,11 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
                 if (isAdminSub) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: true };
                 else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };
                 else if (isUsuario) perm = { can_view: false, can_create: false, can_edit: false, can_delete: false, can_approve: false };
+            } else if (['unidad_analisis', 'gestionar_unidad_analisis', 'calendario_unidad_analisis'].includes(m.name)) {
+                // La visibilidad real (área "Vigilancia en Salud Pública" o admin_subdireccion de
+                // "Subdirección de Salud Publica") la impone AreaAccessGuard/canAccessModule; aquí se
+                // habilita el permiso a nivel de rol para que ese chequeo de área sea el único filtro.
+                if (isAdminSub || isLider || isUsuario) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };
             } else if (m.name === 'dashboard') {
                 perm = { can_view: true, can_create: false, can_edit: false, can_delete: false, can_approve: false };
             } else if (isAdminSub) {
