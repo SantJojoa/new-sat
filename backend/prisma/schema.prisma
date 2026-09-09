@@ -531,6 +531,11 @@ model asesorias {
 
   asistentes asesoria_asistentes[]
 
+  firma_registrador_token    String    @unique @default(cuid())
+  firma_registrador_data     String?
+  firma_registrador_ip       String?
+  firmado_registrador_at     DateTime?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }

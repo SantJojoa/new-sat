@@ -86,7 +86,7 @@ export class AsesoriasCertificateReport {
             if (ast.firmado_at) {
                 const fechaHora = `${this.puppeteerBrowser.formatDate(ast.firmado_at)} ${new Date(ast.firmado_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
                 return `
-            <div style="text-align: center; align-self: end;">
+            <div style="text-align: center; align-self: end; break-inside: avoid; page-break-inside: avoid;">
                 <div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">${nombreCompleto}</div>
                 <img src="${ast.firma_data}" style="max-width: 150px; max-height: 55px;" alt="Firma">
                 <div style="border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-size: 9pt; font-weight: bold;">
@@ -100,7 +100,7 @@ export class AsesoriasCertificateReport {
 
             const qr = await QRCode.toDataURL(`${frontendUrl}/firmar/${ast.firma_token}`, { margin: 1, width: 200 });
             return `
-            <div style="text-align: center; align-self: end;">
+            <div style="text-align: center; align-self: end; break-inside: avoid; page-break-inside: avoid;">
                 <div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">${nombreCompleto}</div>
                 <div style="position: relative; height: 55px;">
                     <img src="${qr}" style="position: absolute; top: 0; right: 0; width: 42px; height: 42px;" alt="QR para firmar">
@@ -113,6 +113,36 @@ export class AsesoriasCertificateReport {
                 </div>
             </div>`;
         }))).join('');
+
+        // Casilla de firma del funcionario del IDSN que brinda la asesoría (mismo mecanismo de QR)
+        let registradorFirmaBox: string;
+        if (a.firmado_registrador_at) {
+            const fechaHoraRegistrador = `${this.puppeteerBrowser.formatDate(a.firmado_registrador_at)} ${new Date(a.firmado_registrador_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+            registradorFirmaBox = `
+        <div style="text-align: center; align-self: end; break-inside: avoid; page-break-inside: avoid;">
+            <img src="${a.firma_registrador_data}" style="max-width: 150px; max-height: 55px;" alt="Firma">
+            <div style="border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-size: 9pt; font-weight: bold;">
+                FIRMA DE QUIEN BRINDA LA ASESORÍA
+            </div>
+            <div style="font-size: 6.5pt; color: #555; margin-top: 2px;">
+                Firmado el ${fechaHoraRegistrador} · IP ${this.puppeteerBrowser.escapeHtml(a.firma_registrador_ip ?? 'desconocida')}
+            </div>
+        </div>`;
+        } else {
+            const qrRegistrador = await QRCode.toDataURL(`${frontendUrl}/firmar/${a.firma_registrador_token}`, { margin: 1, width: 200 });
+            registradorFirmaBox = `
+        <div style="text-align: center; align-self: end; break-inside: avoid; page-break-inside: avoid;">
+            <div style="position: relative; height: 55px;">
+                <img src="${qrRegistrador}" style="position: absolute; top: 0; right: 0; width: 42px; height: 42px;" alt="QR para firmar">
+            </div>
+            <div style="border-top: 1px solid #000; padding-top: 4px; font-size: 9pt; font-weight: bold;">
+                FIRMA DE QUIEN BRINDA LA ASESORÍA
+            </div>
+            <div style="font-size: 6.5pt; color: #666; margin-top: 2px;">
+                Firme aquí a mano, o escanee el QR para firmar desde el celular
+            </div>
+        </div>`;
+        }
 
         return `<!DOCTYPE html>
 <html lang="es">
@@ -259,13 +289,13 @@ export class AsesoriasCertificateReport {
 
     <!-- FIRMAS -->
     <!-- Grid de 2 columnas: cada casilla cae siempre en su columna exacta,
-         fila tras fila, sin importar cuántas casillas haya ni su altura. -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 10mm; row-gap: 14mm; margin-top: 18mm;">
-        <div style="text-align: center; align-self: end;">
-            <div style="border-top: 1px solid #000; padding-top: 6px; font-size: 9pt; font-weight: bold;">
-                FIRMA DE QUIEN BRINDA LA ASESORÍA
-            </div>
-        </div>
+         fila tras fila, sin importar cuántas casillas haya ni su altura.
+         break-inside: avoid evita que Chromium parta esta sección a la mitad
+         entre dos hojas al imprimir el PDF — si no cabe completa, se mueve
+         entera a la siguiente hoja, y así el margin-top de 24mm se respeta
+         en vez de quedar la firma cortada y pegada arriba. -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 10mm; row-gap: 14mm; margin-top: 24mm; break-inside: avoid; page-break-inside: avoid;">
+        ${registradorFirmaBox}
         ${asistentesFirmaBoxes}
     </div>
 
