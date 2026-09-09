@@ -3,6 +3,7 @@ import { AsesoriasService } from './asesorias.service';
 import { AsesoriasController } from './asesorias.controller';
 import { AsesoriasFirmaController } from './asesorias-firma.controller';
 import { AsesoriasFirmaService } from './asesorias-firma.service';
+import { AsesoriasFirmaGateway } from './asesorias-firma.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { AsesoriasCertificateReport } from './reports/asesorias-certificate.report';
@@ -12,7 +13,7 @@ import { DocumentosAdicionalesModule } from '../documentos-adicionales/documento
 @Module({
     imports: [AuthModule, CommonModule, DocumentosAdicionalesModule],
     controllers: [AsesoriasController, AsesoriasFirmaController],
-    providers: [AsesoriasService, PrismaService, AsesoriasCertificateReport, AsesoriasFirmaService],
+    providers: [AsesoriasService, PrismaService, AsesoriasCertificateReport, AsesoriasFirmaService, AsesoriasFirmaGateway],
     exports: [AsesoriasService],
 })
 export class AsesoriasModule { }

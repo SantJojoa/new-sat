@@ -28,10 +28,20 @@ export const asesoriasService = {
         await api.delete(`/asesorias/${id}`);
     },
 
-    generateCertificado: async (id: string, codigo: string): Promise<void> => {
+    // Si se pasa `existingPopup` (y sigue abierta), recarga esa misma ventana con el PDF
+    // fresco en vez de abrir una nueva — así se puede refrescar automáticamente cuando
+    // alguien firma sin que el usuario tenga que cerrar y volver a generar el certificado.
+    generateCertificado: async (id: string, codigo: string, existingPopup?: Window | null): Promise<Window | null> => {
         const response = await api.get(`/asesorias/${id}/certificado`, { responseType: 'blob' });
         const url = window.URL.createObjectURL(new Blob([response.data as BlobPart], { type: 'application/pdf' }));
-        const popup = window.open(url, `certificado-${codigo}`, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+
+        let popup: Window | null = existingPopup && !existingPopup.closed ? existingPopup : null;
+        if (popup) {
+            popup.location.href = url;
+        } else {
+            popup = window.open(url, `certificado-${codigo}`, 'width=900,height=700,menubar=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        }
+
         if (!popup) {
             const link = document.createElement('a');
             link.href = url;
@@ -41,5 +51,6 @@ export const asesoriasService = {
             document.body.removeChild(link);
         }
         setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+        return popup;
     },
 };

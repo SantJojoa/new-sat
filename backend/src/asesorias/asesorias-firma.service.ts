@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AsesoriasFirmaGateway } from './asesorias-firma.gateway';
 
 @Injectable()
 export class AsesoriasFirmaService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private firmaGateway: AsesoriasFirmaGateway,
+    ) { }
 
     async getByToken(token: string) {
         const asistente = await this.prisma.asesoria_asistentes.findUnique({
@@ -46,6 +50,7 @@ export class AsesoriasFirmaService {
                 where: { firma_token: token },
                 data: { firma_data: firma, firma_ip: ip, firmado_at: new Date() },
             });
+            this.firmaGateway.emitFirmaActualizada(asistente.asesoria_id);
             return { success: true };
         }
 
@@ -55,6 +60,7 @@ export class AsesoriasFirmaService {
                 where: { firma_registrador_token: token },
                 data: { firma_registrador_data: firma, firma_registrador_ip: ip, firmado_registrador_at: new Date() },
             });
+            this.firmaGateway.emitFirmaActualizada(asesoria.id);
             return { success: true };
         }
 

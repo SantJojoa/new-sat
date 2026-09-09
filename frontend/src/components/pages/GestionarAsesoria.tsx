@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { User, RefreshCcw, Calendar, MapPin, Layers, Clock, Building2, MessageSquare, FileText, Trash2, X, Plus } from 'lucide-react';
+import { io } from 'socket.io-client';
 import FeedbackModal from '../ui/FeedbackModal';
 import ConfirmModal from '../ui/ConfirmModal';
 import SlideBar from '../ui/SlideBar';
@@ -59,16 +60,35 @@ export default function GestionarAsesoria() {
     const [editAsistentes, setEditAsistentes] = useState<AsesoriaAsistente[]>([]);
     const [feedbackModal, setFeedbackModal] = useState<{ type: 'success' | 'error' | null; title: string; message: string }>({ type: null, title: '', message: '' });
 
+    // Ventanas de certificado abiertas por asesoría (id -> ventana). Si alguien firma
+    // mientras la ventana sigue abierta, la recargamos con el PDF actualizado en vez de
+    // que el usuario tenga que cerrarla y generar otra.
+    const openCertificadoPopups = useRef<Record<string, Window>>({});
+
     const handleGenerateCertificate = async (record: AsesoriaRecord) => {
         setGeneratingId(record.id);
         try {
-            await asesoriasService.generateCertificado(record.id, record.codigo);
+            const popup = await asesoriasService.generateCertificado(record.id, record.codigo, openCertificadoPopups.current[record.id]);
+            if (popup) openCertificadoPopups.current[record.id] = popup;
         } catch (error) {
             console.error('Error generando certificado:', error);
         } finally {
             setGeneratingId(null);
         }
     };
+
+    useEffect(() => {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const socket = io(API_URL, { transports: ['websocket'] });
+        socket.on('asesoria_firma_actualizada', ({ asesoriaId }: { asesoriaId: string }) => {
+            const record = records.find(r => r.id === asesoriaId);
+            const popup = openCertificadoPopups.current[asesoriaId];
+            if (record && popup && !popup.closed) {
+                void asesoriasService.generateCertificado(record.id, record.codigo, popup);
+            }
+        });
+        return () => { socket.disconnect(); };
+    }, [records]);
 
     const fetchRecords = useCallback(async () => {
         setLoading(true);
