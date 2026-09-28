@@ -14,6 +14,7 @@ import type { AcompanamientoNoRegistrado } from "../../types/acompanamientoNoReg
 
 const INSTITUCIONES = ['DLS', 'EAPB', 'ENTIDADES PRIVADAS', 'ENTIDADES PUBLICAS', 'IDSN', 'IPS', 'PARTICULAR', 'UNIVERSIDAD'];
 const MATERIALES = ['Ninguno', 'Magnético', 'Impreso', 'Magnético/Impreso'];
+const MAX_PDF_MB = 15;
 
 interface Asistente { _id: string; identificacion: string; nombre: string; apellido: string; cargo: string; email: string; movil: string; }
 interface OrdenDia { _id: string; tematica: string; responsable: string; }
@@ -100,6 +101,10 @@ function NuevaActaDrawer({ onClose, onSaved, municipios }: NuevaActaDrawerProps)
         }
         if (mode === 'pdf' && !file) {
             setError('Debe seleccionar un archivo PDF');
+            return;
+        }
+        if (mode === 'pdf' && file && file.size > MAX_PDF_MB * 1024 * 1024) {
+            setError(`El archivo supera el máximo permitido de ${MAX_PDF_MB} MB`);
             return;
         }
         setSaving(true); setError('');
@@ -218,7 +223,17 @@ function NuevaActaDrawer({ onClose, onSaved, municipios }: NuevaActaDrawerProps)
                             <input
                                 type="file"
                                 accept="application/pdf"
-                                onChange={e => setFile(e.target.files?.[0] ?? null)}
+                                onChange={e => {
+                                    const selected = e.target.files?.[0] ?? null;
+                                    if (selected && selected.size > MAX_PDF_MB * 1024 * 1024) {
+                                        setError(`El archivo pesa ${(selected.size / 1024 / 1024).toFixed(1)} MB y el máximo permitido es ${MAX_PDF_MB} MB. Comprima el PDF e intente de nuevo.`);
+                                        e.target.value = '';
+                                        setFile(null);
+                                        return;
+                                    }
+                                    setError('');
+                                    setFile(selected);
+                                }}
                                 className={inputCls}
                             />
                             {file && <p className="text-zinc-500 text-xs mt-1">{file.name}</p>}
