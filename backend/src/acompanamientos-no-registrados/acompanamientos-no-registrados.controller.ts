@@ -36,14 +36,14 @@ export class AcompanamientosNoRegistradosController {
 
     @Post()
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'create')
+    @RequirePermissions('acompanamiento_no_registrado', 'create')
     create(@Body() dto: CreateAcompanamientoNoRegistradoDto, @Request() req) {
         return this.service.create(dto, req.user);
     }
 
     @Post('archivo')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'create')
+    @RequirePermissions('acompanamiento_no_registrado', 'create')
     @UseInterceptors(FileInterceptor('file', {
         storage: memoryStorage(),
         limits: { fileSize: 15 * 1024 * 1024 },
@@ -62,21 +62,21 @@ export class AcompanamientosNoRegistradosController {
 
     @Get()
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     findAll(@Request() req, @Query('viewAll') viewAll?: string) {
         return this.service.findAll(req.user, viewAll === 'true');
     }
 
     @Get(':id')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     findOne(@Param('id') id: string, @Request() req) {
         return this.service.findOne(id, req.user);
     }
 
     @Get(':id/certificado')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     async getCertificado(
         @Param('id') id: string,
         @Request() req,
@@ -92,7 +92,7 @@ export class AcompanamientosNoRegistradosController {
 
     @Get(':id/archivo')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     async downloadArchivo(
         @Param('id') id: string,
         @Request() req,
@@ -108,7 +108,7 @@ export class AcompanamientosNoRegistradosController {
 
     @Post(':id/documentos')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     @UseInterceptors(FilesInterceptor('files', DOCUMENTOS_MAX_FILES, {
         storage: memoryStorage(),
         limits: DOCUMENTOS_MULTER_LIMITS,
@@ -125,7 +125,7 @@ export class AcompanamientosNoRegistradosController {
 
     @Get(':id/documentos')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     async listDocumentos(@Param('id') id: string, @Request() req) {
         await this.service.findOne(id, req.user);
         return this.documentosAdicionalesService.list('acta_no_registrada', id);
@@ -133,7 +133,7 @@ export class AcompanamientosNoRegistradosController {
 
     @Get(':id/documentos/:docId')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     async downloadDocumento(
         @Param('id') id: string,
         @Param('docId') docId: string,
@@ -148,7 +148,7 @@ export class AcompanamientosNoRegistradosController {
 
     @Delete(':id/documentos/:docId')
     @UseGuards(PermissionsGuard)
-    @RequirePermissions('solicitar_salida', 'view')
+    @RequirePermissions('acompanamiento_no_registrado', 'view')
     async deleteDocumento(
         @Param('id') id: string,
         @Param('docId') docId: string,

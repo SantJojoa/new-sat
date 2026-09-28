@@ -76,6 +76,7 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
         { name: 'unidad_analisis', description: 'Solicitar Unidad de Análisis', icon: 'analytics', path: '/solicitar-unidad-analisis', order: 13 },
         { name: 'gestionar_unidad_analisis', description: 'Gestionar Unidad de Análisis', icon: 'table_view', path: '/gestionar-unidad-analisis', order: 14 },
         { name: 'calendario_unidad_analisis', description: 'Calendario Unidad de Análisis', icon: 'event', path: '/calendario-unidad-analisis', order: 15 },
+        { name: 'acompanamiento_no_registrado', description: 'Acta de Acompañamiento No Registrado', icon: 'note_add', path: '/acompanamiento-no-registrado', order: 108 },
     ];
 
     const modules: Record<string, { id: string; name: string }> = {};
@@ -125,6 +126,9 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
                 // "Subdirección de Salud Publica") la impone AreaAccessGuard/canAccessModule; aquí se
                 // habilita el permiso a nivel de rol para que ese chequeo de área sea el único filtro.
                 if (isAdminSub || isLider || isUsuario) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };
+            } else if (m.name === 'acompanamiento_no_registrado') {
+                // Cualquier usuario puede registrar actas; el servicio limita qué registros ve cada uno.
+                perm = { can_view: true, can_create: true, can_edit: false, can_delete: false, can_approve: false };
             } else if (m.name === 'dashboard') {
                 perm = { can_view: true, can_create: false, can_edit: false, can_delete: false, can_approve: false };
             } else if (isAdminSub) {
