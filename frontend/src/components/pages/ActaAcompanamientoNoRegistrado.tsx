@@ -136,7 +136,10 @@ function NuevaActaDrawer({ onClose, onSaved, municipios }: NuevaActaDrawerProps)
                 });
             }
             onSaved(); handleClose();
-        } catch { setError('Error al guardar el acta'); }
+        } catch (err) {
+            const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+            setError((Array.isArray(msg) ? msg.join(', ') : msg) || 'Error al guardar el acta');
+        }
         finally { setSaving(false); }
     };
 
