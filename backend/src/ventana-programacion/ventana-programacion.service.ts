@@ -11,17 +11,29 @@ export class VentanaProgramacionService {
     ) { }
 
     async get() {
+        const now = new Date();
+
+        // Ventana vigente (o la próxima configurada) — la que gobierna las solicitudes
         const ventana = await this.prisma.ventana_programacion.findFirst({
             where: { activo: true },
             orderBy: { created_at: 'desc' },
         });
 
-        const now = new Date();
         const abierta = ventana
             ? now >= new Date(ventana.fecha_inicio) && now <= new Date(ventana.fecha_fin)
             : false;
 
-        return { ventana, abierta };
+        const proxima = await this.prisma.ventana_programacion.findFirst({
+            where: { activo: true, fecha_inicio: { gt: now } },
+            orderBy: { fecha_inicio: 'asc' },
+        });
+
+        const anterior = await this.prisma.ventana_programacion.findFirst({
+            where: { fecha_fin: { lt: now } },
+            orderBy: { fecha_fin: 'desc' },
+        });
+
+        return { ventana, abierta, proxima, anterior };
     }
 
     async set(dto: SetVentanaDto, user: any) {
@@ -29,8 +41,9 @@ export class VentanaProgramacionService {
             throw new ForbiddenException('Solo el superadmin puede configurar la ventana de programación');
         }
 
+        // Reemplaza solo ventanas vigentes/futuras; las ya finalizadas quedan como historial
         await this.prisma.ventana_programacion.updateMany({
-            where: { activo: true },
+            where: { activo: true, fecha_fin: { gte: new Date() } },
             data: { activo: false },
         });
 
@@ -51,6 +64,12 @@ export class VentanaProgramacionService {
             throw new ForbiddenException('Solo el superadmin puede desactivar la ventana');
         }
 
+        const now = new Date();
+        // Ventana abierta: se corta en este instante para que figure como "anterior"
+        await this.prisma.ventana_programacion.updateMany({
+            where: { activo: true, fecha_inicio: { lte: now }, fecha_fin: { gt: now } },
+            data: { fecha_fin: now },
+        });
         await this.prisma.ventana_programacion.updateMany({
             where: { activo: true },
             data: { activo: false },

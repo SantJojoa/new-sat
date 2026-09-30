@@ -12,6 +12,8 @@ export interface VentanaProgramacion {
 export interface VentanaStatus {
     ventana: VentanaProgramacion | null;
     abierta: boolean;
+    proxima?: VentanaProgramacion | null;
+    anterior?: VentanaProgramacion | null;
 }
 
 export const ventanaProgramacionService = {

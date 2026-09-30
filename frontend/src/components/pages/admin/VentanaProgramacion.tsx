@@ -1,7 +1,29 @@
 import { useEffect, useState } from 'react';
 import SlideBar from '../../ui/SlideBar';
-import { ventanaProgramacionService, type VentanaStatus } from '../../../services/ventanaProgramacionService';
+import { ventanaProgramacionService, type VentanaStatus, type VentanaProgramacion } from '../../../services/ventanaProgramacionService';
 import { Calendar, CheckCircle, XCircle, AlertCircle, Lock, Unlock } from 'lucide-react';
+
+// ISO (UTC) -> valor 'YYYY-MM-DDTHH:mm' en hora local para <input type="datetime-local">
+const toLocalInput = (iso: string) => {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+function DateRange({ ventana, fmt }: { ventana: VentanaProgramacion; fmt: (d: string) => string }) {
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Apertura</p>
+                <p className="text-sm font-bold text-zinc-800">{fmt(ventana.fecha_inicio)}</p>
+            </div>
+            <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Cierre</p>
+                <p className="text-sm font-bold text-zinc-800">{fmt(ventana.fecha_fin)}</p>
+            </div>
+        </div>
+    );
+}
 
 export default function VentanaProgramacion() {
     const [status, setStatus] = useState<VentanaStatus | null>(null);
@@ -18,8 +40,8 @@ export default function VentanaProgramacion() {
             const data = await ventanaProgramacionService.get();
             setStatus(data);
             if (data.ventana) {
-                setFechaInicio(data.ventana.fecha_inicio.slice(0, 16));
-                setFechaFin(data.ventana.fecha_fin.slice(0, 16));
+                setFechaInicio(toLocalInput(data.ventana.fecha_inicio));
+                setFechaFin(toLocalInput(data.ventana.fecha_fin));
             }
         } catch {
             setFeedback({ type: 'error', message: 'Error al cargar la configuración' });
@@ -48,7 +70,7 @@ export default function VentanaProgramacion() {
         }
         setSaving(true);
         try {
-            await ventanaProgramacionService.set(fechaInicio, fechaFin);
+            await ventanaProgramacionService.set(new Date(fechaInicio).toISOString(), new Date(fechaFin).toISOString());
             setFeedback({ type: 'success', message: 'Ventana de programación guardada exitosamente.' });
             await fetchStatus();
         } catch {
@@ -100,7 +122,7 @@ export default function VentanaProgramacion() {
                         <div className="p-6">
                             {loading ? (
                                 <p className="text-zinc-500 text-sm">Cargando...</p>
-                            ) : status?.ventana ? (
+                            ) : (
                                 <div className="space-y-3">
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${clientAbierta ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                         {clientAbierta
@@ -108,33 +130,50 @@ export default function VentanaProgramacion() {
                                             : <><Lock size={14} /> Ventana Cerrada</>
                                         }
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 mt-3">
-                                        <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Apertura</p>
-                                            <p className="text-sm font-bold text-zinc-800">{fmt(status.ventana.fecha_inicio)}</p>
-                                        </div>
-                                        <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">
-                                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Cierre</p>
-                                            <p className="text-sm font-bold text-zinc-800">{fmt(status.ventana.fecha_fin)}</p>
-                                        </div>
-                                    </div>
-                                    {clientAbierta && (
-                                        <button
-                                            onClick={handleDeactivate}
-                                            disabled={saving}
-                                            className="mt-2 flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-50 cursor-pointer"
-                                        >
-                                            <Lock size={14} />
-                                            Cerrar Ventana Ahora
-                                        </button>
+                                    {clientAbierta && status?.ventana ? (
+                                        <>
+                                            <DateRange ventana={status.ventana} fmt={fmt} />
+                                            <button
+                                                onClick={handleDeactivate}
+                                                disabled={saving}
+                                                className="mt-2 flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <Lock size={14} />
+                                                Cerrar Ventana Ahora
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <p className="flex items-center gap-2 text-sm text-zinc-500">
+                                            <AlertCircle size={16} className="text-yellow-500" />
+                                            El módulo de solicitudes está <strong>bloqueado</strong>.
+                                        </p>
                                     )}
                                 </div>
-                            ) : (
-                                <div className="flex items-center gap-3 text-zinc-500">
-                                    <AlertCircle size={18} className="text-yellow-500" />
-                                    <span className="text-sm">No hay ventana configurada. El módulo de solicitudes está <strong>bloqueado</strong>.</span>
-                                </div>
                             )}
+                        </div>
+                    </div>
+
+                    {/* Próxima ventana */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden mb-6">
+                        <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-6 py-4 border-b border-zinc-100">
+                            <h2 className="text-base font-bold text-zinc-800">Próxima Ventana</h2>
+                        </div>
+                        <div className="p-6">
+                            {loading ? <p className="text-zinc-500 text-sm">Cargando...</p>
+                                : status?.proxima ? <DateRange ventana={status.proxima} fmt={fmt} />
+                                : <p className="text-sm text-zinc-500">No hay una próxima ventana programada.</p>}
+                        </div>
+                    </div>
+
+                    {/* Ventana anterior */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden mb-6">
+                        <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-6 py-4 border-b border-zinc-100">
+                            <h2 className="text-base font-bold text-zinc-800">Ventana Anterior</h2>
+                        </div>
+                        <div className="p-6">
+                            {loading ? <p className="text-zinc-500 text-sm">Cargando...</p>
+                                : status?.anterior ? <DateRange ventana={status.anterior} fmt={fmt} />
+                                : <p className="text-sm text-zinc-500">Aún no hay ventanas anteriores.</p>}
                         </div>
                     </div>
 
