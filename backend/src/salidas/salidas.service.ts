@@ -106,7 +106,9 @@ export class SalidasService {
         // El municipio no determina conflicto por sí solo: distintos actores pueden
         // coincidir en el mismo municipio y fecha sin generar cruce de agenda. Un
         // conflicto real requiere que se comparta un actor (IPS/EAPB/entidad/
-        // organización/IDSN) entre ambas programaciones.
+        // organización/IDSN) Y al menos un municipio entre ambas programaciones:
+        // el mismo actor en municipios distintos (p. ej. Ipiales y Providencia)
+        // no es un cruce.
         const resourceOr: any[] = [
             ...ips_actores.map(item => ({
                 salida_ips: { some: { ips_id: item.ips_id, actor_id: item.actor_id ?? null } }
@@ -126,7 +128,8 @@ export class SalidasService {
                 { fecha_inicio: { lte: end }, fecha_final: { gte: start } },
                 { estado: { in: ['aprobada', 'pendiente'] } },
                 jornadaFilter,
-                { OR: resourceOr }
+                { OR: resourceOr },
+                ...(municipios.length > 0 ? [{ municipios: { some: { id: { in: municipios } } } }] : []),
             ]
         };
 
