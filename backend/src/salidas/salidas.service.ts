@@ -99,6 +99,26 @@ export class SalidasService {
             throw new BadRequestException('Debe seleccionar al menos un actor (IPS, Entidad Territorial, EAPB, Organización o IDSN) además de los municipios convocados');
     }
 
+    /** Las programaciones se hacen un mes antes: las fechas deben caer en el mes siguiente a `referencia`. */
+    static assertMesSiguiente(referencia: Date, ...fechas: (string | undefined)[]) {
+        const next = new Date(referencia.getFullYear(), referencia.getMonth() + 1, 1);
+        SalidasService.assertMes(next.getFullYear(), next.getMonth(), ...fechas);
+    }
+
+    /** Las fechas deben caer dentro del mes `monthIdx` (0-11) del año `y`. */
+    static assertMes(y: number, monthIdx: number, ...fechas: (string | undefined)[]) {
+        const m = monthIdx;
+        const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        const lastDay = `${y}-${String(m + 1).padStart(2, '0')}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, '0')}`;
+        const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        for (const fecha of fechas) {
+            if (fecha === undefined) continue;
+            const dia = fecha.slice(0, 10);
+            if (dia < firstDay || dia > lastDay)
+                throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${MONTHS_ES[m]} de ${y}`);
+        }
+    }
+
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
         municipios: string[] = [],
@@ -188,19 +208,7 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         const isSuperadmin = userType?.name === 'superadmin';
 
-        if (!isSuperadmin) {
-            const today = new Date();
-            const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-            const nextMonthYear = nextMonthDate.getFullYear();
-            const nextMonthIdx = nextMonthDate.getMonth();
-            const firstDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-01`;
-            const lastDayNum = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
-            const lastDay = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
-            const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-            const nextMonthName = `${MONTHS_ES[nextMonthIdx]} de ${nextMonthYear}`;
-            if (createSalidaDto.fecha_inicio < firstDay || createSalidaDto.fecha_inicio > lastDay)
-                throw new BadRequestException(`Las programaciones solo pueden solicitarse para ${nextMonthName}`);
-        }
+        if (!isSuperadmin) SalidasService.assertMesSiguiente(new Date(), createSalidaDto.fecha_inicio, createSalidaDto.fecha_final);
 
         const targetAreaId = await this.userContext.resolveTargetAreaId(createSalidaDto.area_id, createSalidaDto.solicitante_id, user);
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
@@ -361,6 +369,12 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (salida.solicitante_id !== user.id && userType?.name !== 'superadmin')
             throw new ForbiddenException('Solo el creador puede editar');
+
+        // Al editar solo se permiten fechas dentro del mes en que ya está programada.
+        if (userType?.name !== 'superadmin' && (updateSalidaDto.fecha_inicio || updateSalidaDto.fecha_final)) {
+            const mesProgramado = new Date(salida.fecha_inicio);
+            SalidasService.assertMes(mesProgramado.getFullYear(), mesProgramado.getMonth(), updateSalidaDto.fecha_inicio, updateSalidaDto.fecha_final);
+        }
 
         SalidasService.assertMunicipiosYActores({
             municipios: updateSalidaDto.municipios_ids ?? salida.municipios, ips: updateSalidaDto.ips_actores ?? (salida as any).salida_ips,
