@@ -90,6 +90,15 @@ export class SalidasService {
         updated_at: true,
     };
 
+    /** Municipios convocados son obligatorios y no pueden ir solos: debe haber IPS, entidad territorial, EAPB, organización o IDSN. */
+    static assertMunicipiosYActores(a: { municipios?: unknown[]; ips?: unknown[]; entidades?: unknown[]; eapb?: unknown[]; organizaciones?: unknown[]; idsn?: unknown[] }) {
+        if (!a.municipios?.length)
+            throw new BadRequestException('Debe seleccionar al menos un municipio convocado');
+        const total = (a.ips?.length ?? 0) + (a.entidades?.length ?? 0) + (a.eapb?.length ?? 0) + (a.organizaciones?.length ?? 0) + (a.idsn?.length ?? 0);
+        if (total === 0)
+            throw new BadRequestException('Debe seleccionar al menos un actor (IPS, Entidad Territorial, EAPB, Organización o IDSN) además de los municipios convocados');
+    }
+
     private async checkConflicts(
         start: Date, end: Date, jornada: string,
         municipios: string[] = [],
@@ -207,6 +216,11 @@ export class SalidasService {
 
         if (await this.prisma.salidas.findUnique({ where: { codigo: newCodigo } }))
             throw new ConflictException('Error generando código único, intente nuevamente');
+
+        SalidasService.assertMunicipiosYActores({
+            municipios: createSalidaDto.municipios_ids, ips: createSalidaDto.ips_actores, entidades: createSalidaDto.entidades_ids, eapb: createSalidaDto.eapb_actores,
+            organizaciones: createSalidaDto.organizaciones_ids, idsn: createSalidaDto.idsn_ids
+        });
 
         if (!isSuperadmin) {
             await this.checkConflicts(
@@ -347,6 +361,14 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         if (salida.solicitante_id !== user.id && userType?.name !== 'superadmin')
             throw new ForbiddenException('Solo el creador puede editar');
+
+        SalidasService.assertMunicipiosYActores({
+            municipios: updateSalidaDto.municipios_ids ?? salida.municipios, ips: updateSalidaDto.ips_actores ?? (salida as any).salida_ips,
+            entidades: updateSalidaDto.entidades_ids ?? salida.entidades,
+            eapb: updateSalidaDto.eapb_actores ?? salida.salida_eapb,
+            organizaciones: updateSalidaDto.organizaciones_ids ?? salida.organizaciones,
+            idsn: updateSalidaDto.idsn_ids ?? salida.idsn
+        });
 
         if (updateSalidaDto.fecha_inicio || updateSalidaDto.municipios_ids) {
             await this.checkConflicts(

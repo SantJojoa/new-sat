@@ -45,6 +45,11 @@ export class UnidadAnalisisService {
         const count = await this.prisma.salidas.count({ where: { codigo: { startsWith: pattern } } });
         const newCodigo = `${pattern}${String(count + 1).padStart(2, '0')}`;
 
+        SalidasService.assertMunicipiosYActores({
+            municipios: dto.municipios_ids, ips: dto.ips_actores, entidades: dto.entidades_ids, eapb: dto.eapb_actores,
+            organizaciones: dto.organizaciones_ids, idsn: dto.idsn_ids
+        });
+
         let municipiosConvocadosStr: string | undefined;
         if (dto.municipios_ids?.length) {
             const munis = await this.prisma.municipios.findMany({ where: { id: { in: dto.municipios_ids } }, select: { name: true } });
@@ -107,7 +112,13 @@ export class UnidadAnalisisService {
     async update(id: string, dto: UpdateUnidadAnalisisDto, user: users) {
         // findOne ya valida propiedad/subdirección (propietario, admin_subdireccion de la
         // misma subdirección, o superadmin) — no hay más roles que puedan llegar hasta aquí.
-        await this.findOne(id, user);
+        const actual: any = await this.findOne(id, user);
+
+        SalidasService.assertMunicipiosYActores({
+            municipios: dto.municipios_ids ?? actual.municipios, ips: dto.ips_actores ?? actual.salida_ips, entidades: dto.entidades_ids ?? actual.entidades,
+            eapb: dto.eapb_actores ?? actual.salida_eapb, organizaciones: dto.organizaciones_ids ?? actual.organizaciones,
+            idsn: dto.idsn_ids ?? actual.idsn
+        });
 
         let municipiosConvocadosStr: string | undefined;
         if (dto.municipios_ids?.length) {
