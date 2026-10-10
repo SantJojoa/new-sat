@@ -336,12 +336,11 @@ export default function SolicitarSalida() {
 
     // Generic effect to clear errors for complex states
     useEffect(() => {
-        const hasAnyParticipant = selectedMunicipios.length > 0 ||
-            selectedIPS.length > 0 ||
+        const hasAnyParticipant = selectedMunicipios.length > 0 && (selectedIPS.length > 0 ||
             selectedEntidades.length > 0 ||
             selectedEAPB.length > 0 ||
             selectedOrganizaciones.length > 0 ||
-            selectedIDSN.length > 0;
+            selectedIDSN.length > 0);
 
         if (hasAnyParticipant && errors.participantes) {
             setErrors(prev => ({ ...prev, participantes: false }));
@@ -398,12 +397,11 @@ export default function SolicitarSalida() {
         if (!formData.fechaFinal) newErrors.fechaFinal = true;
         if (!formData.jornada) newErrors.jornada = true;
 
-        const hasAnyParticipant = selectedMunicipios.length > 0 ||
-            selectedIPS.length > 0 ||
+        const hasAnyParticipant = selectedMunicipios.length > 0 && (selectedIPS.length > 0 ||
             selectedEntidades.length > 0 ||
             selectedEAPB.length > 0 ||
             selectedOrganizaciones.length > 0 ||
-            selectedIDSN.length > 0;
+            selectedIDSN.length > 0);
 
         if (!hasAnyParticipant) {
             newErrors.participantes = true;
@@ -951,7 +949,7 @@ export default function SolicitarSalida() {
                                         {errors.participantes && (
                                             <div className="bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 text-sm flex items-center gap-2 mb-4">
                                                 <AlertCircle size={18} />
-                                                Debe seleccionar al menos un actor (Municipio, IPS, Entidad, EAPB, Organización o IDSN).
+                                                Debe seleccionar al menos un municipio convocado y un actor (IPS, Entidad Territorial, EAPB, Organización o IDSN).
                                             </div>
                                         )}
                                     </div>
@@ -960,7 +958,7 @@ export default function SolicitarSalida() {
                                         <div className="flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-sm font-semibold text-zinc-700">
-                                                    Municipios Convocados
+                                                    Municipios Convocados <span className="text-red-500">*</span>
                                                 </label>
                                                 <button
                                                     type="button"
