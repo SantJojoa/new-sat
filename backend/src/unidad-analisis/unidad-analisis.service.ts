@@ -96,7 +96,9 @@ export class UnidadAnalisisService {
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where.areas = { subdireccion_id: subdireccionId };
             } else if (userType.name !== 'superadmin') {
-                where.solicitante_id = user.id;
+                where.OR = user.area_id
+                    ? [{ solicitante_id: user.id }, { area_id: user.area_id }]
+                    : [{ solicitante_id: user.id }];
             }
         }
 

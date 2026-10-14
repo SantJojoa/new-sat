@@ -319,7 +319,10 @@ export class SalidasService {
                     { areas_participantes: { some: { subdireccion_id: subdireccionId } } }
                 ];
             } else if (userType.name !== 'superadmin') {
-                where.solicitante_id = user.id;
+                // lider y usuario: ven todo lo de su misma área (propias, de otros del área o donde su área participa)
+                where.OR = user.area_id
+                    ? [{ solicitante_id: user.id }, { area_id: user.area_id }, { areas_participantes: { some: { id: user.area_id } } }]
+                    : [{ solicitante_id: user.id }];
             }
         }
 
@@ -356,7 +359,9 @@ export class SalidasService {
             if (!isOwnerSubdir && !isParticipantSubdir)
                 throw new ForbiddenException('No tienes permiso');
         } else if (userType?.name !== 'superadmin' && salida.solicitante_id !== user.id) {
-            throw new ForbiddenException('No tienes permiso');
+            const sameArea = !!user.area_id && (salida.area_id === user.area_id
+                || (salida as any).areas_participantes?.some((ap: any) => ap.id === user.area_id));
+            if (!sameArea) throw new ForbiddenException('No tienes permiso');
         }
 
         return salida;

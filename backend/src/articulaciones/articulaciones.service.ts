@@ -109,7 +109,9 @@ export class ArticulacionesService {
                 if (!subdireccionId) throw new ForbiddenException('Área no encontrada');
                 where = { areas: { subdireccion_id: subdireccionId } };
             } else if (userType.name !== 'superadmin') {
-                where = { solicitante_id: user.id };
+                where = user.area_id
+                    ? { OR: [{ solicitante_id: user.id }, { area_id: user.area_id }] }
+                    : { solicitante_id: user.id };
             }
         }
 
@@ -145,7 +147,8 @@ export class ArticulacionesService {
             const areaInfo = await this.prisma.areas.findUnique({ where: { id: articulacion.area_id }, select: { subdireccion_id: true } });
             if (subdireccionId !== areaInfo?.subdireccion_id)
                 throw new ForbiddenException('No tienes permiso');
-        } else if (userType?.name !== 'superadmin' && articulacion.solicitante_id !== user.id) {
+        } else if (userType?.name !== 'superadmin' && articulacion.solicitante_id !== user.id
+            && !(user.area_id && articulacion.area_id === user.area_id)) {
             throw new ForbiddenException('No tienes permiso');
         }
 
