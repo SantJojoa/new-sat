@@ -219,8 +219,10 @@ export class SalidasService {
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
         const pattern = `${dateStr}-${userArea.name.substring(0, 3).toUpperCase()}`;
-        const count = await this.prisma.salidas.count({ where: { codigo: { startsWith: pattern } } });
-        const newCodigo = `${pattern}${String(count + 1).padStart(2, '0')}`;
+        // Se usa el mayor consecutivo existente (no el conteo) para no repetir códigos si se eliminó una salida
+        const existentes = await this.prisma.salidas.findMany({ where: { codigo: { startsWith: pattern } }, select: { codigo: true } });
+        const maxConsecutivo = existentes.reduce((max, s) => Math.max(max, parseInt(s.codigo.slice(pattern.length), 10) || 0), 0);
+        const newCodigo = `${pattern}${String(maxConsecutivo + 1).padStart(2, '0')}`;
 
         if (await this.prisma.salidas.findUnique({ where: { codigo: newCodigo } }))
             throw new ConflictException('Error generando código único, intente nuevamente');
