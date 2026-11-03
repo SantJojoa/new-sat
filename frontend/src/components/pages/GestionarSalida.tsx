@@ -69,6 +69,12 @@ export default function GestionarSalida() {
     // Join requests state
     const [joinRequests, setJoinRequests] = useState<SolicitudUnion[]>([]);
     const [joinRequestsLoading, setJoinRequestsLoading] = useState(false);
+    const [expandedJoinTexts, setExpandedJoinTexts] = useState<Set<string>>(new Set());
+    const toggleJoinText = (key: string) => setExpandedJoinTexts(prev => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+    });
     const [joinResolveModal, setJoinResolveModal] = useState<{ type: 'accept' | 'reject' | null; solicitudId: string | null }>({ type: null, solicitudId: null });
     const [joinResolveComment, setJoinResolveComment] = useState('');
     const [joinResolveSubmitting, setJoinResolveSubmitting] = useState(false);
@@ -608,7 +614,12 @@ export default function GestionarSalida() {
                                                         <div className="text-zinc-500">{req.salida.jornada}</div>
                                                     </td>
                                                     <td className="px-6 py-4 max-w-xs">
-                                                        <p className="text-zinc-600 text-xs italic line-clamp-3">{req.mensaje || <span className="text-zinc-400">Sin mensaje</span>}</p>
+                                                        <p className={`text-zinc-600 text-xs italic break-words whitespace-pre-wrap ${expandedJoinTexts.has(`m-${req.id}`) ? '' : 'line-clamp-3'}`}>{req.mensaje || <span className="text-zinc-400">Sin mensaje</span>}</p>
+                                                        {req.mensaje && req.mensaje.length > 120 && (
+                                                            <button onClick={() => toggleJoinText(`m-${req.id}`)} className="text-blue-600 hover:underline text-xs font-medium mt-1">
+                                                                {expandedJoinTexts.has(`m-${req.id}`) ? 'Ver menos' : 'Ver más'}
+                                                            </button>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {req.estado === 'pendiente' && (
@@ -627,7 +638,14 @@ export default function GestionarSalida() {
                                                             </span>
                                                         )}
                                                         {req.respuesta && (
-                                                            <p className="text-zinc-500 text-xs mt-1 italic line-clamp-2">{req.respuesta}</p>
+                                                            <div className="max-w-[220px]">
+                                                                <p className={`text-zinc-500 text-xs mt-1 italic break-words whitespace-pre-wrap ${expandedJoinTexts.has(`r-${req.id}`) ? '' : 'line-clamp-2'}`}>{req.respuesta}</p>
+                                                                {req.respuesta.length > 80 && (
+                                                                    <button onClick={() => toggleJoinText(`r-${req.id}`)} className="text-blue-600 hover:underline text-xs font-medium mt-1">
+                                                                        {expandedJoinTexts.has(`r-${req.id}`) ? 'Ver menos' : 'Ver más'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-zinc-500 text-xs">
