@@ -208,7 +208,9 @@ export class SalidasService {
         const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
         const isSuperadmin = userType?.name === 'superadmin';
 
-        if (!isSuperadmin) SalidasService.assertMesSiguiente(new Date(), createSalidaDto.fecha_inicio, createSalidaDto.fecha_final);
+        // Superadmin y admin de subdirección pueden programar para cualquier fecha (pasada o futura).
+        const sinRestriccionFecha = isSuperadmin || userType?.name === 'admin_subdireccion';
+        if (!sinRestriccionFecha) SalidasService.assertMesSiguiente(new Date(), createSalidaDto.fecha_inicio, createSalidaDto.fecha_final);
 
         const targetAreaId = await this.userContext.resolveTargetAreaId(createSalidaDto.area_id, createSalidaDto.solicitante_id, user);
         if (!targetAreaId) throw new BadRequestException('No se ha especificado o no tiene un área asignada');
@@ -378,7 +380,7 @@ export class SalidasService {
             throw new ForbiddenException('Solo el creador puede editar');
 
         // Al editar solo se permiten fechas dentro del mes en que ya está programada.
-        if (userType?.name !== 'superadmin' && (updateSalidaDto.fecha_inicio || updateSalidaDto.fecha_final)) {
+        if (!['superadmin', 'admin_subdireccion'].includes(userType?.name ?? '') && (updateSalidaDto.fecha_inicio || updateSalidaDto.fecha_final)) {
             const mesProgramado = new Date(salida.fecha_inicio);
             SalidasService.assertMes(mesProgramado.getFullYear(), mesProgramado.getMonth(), updateSalidaDto.fecha_inicio, updateSalidaDto.fecha_final);
         }
