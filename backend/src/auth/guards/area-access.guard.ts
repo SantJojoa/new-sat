@@ -52,7 +52,8 @@ export class AreaAccessGuard implements CanActivate {
         } else if (scope === 'iv') {
             // Todos los usuarios de la Subdirección de Salud Pública pueden usar IV, sin filtro de área.
             allowed = subdireccion === SUBDIRECCION_SALUD_PUBLICA
-                || AREAS_IV_EXTRA_IDS.has(user.areas?.id ?? user.area_id);
+                || AREAS_IV_EXTRA_IDS.has(user.areas?.id ?? user.area_id)
+                || AREAS_IV_EXTRA_IDS.has(user.subdirecciones?.id ?? user.subdireccion_id);
         } else if (scope === 'unidad_analisis') {
             if (subdireccion === SUBDIRECCION_SALUD_PUBLICA) {
                 allowed = user.user_types?.name === 'admin_subdireccion' || area === AREA_VIGILANCIA_SALUD_PUBLICA;

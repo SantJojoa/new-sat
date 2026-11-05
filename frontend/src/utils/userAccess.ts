@@ -4,7 +4,7 @@ const SUBDIRECCION_SALUD_PUBLICA = "subdireccion de salud publica";
 const SUBDIRECCION_CALIDAD = "subdireccion de calidad y aseguramiento";
 
 // Áreas fuera de Salud Pública que también pueden usar IV (por id): Aseguramiento.
-const AREAS_IV_EXTRA_IDS = new Set(["cmqh8a0pw003f25mnewi6zrlf"]);
+const AREAS_IV_EXTRA_IDS = new Set(["cmqh8a0ne002625mnlx87xxdt"]);
 
 const AREAS_IVC_SALUD_PUBLICA = new Set([
     "control de medicamentos",
@@ -35,7 +35,9 @@ export const canUseInspeccionVigilanciaSp = (user?: AuthUser | null) => {
     // seguimiento a IV, sin importar su área.
     if (isSaludPublicaUser(user)) return true;
     const areaId = user?.area?.id ?? user?.area_id;
-    return !!areaId && AREAS_IV_EXTRA_IDS.has(areaId);
+    const subdireccionId = user?.subdireccion?.id ?? user?.subdireccion_id;
+    return (!!areaId && AREAS_IV_EXTRA_IDS.has(areaId))
+        || (!!subdireccionId && AREAS_IV_EXTRA_IDS.has(subdireccionId));
 };
 
 export const canUseIvc = (user?: AuthUser | null) => {
