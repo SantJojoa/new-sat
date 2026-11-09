@@ -125,12 +125,17 @@ export default function SolicitarSalida() {
 
     const handleJoinRequest = async () => {
         setJoinRequestLoading(true);
+        const joinsDirectly = ['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '');
         try {
-            await solicitudesUnionService.create({ salida_id: joinRequestModal.salida_id, mensaje: joinRequestMensaje });
+            // Subdirectores/superadmin no tienen área propia: se unen con el área del líder seleccionado.
+            const areaUnion = joinsDirectly
+                ? (formData.areaId || lideresData.find(l => l.id === formData.solicitanteId)?.area_id || undefined)
+                : undefined;
+            await solicitudesUnionService.create({ salida_id: joinRequestModal.salida_id, mensaje: joinRequestMensaje, area_id: areaUnion });
             setJoinRequestSent(prev => new Set(prev).add(joinRequestModal.salida_id));
             setJoinRequestModal({ open: false, salida_id: '', codigo: '', area: '' });
             setJoinRequestMensaje('');
-            setFeedbackModal({ type: 'success', title: '¡Solicitud Enviada!', message: 'Tu solicitud de unión fue enviada al administrador de la subdirección. Recibirás una respuesta pronto.' });
+            setFeedbackModal({ type: 'success', title: joinsDirectly ? '¡Unión Realizada!' : '¡Solicitud Enviada!', message: joinsDirectly ? 'Te uniste a la programación sin necesidad de autorización.' : 'Tu solicitud de unión fue enviada al administrador de la subdirección. Recibirás una respuesta pronto.' });
         } catch (error) {
             const apiError = error as AxiosError<ApiErrorPayload>;
             const msg = apiError.response?.data?.message || 'Error al enviar la solicitud';
@@ -1714,7 +1719,7 @@ export default function SolicitarSalida() {
                                                             onClick={() => setJoinRequestModal({ open: true, salida_id: c.id, codigo: c.codigo, area: c.area })}
                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
                                                         >
-                                                            <Users size={13} /> Solicitar Unión
+                                                            <Users size={13} /> {['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '') ? 'Unirme' : 'Solicitar Unión'}
                                                         </button>
                                                     )}
                                                 </td>
@@ -1754,7 +1759,7 @@ export default function SolicitarSalida() {
                                 </div>
                             </div>
                             <div className="p-6 space-y-4">
-                                <p className="text-sm text-zinc-600">Se enviará una notificación al administrador de la subdirección para que acepte o rechace tu solicitud de unión a esta actividad.</p>
+                                <p className="text-sm text-zinc-600">{['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '') ? 'Te unirás directamente a esta actividad, sin esperar la autorización de quien la programó.' : 'Se enviará una notificación al administrador de la subdirección para que acepte o rechace tu solicitud de unión a esta actividad.'}</p>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-semibold text-zinc-700">Mensaje (opcional)</label>
                                     <textarea
@@ -1780,7 +1785,7 @@ export default function SolicitarSalida() {
                                     disabled={joinRequestLoading}
                                     className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
                                 >
-                                    {joinRequestLoading ? 'Enviando...' : <><Users size={15} /> Enviar Solicitud</>}
+                                    {joinRequestLoading ? 'Enviando...' : <><Users size={15} /> {['admin_subdireccion', 'superadmin'].includes(user?.user_type?.name || '') ? 'Unirme' : 'Enviar Solicitud'}</>}
                                 </button>
                             </div>
                         </div>

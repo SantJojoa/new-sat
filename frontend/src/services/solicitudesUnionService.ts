@@ -39,6 +39,7 @@ export interface SolicitudUnion {
 export interface CreateSolicitudUnionPayload {
     salida_id: string;
     mensaje?: string;
+    area_id?: string;
 }
 
 export const solicitudesUnionService = {

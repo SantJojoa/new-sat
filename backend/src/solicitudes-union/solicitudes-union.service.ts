@@ -18,17 +18,51 @@ export class SolicitudesUnionService {
     }
 
     async create(dto: CreateSolicitudUnionDto, user: users) {
-        if (!user.area_id) throw new BadRequestException('No tienes un área asignada para enviar la solicitud');
+        const userType = await this.prisma.user_types.findUnique({ where: { id: user.user_type_id } });
+        const isAdminType = ['admin_subdireccion', 'superadmin'].includes(userType?.name || '');
+
+        // Subdirectores/superadmin no tienen área propia: usan el área indicada (la del líder seleccionado).
+        const areaSolicitanteId = isAdminType ? (dto.area_id || user.area_id) : user.area_id;
+        if (!areaSolicitanteId) throw new BadRequestException(
+            isAdminType ? 'Debe seleccionar el líder/área con la que se unirá a la programación' : 'No tienes un área asignada para enviar la solicitud');
 
         const salida = await this.prisma.salidas.findUnique({
             where: { id: dto.salida_id },
-            include: { areas: { include: { subdirecciones: true } } }
+            include: { areas: { include: { subdirecciones: true } }, areas_participantes: { select: { id: true } } }
         });
         if (!salida) throw new NotFoundException('Salida no encontrada');
         if (salida.es_unidad_analisis) throw new BadRequestException('No aplica para Unidad de Análisis');
 
-        if (salida.area_id === user.area_id)
+        if (salida.area_id === areaSolicitanteId)
             throw new BadRequestException('No puedes solicitar unirte a tu propia salida');
+
+        // Los subdirectores se unen directamente, sin esperar aprobación.
+        if (isAdminType) {
+            if (salida.areas_participantes?.some(a => a.id === areaSolicitanteId))
+                throw new BadRequestException('Esta área ya participa en la programación');
+            const [solicitudDirecta] = await this.prisma.$transaction([
+                this.prisma.solicitudes_union.create({
+                    data: {
+                        salida_id: dto.salida_id,
+                        solicitante_id: user.id,
+                        area_solicitante_id: areaSolicitanteId,
+                        mensaje: dto.mensaje,
+                        estado: 'aceptada',
+                        respuesta: 'Unión directa por subdirección'
+                    },
+                    include: {
+                        salida: { select: { id: true, codigo: true, tema: true } },
+                        solicitante: { select: { id: true, names: true, last_name: true, email: true } },
+                        area_solicitante: { select: { id: true, name: true } }
+                    }
+                }),
+                this.prisma.salidas.update({
+                    where: { id: dto.salida_id },
+                    data: { areas_participantes: { connect: { id: areaSolicitanteId } } }
+                }),
+            ]);
+            return solicitudDirecta;
+        }
 
         const existing = await this.prisma.solicitudes_union.findFirst({
             where: {
@@ -43,7 +77,7 @@ export class SolicitudesUnionService {
             data: {
                 salida_id: dto.salida_id,
                 solicitante_id: user.id,
-                area_solicitante_id: user.area_id,
+                area_solicitante_id: areaSolicitanteId,
                 mensaje: dto.mensaje,
                 estado: 'pendiente'
             },

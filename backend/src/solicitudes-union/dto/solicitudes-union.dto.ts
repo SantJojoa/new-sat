@@ -8,6 +8,11 @@ export class CreateSolicitudUnionDto {
     @IsString()
     @IsOptional()
     mensaje?: string;
+
+    /** Área con la que se une (usado por subdirectores/superadmin, que no tienen área propia). */
+    @IsString()
+    @IsOptional()
+    area_id?: string;
 }
 
 export class ResolveSolicitudUnionDto {
