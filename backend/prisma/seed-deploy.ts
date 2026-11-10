@@ -90,6 +90,8 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
     }
     console.log('✅ Módulos verificados:', Object.keys(modules).length);
 
+    // Usuarios normales también pueden programar articulaciones y hacerles seguimiento.
+    const USUARIO_ARTICULACION = ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones'];
     const restrictedToSuperadmin = ['usuarios', 'subdirecciones', 'areas'];
     const onlyView = ['calendario_salidas'];
 
@@ -120,7 +122,9 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
             } else if (['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'].includes(m.name)) {
                 if (isAdminSub) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: true };
                 else if (isLider) perm = { can_view: true, can_create: true, can_edit: true, can_delete: true, can_approve: false };
-                else if (isUsuario) perm = { can_view: false, can_create: false, can_edit: false, can_delete: false, can_approve: false };
+                else if (isUsuario) perm = USUARIO_ARTICULACION.includes(m.name)
+                    ? { can_view: true, can_create: true, can_edit: true, can_delete: false, can_approve: false }
+                    : { can_view: false, can_create: false, can_edit: false, can_delete: false, can_approve: false };
             } else if (['unidad_analisis', 'gestionar_unidad_analisis', 'calendario_unidad_analisis'].includes(m.name)) {
                 // La visibilidad real (área "Vigilancia en Salud Pública" o admin_subdireccion de
                 // "Subdirección de Salud Publica") la impone AreaAccessGuard/canAccessModule; aquí se
@@ -156,6 +160,19 @@ async function seedModulesAndPermissions(userTypes: Record<string, { id: string;
             data: { can_delete: true },
         });
         console.log('✅ Permiso can_delete corregido: lider / gestionar_salida');
+    }
+
+    // Corrección puntual: el upsert no modifica filas existentes, así que se habilita explícitamente
+    // a 'usuario' en los módulos de articulación (programar y hacer seguimiento).
+    if (userTypes['usuario']) {
+        for (const name of USUARIO_ARTICULACION) {
+            if (!modules[name]) continue;
+            await prisma.permissions.updateMany({
+                where: { user_type_id: userTypes['usuario'].id, module_id: modules[name].id },
+                data: { can_view: true, can_create: true, can_edit: true },
+            });
+        }
+        console.log('✅ Permisos de articulación habilitados para usuario');
     }
 
     return modules;

@@ -86,7 +86,7 @@ export default function SlideBar() {
 
     // Generate nav items from permissions
     const allNavItems = user?.user_type?.permissions
-        ?.filter(p => p.can_view && p.modules.is_active)
+        ?.filter(p => p.can_view && p.modules.is_active && !['reportes_salidas', 'reportes_articulacion', 'reportes_ivc'].includes(p.modules.name))
         ?.filter(p => {
             // Restriction: Only superadmin can see areas, subdirecciones, usuarios
             const restrictedModules = ['areas', 'subdirecciones', 'usuarios'];
@@ -114,25 +114,11 @@ export default function SlideBar() {
             href: '/calendario-salidas'
         },
         {
-            id: 'reportes-salidas-module',
-            name: 'reportes_salidas',
+            id: 'reportes-module',
+            name: 'reportes',
             label: 'Reportes y Estadísticas',
             icon: 'bar_chart',
-            href: '/reportes-salidas'
-        },
-        {
-            id: 'reportes-articulacion-module',
-            name: 'reportes_articulacion',
-            label: 'Reportes y Estadísticas',
-            icon: 'bar_chart',
-            href: '/reportes-articulacion'
-        },
-        {
-            id: 'reportes-ivc-module',
-            name: 'reportes_ivc',
-            label: 'Reportes y Estadísticas',
-            icon: 'bar_chart',
-            href: '/reportes-ivc'
+            href: '/reportes'
         },
         {
             id: 'seguimiento-capacitaciones-module',
@@ -203,9 +189,10 @@ export default function SlideBar() {
     // Define categories
     const categories: Record<string, string[]> = {
         'Inicio': ['dashboard'],
-        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
-        'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
-        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
+        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
+        'Articulaciones': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones'],
+        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'],
+        'Reportes': ['reportes'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
         'IV - Unidad de Análisis': ['unidad_analisis', 'gestionar_unidad_analisis', 'calendario_unidad_analisis'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento', 'seguimiento_articulacion', 'acompanamiento_no_registrado'],
@@ -248,7 +235,7 @@ export default function SlideBar() {
     }
 
     // Order of categories to display
-    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'IV - Unidad de Análisis', 'Seguimiento/Actas', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
+    const categoryOrder = ['Inicio', 'Programaciones', 'Articulaciones', 'IVC', 'Asesorias', 'IV - Unidad de Análisis', 'Seguimiento/Actas', 'Reportes', 'Gestión de Dependencias', 'Usuarios', 'Configuración', 'Otros'];
 
     const isItemActive = (href: string) => location.pathname === href || location.pathname.startsWith(`${href}/`);
 

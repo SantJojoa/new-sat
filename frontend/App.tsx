@@ -11,7 +11,7 @@ import Areas from './src/components/pages/admin/Areas'
 import Users from './src/components/pages/admin/Users'
 import GestionarSalida from './src/components/pages/GestionarSalida'
 import CalendarioSalidas from './src/components/pages/CalendarioSalidas'
-import ReportesSalidas from './src/components/pages/ReportesSalidas'
+import Reportes from './src/components/pages/Reportes'
 import SolicitarArticulacion from './src/components/pages/SolicitarArticulacion'
 import SolicitarIvc from './src/components/pages/SolicitarIvc'
 import GestionarArticulacion from './src/components/pages/GestionarArticulacion'
@@ -20,8 +20,6 @@ import GestionarIvc from './src/components/pages/GestionarIvc'
 import CalendarioIvc from './src/components/pages/CalendarioIvc'
 import VentanaProgramacion from './src/components/pages/admin/VentanaProgramacion'
 import Avisos from './src/components/pages/admin/Avisos'
-import ReportesArticulacion from './src/components/pages/ReportesArticulacion'
-import ReportesIvc from './src/components/pages/ReportesIvc'
 import SeguimientoCapacitaciones from './src/components/pages/SeguimientoCapacitaciones'
 import SeguimientoIVC from './src/components/pages/SeguimientoIVC'
 import SeguimientoArticulacionIV from './src/components/pages/SeguimientoArticulacionIV'
@@ -83,12 +81,14 @@ function App() {
                                 <CalendarioSalidas />
                             </ProtectedRoute>
                         } />
-
-                        <Route path="reportes-salidas" element={
-                            <ProtectedRoute moduleName="reportes_salidas">
-                                <ReportesSalidas />
+                        <Route path="reportes" element={
+                            <ProtectedRoute>
+                                <Reportes />
                             </ProtectedRoute>
                         } />
+                        <Route path="reportes-salidas" element={<Navigate to="/reportes" replace />} />
+                        <Route path="reportes-articulacion" element={<Navigate to="/reportes" replace />} />
+                        <Route path="reportes-ivc" element={<Navigate to="/reportes" replace />} />
 
                         <Route path="solicitar-articulacion" element={
                             <ProtectedRoute moduleName="solicitar_articulacion">
@@ -123,18 +123,6 @@ function App() {
                         <Route path="calendario-ivc" element={
                             <ProtectedRoute moduleName="calendario_ivc">
                                 <CalendarioIvc />
-                            </ProtectedRoute>
-                        } />
-
-                        <Route path="reportes-articulacion" element={
-                            <ProtectedRoute moduleName="reportes_articulacion">
-                                <ReportesArticulacion />
-                            </ProtectedRoute>
-                        } />
-
-                        <Route path="reportes-ivc" element={
-                            <ProtectedRoute moduleName="reportes_ivc">
-                                <ReportesIvc />
                             </ProtectedRoute>
                         } />
 

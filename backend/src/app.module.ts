@@ -7,6 +7,7 @@ import { SalidasModule } from './salidas/salidas.module';
 import { SubdireccionesModule } from './subdirecciones/subdirecciones.module';
 import { AreasModule } from './areas/areas.module';
 import { SolicitudesUnionModule } from './solicitudes-union/solicitudes-union.module';
+import { ReportesModule } from './reportes/reportes.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ArticulacionesModule } from './articulaciones/articulaciones.module';
 import { IvcModule } from './ivc/ivc.module';
@@ -28,6 +29,7 @@ import { UnidadAnalisisModule } from './unidad-analisis/unidad-analisis.module';
     SubdireccionesModule,
     AreasModule,
     SolicitudesUnionModule,
+    ReportesModule,
     NotificationsModule,
     ArticulacionesModule,
     IvcModule,

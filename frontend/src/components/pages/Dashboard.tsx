@@ -30,11 +30,12 @@ export default function Dashboard() {
     });
 
     const categories: Record<string, string[]> = {
-        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas', 'reportes_salidas'],
-        'Articulacion': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones', 'reportes_articulacion'],
-        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc', 'reportes_ivc'],
+        'Programaciones': ['solicitar_salida', 'gestionar_salida', 'calendario_salidas'],
+        'Articulacion': ['solicitar_articulacion', 'gestionar_articulacion', 'calendario_articulaciones'],
+        'IVC': ['solicitar_ivc', 'gestionar_ivc', 'calendario_ivc'],
         'Gestion de Dependencias': ['areas', 'subdirecciones'],
         'Usuarios': ['usuarios'],
+        'Reportes': ['reportes'],
         'Asesorias': ['programar_asesoria', 'gestionar_asesoria'],
         'Seguimiento/Actas': ['seguimiento_capacitaciones', 'seguimiento_ivc', 'seguimiento_articulacion_iv', 'seguimiento_acompanamiento', 'seguimiento_articulacion', 'acompanamiento_no_registrado']
     };
@@ -53,18 +54,8 @@ export default function Dashboard() {
             can_view: true
         },
         {
-            id: 'reportes-salidas-module',
-            modules: { id: 'reportes-salidas-module', name: 'reportes_salidas', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-salidas', is_active: true, order: 99 },
-            can_view: true
-        },
-        {
-            id: 'reportes-articulacion-module',
-            modules: { id: 'reportes-articulacion-module', name: 'reportes_articulacion', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-articulacion', is_active: true, order: 100 },
-            can_view: true
-        },
-        {
-            id: 'reportes-ivc-module',
-            modules: { id: 'reportes-ivc-module', name: 'reportes_ivc', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes-ivc', is_active: true, order: 101 },
+            id: 'reportes-module',
+            modules: { id: 'reportes-module', name: 'reportes', description: 'Reportes y Estadisticas', icon: 'bar_chart', path: '/reportes', is_active: true, order: 99 },
             can_view: true
         },
         {
@@ -124,7 +115,7 @@ export default function Dashboard() {
         return acc;
     }, {} as Record<string, DashboardModulePermission[]>);
 
-    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
+    const categoryOrder = ['Programaciones', 'Articulacion', 'IVC', 'Asesorias', 'Seguimiento/Actas', 'Reportes', 'Gestion de Dependencias', 'Usuarios', 'Otros'];
 
     return (
         <div className="bg-bg-light font-display min-h-screen">
