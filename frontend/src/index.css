@@ -141,6 +141,21 @@ html {
     text-decoration: underline;
 }
 
+/* Popover de "+N más": limitar altura y permitir scroll */
+.fc .fc-popover {
+    max-height: 320px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    z-index: 60;
+}
+
+.fc .fc-popover .fc-popover-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    min-height: 0;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {
